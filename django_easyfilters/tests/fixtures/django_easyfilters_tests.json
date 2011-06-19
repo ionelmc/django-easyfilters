@@ -1,0 +1,129 @@
+[
+  {
+    "pk": 1, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Jane Austen"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Charlotte Bronte"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Lewis Carroll"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "A. A. Milne"
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "E. H. Shepard"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "tests.genre", 
+    "fields": {
+      "name": "Romance"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "tests.genre", 
+    "fields": {
+      "name": "Fantasy"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "tests.genre", 
+    "fields": {
+      "name": "Children's"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Pride and Prejudice", 
+      "price": "5.99", 
+      "binding": "P", 
+      "date_published": "1813-01-28", 
+      "authors": [
+        1
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Emma", 
+      "price": "4.99", 
+      "binding": "H", 
+      "date_published": "1815-12-01", 
+      "authors": [
+        1
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Jane Eyre", 
+      "price": "3.5", 
+      "binding": "P", 
+      "date_published": "1847-10-16", 
+      "authors": [
+        2
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Through The Looking Glass", 
+      "price": "10.99", 
+      "binding": "H", 
+      "date_published": "1871-01-02", 
+      "authors": [
+        3
+      ], 
+      "genre": 2
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Winnie-the-Pooh", 
+      "price": "5.99", 
+      "binding": "C", 
+      "date_published": "1926-10-14", 
+      "authors": [
+        4, 
+        5
+      ], 
+      "genre": 3
+    }
+  }
+]
