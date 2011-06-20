@@ -93,13 +93,6 @@ class Filter(FilterOptions):
                                         FILTER_ADD))
         return choices
 
-    def get_remove_url(self, params, request=None):
-        """
-        Returns a URL for removing the filter, or None
-        if the filter is not currently in use.
-        """
-        pass
-
 
 class FilterSet(object):
 
