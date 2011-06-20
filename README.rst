@@ -87,9 +87,8 @@ To run the test suite, do::
 
    ./manage.py test django_easyfilters
 
-To edit the test fixtures, you can edit the
-django_easyfilters/tests/fixtures/*.json, or you can do it via an admin
-interface:
+To edit the test fixtures, you can edit the fixtures in
+django_easyfilters/tests/fixtures/, or you can do it via an admin interface:
 
 First create an empty db::
 
