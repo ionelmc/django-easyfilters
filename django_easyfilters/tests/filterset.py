@@ -138,7 +138,7 @@ class TestFilterSet(TestCase):
         """
         class BookFilterSet1(FilterSet):
             fields = [
-                FilterOptions('genre', order_by_count=True)
+                ('genre', FilterOptions(order_by_count=True))
                 ]
         qs = Book.objects.all()
         fs1 = BookFilterSet1(qs, {})
@@ -148,7 +148,7 @@ class TestFilterSet(TestCase):
         self.assertEqual(choices1, sorted(choices1, key=operator.attrgetter('count'), reverse=True))
         class BookFilterSet2(FilterSet):
             fields = [
-                FilterOptions('genre', order_by_count=False)
+                ('genre', FilterOptions(order_by_count=False))
                 ]
         fs2 = BookFilterSet2(qs, {})
         choices2 = fs2.filters[0].get_choices(qs, {})

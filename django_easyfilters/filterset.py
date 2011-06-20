@@ -21,13 +21,7 @@ class FilterOptions(object):
     a FilterSet. The actual choice of Filter subclass will be done by the
     FilterSet in this case.
     """
-    def __init__(self, field, query_param=None, order_by_count=False):
-        # State: Filter objects are created as class attributes of FilterSets,
-        # and so cannot carry any request specific state. They only have
-        # configuration information.
-        self.field = field
-        if query_param is None:
-            query_param = field
+    def __init__(self, query_param=None, order_by_count=False):
         self.query_param = query_param
         self.order_by_count = order_by_count
 
@@ -36,6 +30,15 @@ class Filter(FilterOptions):
     A Filter creates links/URLs that correspond to some DB filtering,
     and can apply the information from a URL to filter a QuerySet.
     """
+    def __init__(self, field, **kwargs):
+        # State: Filter objects are created as class attributes of FilterSets,
+        # and so cannot carry any request specific state. They only have
+        # configuration information.
+        self.field = field
+        if kwargs.get('query_param', None) is None:
+            kwargs['query_param'] = field
+        super(Filter, self).__init__(**kwargs)
+
     def apply_filter(self, qs, params):
         p_val = params.get(self.query_param, None)
         if p_val is None:
@@ -132,14 +135,14 @@ class FilterSet(object):
         return Filter(field, **kwargs)
 
     def setup_filters(self):
-        # This could run once, as soon as FilterSet is created
         filters = []
         for i, f in enumerate(self.get_fields()):
             if isinstance(f, basestring):
                 f = self.get_filter_for_field(f)
-            elif isinstance(f, FilterOptions):
-                opts = f.__dict__.copy()
-                field = opts.pop('field')
+            elif isinstance(f, tuple):
+                # (field name, FilterOptions)
+                field = f[0]
+                opts = f[1].__dict__.copy()
                 f = self.get_filter_for_field(field, **opts)
             filters.append(f)
         return filters
