@@ -1,4 +1,5 @@
 from collections import namedtuple
+import operator
 
 from django.db import models
 from django.utils.safestring import mark_safe
@@ -20,7 +21,7 @@ class FilterOptions(object):
     a FilterSet. The actual choice of Filter subclass will be done by the
     FilterSet in this case.
     """
-    def __init__(self, field, query_param=None):
+    def __init__(self, field, query_param=None, order_by_count=False):
         # State: Filter objects are created as class attributes of FilterSets,
         # and so cannot carry any request specific state. They only have
         # configuration information.
@@ -28,7 +29,7 @@ class FilterOptions(object):
         if query_param is None:
             query_param = field
         self.query_param = query_param
-
+        self.order_by_count = order_by_count
 
 class Filter(FilterOptions):
     """
@@ -91,6 +92,8 @@ class Filter(FilterOptions):
                                         count_dict[pk],
                                         self.build_params(params, add=pk),
                                         FILTER_ADD))
+        if self.order_by_count:
+            choices.sort(key=operator.attrgetter('count'), reverse=True)
         return choices
 
 

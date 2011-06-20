@@ -1,7 +1,8 @@
 import decimal
+import operator
 
 from django.test import TestCase
-from django_easyfilters import FilterSet, FILTER_ADD, FILTER_REMOVE
+from django_easyfilters import FilterSet, FilterOptions, FILTER_ADD, FILTER_REMOVE
 
 from models import Book, Genre
 
@@ -130,3 +131,28 @@ class TestFilterSet(TestCase):
         fs_filtered = BookFilterSet(qs, choice.params)
         rendered_2 = fs_filtered.render()
         self.assertTrue('Genre' in rendered_2)
+
+    def test_order_by_count(self):
+        """
+        Tests the 'order_by_count' option.
+        """
+        class BookFilterSet1(FilterSet):
+            fields = [
+                FilterOptions('genre', order_by_count=True)
+                ]
+        qs = Book.objects.all()
+        fs1 = BookFilterSet1(qs, {})
+        choices1 = fs1.filters[0].get_choices(qs, {})
+
+        # Should be same after sorting by 'count'
+        self.assertEqual(choices1, sorted(choices1, key=operator.attrgetter('count'), reverse=True))
+        class BookFilterSet2(FilterSet):
+            fields = [
+                FilterOptions('genre', order_by_count=False)
+                ]
+        fs2 = BookFilterSet2(qs, {})
+        choices2 = fs2.filters[0].get_choices(qs, {})
+
+        # Should be same after sorting by 'label' (that is equal to Genre.name,
+        # and Genre ordering is by that field)
+        self.assertEqual(choices2, sorted(choices2, key=operator.attrgetter('label')))

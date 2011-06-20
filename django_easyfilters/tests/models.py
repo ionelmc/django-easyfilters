@@ -20,6 +20,9 @@ class Genre(models.Model):
     def __unicode__(self):
         return self.name
 
+    class Meta:
+        ordering = ['name']
+
 class Book(models.Model):
     name = models.CharField(max_length=100)
     binding = models.CharField(max_length=2, choices=BINDING_CHOICES)
