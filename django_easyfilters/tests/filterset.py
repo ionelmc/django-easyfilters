@@ -8,12 +8,15 @@ from models import Book, Genre
 
 class TestFilterSet(TestCase):
 
+    # Tests are written so that adding new data to fixtures won't break the
+    # tests, so numbers/values are compared using DB queries. Extra care is
+    # taken to ensure that there is some data that matches what we are assuming
+    # is there.
     fixtures = ['django_easyfilters_tests']
 
     def test_queryset_no_filters(self):
         class BookFilterSet(FilterSet):
             fields = []
-            model = Book
 
         qs = Book.objects.all()
         data = {}
@@ -29,7 +32,6 @@ class TestFilterSet(TestCase):
             fields = [
                 'genre',
                 ]
-            model = Book
 
         # Make another Genre that isn't used
         new_g, created = Genre.objects.get_or_create(name='Nonsense')
@@ -54,3 +56,15 @@ class TestFilterSet(TestCase):
         self.assertTrue(reached[0])
         self.assertTrue(reached[1])
 
+    def test_filterset_render(self):
+        """
+        Smoke test to ensure that filtersets can be rendered
+        """
+        class BookFilterSet(FilterSet):
+            fields = [
+                'genre',
+                ]
+        fs = BookFilterSet(Book.objects.all(), {})
+        rendered = fs.render()
+        self.assertTrue('Genre' in rendered)
+        self.assertEqual(rendered, unicode(fs))

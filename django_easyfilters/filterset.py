@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.utils.http import urlencode
+from django.utils.text import capfirst
 
 standard_filter_mapping = {
 }
@@ -87,7 +88,7 @@ class Filter(FilterOptions):
     def render(self, qs, params):
         out = []
         field_obj = qs.model._meta.get_field(self.field)
-        label = field_obj.verbose_name
+        label = capfirst(field_obj.verbose_name)
         for c in self.get_choices(qs, params):
             out.append(u'<a href="%s">%s</a> (%d) &nbsp;&nbsp;' % (escape(c.url), escape(c.label), c.count))
         return u'<div>%s: %s</div>' % (escape(label), u''.join(out))
