@@ -1,1 +1,1 @@
-from filterset import FilterSet
+from filterset import FilterSet, FilterOptions
