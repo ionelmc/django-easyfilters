@@ -9,7 +9,7 @@ def read(*rnames):
 
 setup(
     name = "django-easyfilters",
-    version = '0.1',
+    version = '0.0.1',
     packages = find_packages(),
     include_package_data = True,
 
@@ -23,7 +23,7 @@ setup(
                         read('CHANGES.rst')
     ),
     license = "MIT",
-    keywords = "django filter autofilter drilldown",
+    keywords = "django filter autofilter drilldown easy simple",
     classifiers = [
         "Development Status :: 3 - Alpha",
         "Environment :: Web Environment",
@@ -34,5 +34,5 @@ setup(
         "Framework :: Django",
         "Topic :: Software Development :: User Interfaces",
         ],
-    install_requires = ['django >= 1.0'],
+    install_requires = ['django >= 1.3'],
 )
