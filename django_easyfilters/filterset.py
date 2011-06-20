@@ -6,7 +6,10 @@ from django.utils.html import escape
 from django.utils.http import urlencode
 from django.utils.text import capfirst
 
-FilterChoice = namedtuple('FilterChoice', 'label count params')
+FILTER_ADD = 'add'
+FILTER_REMOVE = 'remove'
+
+FilterChoice = namedtuple('FilterChoice', 'label count params link_type')
 
 
 class FilterOptions(object):
@@ -39,9 +42,12 @@ class Filter(FilterOptions):
         else:
             return qs.filter(**{self.field: p_val})
 
-    def build_params(self, params, filter_val):
+    def build_params(self, params, add=None, remove=False):
         params = params.copy()
-        params[self.query_param] = filter_val
+        if remove:
+            del params[self.query_param]
+        else:
+            params[self.query_param] = add
         params.pop('page', None) # links should reset paging
         return params
 
@@ -51,14 +57,25 @@ class Filter(FilterOptions):
         (label (as a string), count, url)
         """
         field_obj = qs.model._meta.get_field(self.field)
+        rel_model = field_obj.rel.to
+        rel_field = field_obj.rel.get_related_field()
+
+        if self.query_param in params:
+            # Already filtered on this, there is just one object.
+            lookup = {rel_field.attname: params[self.query_param]}
+            obj = rel_model.objects.get(**lookup)
+            return [FilterChoice(unicode(obj),
+                                 None, # Don't need count for removing
+                                 self.build_params(params, remove=True),
+                                 FILTER_REMOVE)]
+
+        # Not filtered on this yet, need counts
 
         # First get the IDs and counts in one query.
         ids_counts = qs.values_list(self.field).order_by(self.field).annotate(models.Count(self.field))
 
         # Then get the instances, so that we can get the unicode() of them,
         # using their normal manager to get them in normal order.
-        rel_model = field_obj.rel.to
-        rel_field = field_obj.rel.get_related_field()
         count_dict = {}
         for id, count in ids_counts:
             count_dict[id] = count
@@ -69,10 +86,11 @@ class Filter(FilterOptions):
         choices = []
 
         for o in objs:
-            id = getattr(o, rel_field.attname)
+            pk = getattr(o, rel_field.attname)
             choices.append(FilterChoice(unicode(o),
-                                        count_dict[id],
-                                        self.build_params(params, id)))
+                                        count_dict[pk],
+                                        self.build_params(params, add=pk),
+                                        FILTER_ADD))
         return choices
 
     def get_remove_url(self, params, request=None):
@@ -102,7 +120,10 @@ class FilterSet(object):
         field_obj = qs.model._meta.get_field(filter_.field)
         label = capfirst(field_obj.verbose_name)
         for c in filter_.get_choices(qs, params):
-            out.append(u'<a href="%s">%s</a> (%d) &nbsp;&nbsp;' % (escape('?%s' % urlencode(c.params)), escape(c.label), c.count))
+            if c.link_type == FILTER_REMOVE:
+                out.append(u'%s <a href="%s" title="Remove filter" class="removefilter">[x]</a> ' % (escape(c.label), escape('?%s' % urlencode(c.params))))
+            else:
+                out.append(u'<a href="%s" class="addfilter">%s</a> (%d) &nbsp;&nbsp;' % (escape('?%s' % urlencode(c.params)), escape(c.label), c.count))
         return u'<div>%s: %s</div>' % (escape(label), u''.join(out))
 
     def render(self):

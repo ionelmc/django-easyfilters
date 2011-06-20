@@ -1,1 +1,2 @@
-from filterset import FilterSet, FilterOptions
+from filterset import FilterSet, FilterOptions, FILTER_ADD, FILTER_REMOVE
+

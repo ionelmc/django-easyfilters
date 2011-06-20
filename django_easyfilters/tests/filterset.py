@@ -1,7 +1,7 @@
 import decimal
 
 from django.test import TestCase
-from django_easyfilters import FilterSet
+from django_easyfilters import FilterSet, FILTER_ADD, FILTER_REMOVE
 
 from models import Book, Genre
 
@@ -84,6 +84,32 @@ class TestFilterSet(TestCase):
                 self.assertEqual(unicode(book.genre), choice.label)
         self.assertTrue(reached)
 
+    def test_foreignkey_remove_link(self):
+        """
+        Ensure that a ForeignKey Filter will turn into a 'remove' link when an
+        item has been selected.
+        """
+        class BookFilterSet(FilterSet):
+            fields = [
+                'genre',
+                ]
+
+        qs = Book.objects.all()
+        data = {}
+        fs = BookFilterSet(qs, data)
+        choices = fs.filters[0].get_choices(qs, data)
+        choice = choices[0]
+        fs_filtered = BookFilterSet(qs, choice.params)
+        qs_filtered = fs_filtered.qs
+        choices2 = fs_filtered.filters[0].get_choices(qs_filtered, choice.params)
+
+        # Should have one item
+        self.assertEqual(1, len(choices2))
+        self.assertEqual(choices2[0].link_type, FILTER_REMOVE)
+
+        # 'Clicking' should remove filtering
+        fs_reverted = BookFilterSet(qs, choices2[0].params)
+        self.assertEqual(qs, fs_reverted.qs)
 
     def test_filterset_render(self):
         """
@@ -93,7 +119,14 @@ class TestFilterSet(TestCase):
             fields = [
                 'genre',
                 ]
-        fs = BookFilterSet(Book.objects.all(), {})
+        qs = Book.objects.all()
+        fs = BookFilterSet(qs, {})
         rendered = fs.render()
         self.assertTrue('Genre' in rendered)
         self.assertEqual(rendered, unicode(fs))
+
+        # And when in 'already filtered' mode:
+        choice = fs.filters[0].get_choices(qs, {})[0]
+        fs_filtered = BookFilterSet(qs, choice.params)
+        rendered_2 = fs_filtered.render()
+        self.assertTrue('Genre' in rendered_2)
