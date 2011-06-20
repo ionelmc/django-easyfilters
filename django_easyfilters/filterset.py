@@ -26,6 +26,8 @@ class FilterOptions(object):
         # and so cannot carry any request specific state. They only have
         # configuration information.
         self.field = field
+        if query_param is None:
+            query_param = field
         self.query_param = query_param
 
 
@@ -127,8 +129,6 @@ class FilterSet(object):
                 opts = f.__dict__.copy()
                 field = opts.pop('field')
                 f = self.get_filter_for_field(field, **opts)
-            if f.query_param is None:
-                f.query_param = 'f%d' % (i+1)
             filters.append(f)
         return filters
 
