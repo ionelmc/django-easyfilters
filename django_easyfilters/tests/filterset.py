@@ -56,6 +56,35 @@ class TestFilterSet(TestCase):
         self.assertTrue(reached[0])
         self.assertTrue(reached[1])
 
+    def test_foreignkey_params_produced(self):
+        """
+        A ForeignKey filter shoud produce params that cause the query to be
+        limited by that filter.
+        """
+        class BookFilterSet(FilterSet):
+            fields = [
+                'genre',
+                ]
+
+        qs = Book.objects.all()
+        data = {}
+        fs = BookFilterSet(qs, data)
+        choices = fs.filters[0].get_choices(qs, data)
+
+        # If we use the params from e.g. the first choice, that should produce a
+        # filtered qs when fed back in (i.e. when we 'click' on that option we
+        # should get a filter on it).
+        reached = False
+        for choice in choices:
+            reached = True
+            fs_filtered = BookFilterSet(qs, choice.params)
+            qs_filtered = fs_filtered.qs
+            self.assertEqual(len(qs_filtered), choice.count)
+            for book in qs_filtered:
+                self.assertEqual(unicode(book.genre), choice.label)
+        self.assertTrue(reached)
+
+
     def test_filterset_render(self):
         """
         Smoke test to ensure that filtersets can be rendered

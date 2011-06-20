@@ -6,11 +6,7 @@ from django.utils.html import escape
 from django.utils.http import urlencode
 from django.utils.text import capfirst
 
-standard_filter_mapping = {
-}
-
-
-FilterChoice = namedtuple('FilterChoice', 'label count url')
+FilterChoice = namedtuple('FilterChoice', 'label count params')
 
 
 class FilterOptions(object):
@@ -43,11 +39,11 @@ class Filter(FilterOptions):
         else:
             return qs.filter(**{self.field: p_val})
 
-    def build_query_string(self, params, filter_val):
+    def build_params(self, params, filter_val):
         params = params.copy()
         params[self.query_param] = filter_val
         params.pop('page', None) # links should reset paging
-        return '?%s' % urlencode(params)
+        return params
 
     def get_choices(self, qs, params):
         """
@@ -76,7 +72,7 @@ class Filter(FilterOptions):
             id = getattr(o, rel_field.attname)
             choices.append(FilterChoice(unicode(o),
                                         count_dict[id],
-                                        self.build_query_string(params, id)))
+                                        self.build_params(params, id)))
         return choices
 
     def get_remove_url(self, params, request=None):
@@ -92,7 +88,7 @@ class Filter(FilterOptions):
         field_obj = qs.model._meta.get_field(self.field)
         label = capfirst(field_obj.verbose_name)
         for c in self.get_choices(qs, params):
-            out.append(u'<a href="%s">%s</a> (%d) &nbsp;&nbsp;' % (escape(c.url), escape(c.label), c.count))
+            out.append(u'<a href="%s">%s</a> (%d) &nbsp;&nbsp;' % (escape('?%s' % urlencode(c.params)), escape(c.label), c.count))
         return u'<div>%s: %s</div>' % (escape(label), u''.join(out))
 
 
