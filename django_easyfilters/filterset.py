@@ -82,15 +82,6 @@ class Filter(FilterOptions):
         """
         pass
 
-    # TODO - move all this HTML specific stuff to FilterSet
-    def render(self, qs, params):
-        out = []
-        field_obj = qs.model._meta.get_field(self.field)
-        label = capfirst(field_obj.verbose_name)
-        for c in self.get_choices(qs, params):
-            out.append(u'<a href="%s">%s</a> (%d) &nbsp;&nbsp;' % (escape('?%s' % urlencode(c.params)), escape(c.label), c.count))
-        return u'<div>%s: %s</div>' % (escape(label), u''.join(out))
-
 
 class FilterSet(object):
 
@@ -106,8 +97,16 @@ class FilterSet(object):
             queryset = f.apply_filter(queryset, params)
         return queryset
 
+    def render_filter(self, filter_, qs, params):
+        out = []
+        field_obj = qs.model._meta.get_field(filter_.field)
+        label = capfirst(field_obj.verbose_name)
+        for c in filter_.get_choices(qs, params):
+            out.append(u'<a href="%s">%s</a> (%d) &nbsp;&nbsp;' % (escape('?%s' % urlencode(c.params)), escape(c.label), c.count))
+        return u'<div>%s: %s</div>' % (escape(label), u''.join(out))
+
     def render(self):
-        return mark_safe(u'\n'.join(f.render(self.qs, self.params) for f in self.filters))
+        return mark_safe(u'\n'.join(self.render_filter(f, self.qs, self.params) for f in self.filters))
 
     def get_fields(self):
         return self.fields
