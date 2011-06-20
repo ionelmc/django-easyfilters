@@ -63,7 +63,7 @@ views.py::
                                                       'books': booksfilter.qs})
 
 
-Template (assuming use of django-pagination to add pagination):
+Template (assuming use of django-pagination to add pagination)::
 
     {% autopaginate books 20 %}
 
@@ -91,12 +91,12 @@ To edit the test fixtures, you can edit the
 django_easyfilters/tests/fixtures/*.json, or you can do it via an admin
 interface:
 
-First create an empty db:
+First create an empty db::
 
    rm tests.db
    ./manage.py syncdb
 
-Then load with current test fixture:
+Then load with current test fixture::
 
    ./manage.py loaddata django_easyfilters_tests
 
