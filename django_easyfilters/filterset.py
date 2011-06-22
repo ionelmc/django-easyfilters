@@ -89,8 +89,8 @@ class Filter(FilterOptions):
 
     def display_choice(self, qs, params, choice):
         retval = unicode(choice)
-        if retval == '':
-            return '(empty)'
+        if retval == u'':
+            return u'(empty)'
         else:
             return retval
 
@@ -168,7 +168,7 @@ class RelatedFilter(SingleValueFilterMixin, Filter):
 
 
 def non_breaking_spaces(val):
-    return '&nbsp;'.join(escape(part) for part in val.split(' '))
+    return u'&nbsp;'.join(escape(part) for part in val.split(u' '))
 
 class FilterSet(object):
 
@@ -190,11 +190,11 @@ class FilterSet(object):
         label = capfirst(field_obj.verbose_name)
         for c in filter_.get_choices(qs, params):
             if c.link_type == FILTER_REMOVE:
-                out.append(u'<span class="removefilter"><span class="filterchoice">%s</span> <a href="%s" title="Remove filter">[x]</a></span> '
-                           % (escape(c.label), escape('?%s' % urlencode(c.params))))
+                out.append(u'<span class="removefilter"><span class="filterchoice">%s</span> <a href="%s" title="Remove filter">[&laquo;]</a></span> '
+                           % (escape(c.label), escape(u'?' + urlencode(c.params))))
             else:
                 out.append(u'<span class="addfilter"><a href="%s" class="addfilter">%s</a>&nbsp;(%d)</span>&nbsp;&nbsp; '
-                           % (escape('?' + urlencode(c.params)), non_breaking_spaces(c.label), c.count))
+                           % (escape(u'?' + urlencode(c.params)), non_breaking_spaces(c.label), c.count))
         return (u'<div class="filterline"><span class="filterlabel">%s:</span> %s</div>'
                 % (escape(label), u''.join(out)))
 
