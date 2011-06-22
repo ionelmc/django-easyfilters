@@ -104,7 +104,9 @@ Done so far
 * Support for ForeignKey - RelatedFilter
 * Fallback support for CharField, IntegerField, everything else - ValuesFilter
 * Options:
+
   * order_by_count
+
 * Very good test coverage
 
 TODO
@@ -115,10 +117,13 @@ TODO
 * Better support for Field.choices
 * Automatic range-based filters - e.g. for prices
 * More options for customisation
+
   * max_links
   * max_links_visible (javascript hiding)
   * 'defaults' attribute for FilterSet
+
 * Docs for customisation
+
   * Options provided by FilterOptions
   * API of Filter
   * API of FilterSet for overriding rendering
