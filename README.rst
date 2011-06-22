@@ -60,7 +60,6 @@ To add the filters, in views.py you do something like this::
     from myapp.models import Book
 
     class BookFilterSet(FilterSet):
-        model = Book
         fields = [
             'binding',
             'authors',

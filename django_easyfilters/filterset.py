@@ -170,6 +170,7 @@ class RelatedFilter(SingleValueFilterMixin, Filter):
 def non_breaking_spaces(val):
     return u'&nbsp;'.join(escape(part) for part in val.split(u' '))
 
+
 class FilterSet(object):
 
     def __init__(self, queryset, params, request=None):
@@ -186,7 +187,7 @@ class FilterSet(object):
 
     def render_filter(self, filter_, qs, params):
         out = []
-        field_obj = qs.model._meta.get_field(filter_.field)
+        field_obj = self.model._meta.get_field(filter_.field)
         label = capfirst(field_obj.verbose_name)
         for c in filter_.get_choices(qs, params):
             if c.link_type == FILTER_REMOVE:

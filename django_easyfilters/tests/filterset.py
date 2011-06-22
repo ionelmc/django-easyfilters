@@ -18,7 +18,6 @@ class TestFilterSet(TestCase):
     def test_queryset_no_filters(self):
         class BookFilterSet(FilterSet):
             fields = []
-            model = Book
 
         qs = Book.objects.all()
         data = {}
@@ -33,7 +32,6 @@ class TestFilterSet(TestCase):
             fields = [
                 'genre',
                 ]
-            model = Book
 
         qs = Book.objects.all()
         fs = BookFilterSet(qs, {})
@@ -56,7 +54,6 @@ class TestFilterSet(TestCase):
                 'genre',
                 'edition',
                 ]
-            model = Book
 
         fs = BookFilterSet(Book.objects.all(), {})
         self.assertEqual(RelatedFilter, type(fs.filters[0]))
@@ -75,7 +72,6 @@ class TestFilters(TestCase):
             fields = [
                 'genre',
                 ]
-            model = Book
 
         # Make another Genre that isn't used
         new_g, created = Genre.objects.get_or_create(name='Nonsense')
@@ -109,7 +105,6 @@ class TestFilters(TestCase):
             fields = [
                 'genre',
                 ]
-            model = Book
 
         qs = Book.objects.all()
         data = {}
@@ -139,7 +134,6 @@ class TestFilters(TestCase):
             fields = [
                 'genre',
                 ]
-            model = Book
 
         qs = Book.objects.all()
         data = {}
@@ -167,7 +161,6 @@ class TestFilters(TestCase):
             fields = [
                 ValuesFilter('edition'),
                 ]
-            model = Book
 
         qs = Book.objects.all()
         data = {}
@@ -204,7 +197,6 @@ class TestFilters(TestCase):
             fields = [
                 ('genre', FilterOptions(order_by_count=True))
                 ]
-            model = Book
 
         qs = Book.objects.all()
         fs1 = BookFilterSet1(qs, {})
@@ -217,7 +209,6 @@ class TestFilters(TestCase):
             fields = [
                 ('genre', FilterOptions(order_by_count=False))
                 ]
-            model = Book
 
         fs2 = BookFilterSet2(qs, {})
         choices2 = fs2.filters[0].get_choices(qs, {})
