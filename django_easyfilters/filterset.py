@@ -167,6 +167,9 @@ class RelatedFilter(SingleValueFilterMixin, Filter):
         return choices
 
 
+def non_breaking_spaces(val):
+    return '&nbsp;'.join(escape(part) for part in val.split(' '))
+
 class FilterSet(object):
 
     def __init__(self, queryset, params, request=None):
@@ -190,8 +193,8 @@ class FilterSet(object):
                 out.append(u'<span class="removefilter"><span class="filterchoice">%s</span> <a href="%s" title="Remove filter">[x]</a></span> '
                            % (escape(c.label), escape('?%s' % urlencode(c.params))))
             else:
-                out.append(u'<span class="addfilter"><a href="%s" class="addfilter">%s</a> (%d)</span> &nbsp;&nbsp;'
-                           % (escape('?' + urlencode(c.params)), escape(c.label), c.count))
+                out.append(u'<span class="addfilter"><a href="%s" class="addfilter">%s</a>&nbsp;(%d)</span>&nbsp;&nbsp; '
+                           % (escape('?' + urlencode(c.params)), non_breaking_spaces(c.label), c.count))
         return (u'<div class="filterline"><span class="filterlabel">%s:</span> %s</div>'
                 % (escape(label), u''.join(out)))
 
