@@ -2,6 +2,7 @@ from collections import namedtuple
 import operator
 
 from django.db import models
+from django.utils.datastructures import SortedDict
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.utils.http import urlencode
@@ -46,7 +47,7 @@ class Filter(FilterOptions):
         else:
             return qs.filter(**{self.field: p_val})
 
-    def build_params(self, params, add=None, remove=False):
+    def build_params(self, qs, params, add=None, remove=False):
         params = params.copy()
         if remove:
             del params[self.query_param]
@@ -55,37 +56,105 @@ class Filter(FilterOptions):
         params.pop('page', None) # links should reset paging
         return params
 
+    def get_values_counts(self, qs, params):
+        """
+        Returns a SortedDict dictionary of {value: count}
+        """
+        values_counts = qs.values_list(self.field).order_by(self.field).annotate(models.Count(self.field))
+
+        count_dict = SortedDict()
+        for val, count in values_counts:
+            count_dict[val] = count
+        return count_dict
+
+    def sort_choices(self, qs, params, choices):
+        """
+        Sorts the choices by applying order_by_count if applicable.
+
+        See also sort_choices_custom.
+        """
+        if self.order_by_count:
+            choices.sort(key=operator.attrgetter('count'), reverse=True)
+        else:
+            choices = self.sort_choices_custom(qs, params, choices)
+        return choices
+
+    def sort_choices_custom(self, qs, params, choices):
+        """
+        Override this to provide a custom sorting method for a field. If sorting
+        can be better done in the DB, it should be done in the get_choices_add
+        method.
+        """
+        return choices
+
+    def display_choice(self, qs, params, choice):
+        retval = unicode(choice)
+        if retval == '':
+            return '(empty)'
+        else:
+            return retval
+
+    def get_choices_add(self, qs, params):
+        """
+        Called by 'get_choices', this is usually the one to override.
+        """
+        count_dict = self.get_values_counts(qs, params)
+        return [FilterChoice(self.display_choice(qs, params, val),
+                             count,
+                             self.build_params(qs, params, add=val),
+                             FILTER_ADD)
+                for val, count in count_dict.items()]
+
+    def get_choices(self, qs, params):
+        raise NotImplementedError()
+
+    def choice_from_params(self, qs, params):
+        return params[self.query_param]
+
+    def get_choice_remove(self, qs, params):
+        choice = self.choice_from_params(qs, params)
+        return FilterChoice(self.display_choice(qs, params, choice),
+                            None, # Don't need count for removing
+                            self.build_params(qs, params, remove=True),
+                            FILTER_REMOVE)
+
+
+class SingleValueFilterMixin(object):
+
     def get_choices(self, qs, params):
         """
         Returns a list of namedtuples containing
         (label (as a string), count, url)
         """
+        if self.query_param in params:
+            # Already filtered on this, we just display a remove link.
+            return [self.get_choice_remove(qs, params)]
+        else:
+            choices = self.get_choices_add(qs, params)
+
+        return self.sort_choices(qs, params, choices)
+
+
+class ValuesFilter(SingleValueFilterMixin, Filter):
+    pass
+
+
+class RelatedFilter(SingleValueFilterMixin, Filter):
+    def choice_from_params(self, qs, params):
         field_obj = qs.model._meta.get_field(self.field)
         rel_model = field_obj.rel.to
         rel_field = field_obj.rel.get_related_field()
 
-        if self.query_param in params:
-            # Already filtered on this, there is just one object.
-            lookup = {rel_field.attname: params[self.query_param]}
-            obj = rel_model.objects.get(**lookup)
-            return [FilterChoice(unicode(obj),
-                                 None, # Don't need count for removing
-                                 self.build_params(params, remove=True),
-                                 FILTER_REMOVE)]
+        lookup = {rel_field.attname: params[self.query_param]}
+        return rel_model.objects.get(**lookup)
 
-        # Not filtered on this yet, need counts
+    def get_choices_add(self, qs, params):
+        field_obj = qs.model._meta.get_field(self.field)
+        rel_model = field_obj.rel.to
+        rel_field = field_obj.rel.get_related_field()
 
-        # First get the IDs and counts in one query.
-        ids_counts = qs.values_list(self.field).order_by(self.field).annotate(models.Count(self.field))
-
-        # Then get the instances, so that we can get the unicode() of them,
-        # using their normal manager to get them in normal order.
-        count_dict = {}
-        for id, count in ids_counts:
-            count_dict[id] = count
-
-        # Filter to the ones relevant to our queryset:
-        lookup = {rel_field.attname + '__in': [x[0] for x in ids_counts]}
+        count_dict = self.get_values_counts(qs, params)
+        lookup = {rel_field.attname + '__in': count_dict.keys()}
         objs = rel_model.objects.filter(**lookup)
         choices = []
 
@@ -93,10 +162,8 @@ class Filter(FilterOptions):
             pk = getattr(o, rel_field.attname)
             choices.append(FilterChoice(unicode(o),
                                         count_dict[pk],
-                                        self.build_params(params, add=pk),
+                                        self.build_params(qs, params, add=pk),
                                         FILTER_ADD))
-        if self.order_by_count:
-            choices.sort(key=operator.attrgetter('count'), reverse=True)
         return choices
 
 
@@ -132,7 +199,11 @@ class FilterSet(object):
         return self.fields
 
     def get_filter_for_field(self, field, **kwargs):
-        return Filter(field, **kwargs)
+        f = self.model._meta.get_field(field)
+        if f.rel is not None:
+            return RelatedFilter(field, **kwargs)
+        else:
+            return ValuesFilter(field, **kwargs)
 
     def setup_filters(self):
         filters = []

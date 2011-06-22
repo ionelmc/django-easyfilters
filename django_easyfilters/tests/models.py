@@ -30,6 +30,7 @@ class Book(models.Model):
     genre = models.ForeignKey(Genre)
     price = models.DecimalField(max_digits=6, decimal_places=2)
     date_published = models.DateField()
+    edition = models.IntegerField(default=1)
 
     def __unicode__(self):
         return self.name

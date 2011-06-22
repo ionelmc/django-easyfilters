@@ -35,10 +35,10 @@
     }
   }, 
   {
-    "pk": 1, 
+    "pk": 3, 
     "model": "tests.genre", 
     "fields": {
-      "name": "Romance"
+      "name": "Children's"
     }
   }, 
   {
@@ -49,10 +49,10 @@
     }
   }, 
   {
-    "pk": 3, 
+    "pk": 1, 
     "model": "tests.genre", 
     "fields": {
-      "name": "Children's"
+      "name": "Romance"
     }
   }, 
   {
@@ -60,6 +60,7 @@
     "model": "tests.book", 
     "fields": {
       "name": "Pride and Prejudice", 
+      "edition": 3, 
       "price": "5.99", 
       "binding": "P", 
       "date_published": "1813-01-28", 
@@ -74,6 +75,7 @@
     "model": "tests.book", 
     "fields": {
       "name": "Emma", 
+      "edition": 3, 
       "price": "4.99", 
       "binding": "H", 
       "date_published": "1815-12-01", 
@@ -88,6 +90,7 @@
     "model": "tests.book", 
     "fields": {
       "name": "Jane Eyre", 
+      "edition": 1, 
       "price": "3.5", 
       "binding": "P", 
       "date_published": "1847-10-16", 
@@ -102,6 +105,7 @@
     "model": "tests.book", 
     "fields": {
       "name": "Through The Looking Glass", 
+      "edition": 1, 
       "price": "10.99", 
       "binding": "H", 
       "date_published": "1871-01-02", 
@@ -116,6 +120,7 @@
     "model": "tests.book", 
     "fields": {
       "name": "Winnie-the-Pooh", 
+      "edition": 2, 
       "price": "5.99", 
       "binding": "C", 
       "date_published": "1926-10-14", 

@@ -2,7 +2,7 @@ import decimal
 import operator
 
 from django.test import TestCase
-from django_easyfilters import FilterSet, FilterOptions, FILTER_ADD, FILTER_REMOVE
+from django_easyfilters.filterset import FilterSet, FilterOptions, RelatedFilter, ValuesFilter, FILTER_ADD, FILTER_REMOVE
 
 from models import Book, Genre
 
@@ -18,11 +18,53 @@ class TestFilterSet(TestCase):
     def test_queryset_no_filters(self):
         class BookFilterSet(FilterSet):
             fields = []
+            model = Book
 
         qs = Book.objects.all()
         data = {}
         f = BookFilterSet(qs, data)
         self.assertEqual(qs.count(), f.qs.count())
+
+    def test_filterset_render(self):
+        """
+        Smoke test to ensure that filtersets can be rendered
+        """
+        class BookFilterSet(FilterSet):
+            fields = [
+                'genre',
+                ]
+            model = Book
+
+        qs = Book.objects.all()
+        fs = BookFilterSet(qs, {})
+        rendered = fs.render()
+        self.assertTrue('Genre' in rendered)
+        self.assertEqual(rendered, unicode(fs))
+
+        # And when in 'already filtered' mode:
+        choice = fs.filters[0].get_choices(qs, {})[0]
+        fs_filtered = BookFilterSet(qs, choice.params)
+        rendered_2 = fs_filtered.render()
+        self.assertTrue('Genre' in rendered_2)
+
+    def test_get_filter_for_field(self):
+        """
+        Ensures that the get_filter_for_field method chooses appropriately.
+        """
+        class BookFilterSet(FilterSet):
+            fields = [
+                'genre',
+                'edition',
+                ]
+            model = Book
+
+        fs = BookFilterSet(Book.objects.all(), {})
+        self.assertEqual(RelatedFilter, type(fs.filters[0]))
+        self.assertEqual(ValuesFilter, type(fs.filters[1]))
+
+
+class TestFilters(TestCase):
+    fixtures = ['django_easyfilters_tests']
 
     def test_foreignkey_filters_produced(self):
         """
@@ -33,6 +75,7 @@ class TestFilterSet(TestCase):
             fields = [
                 'genre',
                 ]
+            model = Book
 
         # Make another Genre that isn't used
         new_g, created = Genre.objects.get_or_create(name='Nonsense')
@@ -66,6 +109,7 @@ class TestFilterSet(TestCase):
             fields = [
                 'genre',
                 ]
+            model = Book
 
         qs = Book.objects.all()
         data = {}
@@ -85,6 +129,7 @@ class TestFilterSet(TestCase):
                 self.assertEqual(unicode(book.genre), choice.label)
         self.assertTrue(reached)
 
+
     def test_foreignkey_remove_link(self):
         """
         Ensure that a ForeignKey Filter will turn into a 'remove' link when an
@@ -94,6 +139,7 @@ class TestFilterSet(TestCase):
             fields = [
                 'genre',
                 ]
+            model = Book
 
         qs = Book.objects.all()
         data = {}
@@ -112,25 +158,43 @@ class TestFilterSet(TestCase):
         fs_reverted = BookFilterSet(qs, choices2[0].params)
         self.assertEqual(qs, fs_reverted.qs)
 
-    def test_filterset_render(self):
+    def test_values_filter(self):
         """
-        Smoke test to ensure that filtersets can be rendered
+        Tests for ValuesFilter
         """
+        # We combine the tests for brevity.
         class BookFilterSet(FilterSet):
             fields = [
-                'genre',
+                ValuesFilter('edition'),
                 ]
-        qs = Book.objects.all()
-        fs = BookFilterSet(qs, {})
-        rendered = fs.render()
-        self.assertTrue('Genre' in rendered)
-        self.assertEqual(rendered, unicode(fs))
+            model = Book
 
-        # And when in 'already filtered' mode:
-        choice = fs.filters[0].get_choices(qs, {})[0]
-        fs_filtered = BookFilterSet(qs, choice.params)
-        rendered_2 = fs_filtered.render()
-        self.assertTrue('Genre' in rendered_2)
+        qs = Book.objects.all()
+        data = {}
+        fs = BookFilterSet(qs, data)
+        choices = fs.filters[0].get_choices(qs, data)
+
+        for choice in choices:
+            count = Book.objects.filter(edition=choice.params.values()[0]).count()
+            self.assertEqual(choice.count, count)
+
+            # Check the filtering
+            fs_filtered = BookFilterSet(qs, choice.params)
+            qs_filtered = fs_filtered.qs
+            self.assertEqual(len(qs_filtered), choice.count)
+            for book in qs_filtered:
+                self.assertEqual(unicode(book.edition), choice.label)
+
+            # Check we've got a 'remove link' on filtered.
+            choices_filtered = fs_filtered.filters[0].get_choices(qs, choice.params)
+            self.assertEqual(1, len(choices_filtered))
+            self.assertEqual(choices_filtered[0].link_type, FILTER_REMOVE)
+
+
+        # Check list is full, and in right order
+        self.assertEqual([unicode(v) for v in Book.objects.values_list('edition', flat=True).order_by('edition').distinct()],
+                         [choice.label for choice in choices])
+
 
     def test_order_by_count(self):
         """
@@ -140,16 +204,21 @@ class TestFilterSet(TestCase):
             fields = [
                 ('genre', FilterOptions(order_by_count=True))
                 ]
+            model = Book
+
         qs = Book.objects.all()
         fs1 = BookFilterSet1(qs, {})
         choices1 = fs1.filters[0].get_choices(qs, {})
 
         # Should be same after sorting by 'count'
         self.assertEqual(choices1, sorted(choices1, key=operator.attrgetter('count'), reverse=True))
+
         class BookFilterSet2(FilterSet):
             fields = [
                 ('genre', FilterOptions(order_by_count=False))
                 ]
+            model = Book
+
         fs2 = BookFilterSet2(qs, {})
         choices2 = fs2.filters[0].get_choices(qs, {})
 
