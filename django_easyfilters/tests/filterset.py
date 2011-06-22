@@ -2,9 +2,10 @@ import decimal
 import operator
 
 from django.test import TestCase
-from django_easyfilters.filterset import FilterSet, FilterOptions, RelatedFilter, ValuesFilter, FILTER_ADD, FILTER_REMOVE
+from django_easyfilters.filterset import FilterSet, FilterOptions, FILTER_ADD, FILTER_REMOVE, \
+    RelatedFilter, ValuesFilter, ChoicesFilter
 
-from models import Book, Genre
+from models import Book, Genre, BINDING_CHOICES
 
 
 class TestFilterSet(TestCase):
@@ -53,11 +54,13 @@ class TestFilterSet(TestCase):
             fields = [
                 'genre',
                 'edition',
+                'binding',
                 ]
 
         fs = BookFilterSet(Book.objects.all(), {})
         self.assertEqual(RelatedFilter, type(fs.filters[0]))
         self.assertEqual(ValuesFilter, type(fs.filters[1]))
+        self.assertEqual(ChoicesFilter, type(fs.filters[2]))
 
 
 class TestFilters(TestCase):
@@ -182,6 +185,25 @@ class TestFilters(TestCase):
         self.assertEqual([unicode(v) for v in Book.objects.values_list('edition', flat=True).order_by('edition').distinct()],
                          [choice.label for choice in choices])
 
+    def test_choices_filter(self):
+        """
+        Tests for ChoicesFilter
+        """
+        filter_ = ChoicesFilter('binding', Book)
+        qs = Book.objects.all()
+        choices = filter_.get_choices(qs, {})
+        # Check:
+        # - order is correct.
+        # - all values present (guaranteed by fixture data)
+        # - choice display value is used.
+
+        binding_choices_db = [b[0] for b in BINDING_CHOICES]
+        binding_choices_display = [b[1] for b in BINDING_CHOICES]
+        self.assertEqual([c.label for c in choices], binding_choices_display)
+
+        # Check choice db value in params
+        for c in choices:
+            self.assertTrue(c.params.values()[0] in binding_choices_db)
 
     def test_order_by_count(self):
         """

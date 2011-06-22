@@ -26,6 +26,7 @@ class FilterOptions(object):
         self.query_param = query_param
         self.order_by_count = order_by_count
 
+
 class Filter(FilterOptions):
     """
     A Filter creates links/URLs that correspond to some DB filtering,
@@ -39,6 +40,7 @@ class Filter(FilterOptions):
         self.model = model
         if kwargs.get('query_param', None) is None:
             kwargs['query_param'] = field
+        self.field_obj = self.model._meta.get_field(self.field)
         super(Filter, self).__init__(**kwargs)
 
     def apply_filter(self, qs, params):
@@ -137,13 +139,50 @@ class SingleValueFilterMixin(object):
 
 
 class ValuesFilter(SingleValueFilterMixin, Filter):
+    """
+    Fallback Filter for various kinds of simple values.
+    """
     pass
 
 
+class ChoicesFilter(ValuesFilter):
+    """
+    Filter for fields that have 'choices' defined.
+    """
+    # Need to do the following:
+    # 1) ensure we only display options that are in 'choices'
+    # 2) ensure the order is the same as in choices
+    # 3) make display value = the second element in choices' tuples.
+    def __init__(self, *args, **kwargs):
+        super(ChoicesFilter, self).__init__(*args, **kwargs)
+        # For performance we cache this rather than build in
+        self.choices_dict = dict(self.field_obj.flatchoices)
+
+    def display_choice(self, qs, params, choice):
+        # 3) above
+        return self.choices_dict.get(choice, choice)
+
+    def get_choices_add(self, qs, params):
+        count_dict = self.get_values_counts(qs, params)
+        choices = []
+        for val, display in self.field_obj.choices:
+            # 1), 2) above
+            if val in count_dict:
+                # We could use the value 'display' here, but for consistency
+                # call display_choice() in case it is overriden.
+                choices.append(FilterChoice(self.display_choice(qs, params, val),
+                                            count_dict[val],
+                                            self.build_params(qs, params, add=val),
+                                            FILTER_ADD))
+        return choices
+
+
 class RelatedFilter(SingleValueFilterMixin, Filter):
+    """
+    Filter for ForeignKey fields.
+    """
     def __init__(self, *args, **kwargs):
         super(RelatedFilter, self).__init__(*args, **kwargs)
-        self.field_obj = self.model._meta.get_field(self.field)
         self.rel_model = self.field_obj.rel.to
         self.rel_field = self.field_obj.rel.get_related_field()
 
@@ -208,6 +247,8 @@ class FilterSet(object):
         f = self.model._meta.get_field(field)
         if f.rel is not None:
             return RelatedFilter(field, self.model, **kwargs)
+        elif f.choices:
+            return ChoicesFilter(field, self.model, **kwargs)
         else:
             return ValuesFilter(field, self.model, **kwargs)
 

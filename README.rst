@@ -101,6 +101,7 @@ Done so far
 ===========
 
 * Support for ForeignKey - RelatedFilter
+* Support for anything with 'choices' defined - ChoicesFilter
 * Fallback support for CharField, IntegerField, everything else - ValuesFilter
 * Options:
 
@@ -113,7 +114,6 @@ TODO
 
 * ManyToManyField
 * DateField, DateTimeField
-* Better support for Field.choices
 * Automatic range-based filters - e.g. for prices
 * More options for customisation
 
