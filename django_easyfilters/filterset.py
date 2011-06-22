@@ -187,10 +187,13 @@ class FilterSet(object):
         label = capfirst(field_obj.verbose_name)
         for c in filter_.get_choices(qs, params):
             if c.link_type == FILTER_REMOVE:
-                out.append(u'%s <a href="%s" title="Remove filter" class="removefilter">[x]</a> ' % (escape(c.label), escape('?%s' % urlencode(c.params))))
+                out.append(u'<span class="removefilter"><span class="filterchoice">%s</span> <a href="%s" title="Remove filter">[x]</a></span> '
+                           % (escape(c.label), escape('?%s' % urlencode(c.params))))
             else:
-                out.append(u'<a href="%s" class="addfilter">%s</a> (%d) &nbsp;&nbsp;' % (escape('?%s' % urlencode(c.params)), escape(c.label), c.count))
-        return u'<div>%s: %s</div>' % (escape(label), u''.join(out))
+                out.append(u'<span class="addfilter"><a href="%s" class="addfilter">%s</a> (%d)</span> &nbsp;&nbsp;'
+                           % (escape('?' + urlencode(c.params)), escape(c.label), c.count))
+        return (u'<div class="filterline"><span class="filterlabel">%s:</span> %s</div>'
+                % (escape(label), u''.join(out)))
 
     def render(self):
         return mark_safe(u'\n'.join(self.render_filter(f, self.qs, self.params) for f in self.filters))
