@@ -209,25 +209,15 @@ class TestFilters(TestCase):
         """
         Tests the 'order_by_count' option.
         """
-        class BookFilterSet1(FilterSet):
-            fields = [
-                ('genre', FilterOptions(order_by_count=True))
-                ]
-
+        filter1 = RelatedFilter('genre', Book, order_by_count=True)
         qs = Book.objects.all()
-        fs1 = BookFilterSet1(qs, {})
-        choices1 = fs1.filters[0].get_choices(qs, {})
+        choices1 = filter1.get_choices(qs, {})
 
         # Should be same after sorting by 'count'
         self.assertEqual(choices1, sorted(choices1, key=operator.attrgetter('count'), reverse=True))
 
-        class BookFilterSet2(FilterSet):
-            fields = [
-                ('genre', FilterOptions(order_by_count=False))
-                ]
-
-        fs2 = BookFilterSet2(qs, {})
-        choices2 = fs2.filters[0].get_choices(qs, {})
+        filter2 = RelatedFilter('genre', Book, order_by_count=False)
+        choices2 = filter2.get_choices(qs, {})
 
         # Should be same after sorting by 'label' (that is equal to Genre.name,
         # and Genre ordering is by that field)
