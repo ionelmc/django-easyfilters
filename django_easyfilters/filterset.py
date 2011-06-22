@@ -31,11 +31,12 @@ class Filter(FilterOptions):
     A Filter creates links/URLs that correspond to some DB filtering,
     and can apply the information from a URL to filter a QuerySet.
     """
-    def __init__(self, field, **kwargs):
+    def __init__(self, field, model, **kwargs):
         # State: Filter objects are created as class attributes of FilterSets,
         # and so cannot carry any request specific state. They only have
         # configuration information.
         self.field = field
+        self.model = model
         if kwargs.get('query_param', None) is None:
             kwargs['query_param'] = field
         super(Filter, self).__init__(**kwargs)
@@ -140,26 +141,24 @@ class ValuesFilter(SingleValueFilterMixin, Filter):
 
 
 class RelatedFilter(SingleValueFilterMixin, Filter):
-    def choice_from_params(self, qs, params):
-        field_obj = qs.model._meta.get_field(self.field)
-        rel_model = field_obj.rel.to
-        rel_field = field_obj.rel.get_related_field()
+    def __init__(self, *args, **kwargs):
+        super(RelatedFilter, self).__init__(*args, **kwargs)
+        self.field_obj = self.model._meta.get_field(self.field)
+        self.rel_model = self.field_obj.rel.to
+        self.rel_field = self.field_obj.rel.get_related_field()
 
-        lookup = {rel_field.attname: params[self.query_param]}
-        return rel_model.objects.get(**lookup)
+    def choice_from_params(self, qs, params):
+        lookup = {self.rel_field.attname: params[self.query_param]}
+        return self.rel_model.objects.get(**lookup)
 
     def get_choices_add(self, qs, params):
-        field_obj = qs.model._meta.get_field(self.field)
-        rel_model = field_obj.rel.to
-        rel_field = field_obj.rel.get_related_field()
-
         count_dict = self.get_values_counts(qs, params)
-        lookup = {rel_field.attname + '__in': count_dict.keys()}
-        objs = rel_model.objects.filter(**lookup)
+        lookup = {self.rel_field.attname + '__in': count_dict.keys()}
+        objs = self.rel_model.objects.filter(**lookup)
         choices = []
 
         for o in objs:
-            pk = getattr(o, rel_field.attname)
+            pk = getattr(o, self.rel_field.attname)
             choices.append(FilterChoice(unicode(o),
                                         count_dict[pk],
                                         self.build_params(qs, params, add=pk),
@@ -208,16 +207,16 @@ class FilterSet(object):
     def get_filter_for_field(self, field, **kwargs):
         f = self.model._meta.get_field(field)
         if f.rel is not None:
-            return RelatedFilter(field, **kwargs)
+            return RelatedFilter(field, self.model, **kwargs)
         else:
-            return ValuesFilter(field, **kwargs)
+            return ValuesFilter(field, self.model, **kwargs)
 
     def setup_filters(self):
         filters = []
         for i, f in enumerate(self.get_fields()):
             if isinstance(f, basestring):
                 f = self.get_filter_for_field(f)
-            elif isinstance(f, tuple):
+            else:
                 # (field name, FilterOptions)
                 field = f[0]
                 opts = f[1].__dict__.copy()

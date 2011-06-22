@@ -159,7 +159,7 @@ class TestFilters(TestCase):
         # We combine the tests for brevity.
         class BookFilterSet(FilterSet):
             fields = [
-                ValuesFilter('edition'),
+                'edition',
                 ]
 
         qs = Book.objects.all()
