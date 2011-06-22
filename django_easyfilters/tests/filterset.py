@@ -156,30 +156,24 @@ class TestFilters(TestCase):
         """
         Tests for ValuesFilter
         """
-        # We combine the tests for brevity.
-        class BookFilterSet(FilterSet):
-            fields = [
-                'edition',
-                ]
-
+        # We combine the tests for brevity, and use the Filter directly rather
+        # than use the FilterSet.
+        filter_ = ValuesFilter('edition', Book)
         qs = Book.objects.all()
-        data = {}
-        fs = BookFilterSet(qs, data)
-        choices = fs.filters[0].get_choices(qs, data)
+        choices = filter_.get_choices(qs, {})
 
         for choice in choices:
             count = Book.objects.filter(edition=choice.params.values()[0]).count()
             self.assertEqual(choice.count, count)
 
             # Check the filtering
-            fs_filtered = BookFilterSet(qs, choice.params)
-            qs_filtered = fs_filtered.qs
+            qs_filtered = filter_.apply_filter(qs, choice.params)
             self.assertEqual(len(qs_filtered), choice.count)
             for book in qs_filtered:
                 self.assertEqual(unicode(book.edition), choice.label)
 
             # Check we've got a 'remove link' on filtered.
-            choices_filtered = fs_filtered.filters[0].get_choices(qs, choice.params)
+            choices_filtered = filter_.get_choices(qs, choice.params)
             self.assertEqual(1, len(choices_filtered))
             self.assertEqual(choices_filtered[0].link_type, FILTER_REMOVE)
 
