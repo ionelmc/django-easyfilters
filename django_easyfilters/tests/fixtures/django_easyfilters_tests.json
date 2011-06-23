@@ -14,6 +14,20 @@
     }
   }, 
   {
+    "pk": 10, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Arthur C. Clarke"
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Charles Dickens"
+    }
+  }, 
+  {
     "pk": 2, 
     "model": "tests.author", 
     "fields": {
@@ -32,6 +46,13 @@
     "model": "tests.author", 
     "fields": {
       "name": "Emily Bront\u00eb"
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "George Orwell"
     }
   }, 
   {
@@ -56,6 +77,13 @@
     }
   }, 
   {
+    "pk": 6, 
+    "model": "tests.genre", 
+    "fields": {
+      "name": "Classics"
+    }
+  }, 
+  {
     "pk": 2, 
     "model": "tests.genre", 
     "fields": {
@@ -74,6 +102,20 @@
     "model": "tests.genre", 
     "fields": {
       "name": "Romance"
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "tests.genre", 
+    "fields": {
+      "name": "Satire"
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "tests.genre", 
+    "fields": {
+      "name": "Science Fiction"
     }
   }, 
   {
@@ -180,6 +222,156 @@
       "date_published": "1847-06-22", 
       "authors": [
         7
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Mansfield Park", 
+      "edition": 1, 
+      "price": "5.5", 
+      "binding": "P", 
+      "date_published": "1814-02-03", 
+      "authors": [
+        1
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "The Tenant of Wildfell Hall", 
+      "edition": 1, 
+      "price": "6.5", 
+      "binding": "P", 
+      "date_published": "1848-10-04", 
+      "authors": [
+        6
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 10, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Shirley", 
+      "edition": 1, 
+      "price": "4.5", 
+      "binding": "P", 
+      "date_published": "1849-06-01", 
+      "authors": [
+        2
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 11, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Sense and Sensibility", 
+      "edition": 1, 
+      "price": "6.99", 
+      "binding": "P", 
+      "date_published": "1811-04-05", 
+      "authors": [
+        1
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 12, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Northanger Abbey", 
+      "edition": 1, 
+      "price": "4.25", 
+      "binding": "P", 
+      "date_published": "1818-08-24", 
+      "authors": [
+        1
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 13, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Persuasion", 
+      "edition": 1, 
+      "price": "3.8", 
+      "binding": "P", 
+      "date_published": "1818-08-25", 
+      "authors": [
+        1
+      ], 
+      "genre": 1
+    }
+  }, 
+  {
+    "pk": 14, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Animal Farm", 
+      "edition": 1, 
+      "price": "6.5", 
+      "binding": "P", 
+      "date_published": "1945-08-17", 
+      "authors": [
+        8
+      ], 
+      "genre": 5
+    }
+  }, 
+  {
+    "pk": 15, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Great Expectations", 
+      "edition": 1, 
+      "price": "4.99", 
+      "binding": "P", 
+      "date_published": "1861-11-05", 
+      "authors": [
+        9
+      ], 
+      "genre": 6
+    }
+  }, 
+  {
+    "pk": 16, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Imperial Earth", 
+      "edition": 1, 
+      "price": "5.99", 
+      "binding": "P", 
+      "date_published": "1975-01-01", 
+      "authors": [
+        10
+      ], 
+      "genre": 7
+    }
+  }, 
+  {
+    "pk": 17, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "The Professor", 
+      "edition": 1, 
+      "price": "4.99", 
+      "binding": "P", 
+      "date_published": "1857-04-15", 
+      "authors": [
+        2
       ], 
       "genre": 1
     }
