@@ -77,20 +77,15 @@ class TestFilters(TestCase):
         A ForeignKey should produce a list of the possible related objects,
         with counts.
         """
-        class BookFilterSet(FilterSet):
-            fields = [
-                'genre',
-                ]
-
         # Make another Genre that isn't used
         new_g, created = Genre.objects.get_or_create(name='Nonsense')
         assert created
 
+        filter_ = ForeignKeyFilter('genre', Book)
         qs = Book.objects.all()
         data = {}
-        fs = BookFilterSet(qs, data)
 
-        choices = [(c.label, c.count) for c in fs.filters[0].get_choices(qs, data)]
+        choices = [(c.label, c.count) for c in filter_.get_choices(qs, data)]
 
         reached = [False, False]
         for g in Genre.objects.all():
@@ -110,15 +105,10 @@ class TestFilters(TestCase):
         A ForeignKey filter shoud produce params that cause the query to be
         limited by that filter.
         """
-        class BookFilterSet(FilterSet):
-            fields = [
-                'genre',
-                ]
-
         qs = Book.objects.all()
         data = {}
-        fs = BookFilterSet(qs, data)
-        choices = fs.filters[0].get_choices(qs, data)
+        filter_ = ForeignKeyFilter('genre', Book)
+        choices = filter_.get_choices(qs, data)
 
         # If we use the params from e.g. the first choice, that should produce a
         # filtered qs when fed back in (i.e. when we 'click' on that option we
@@ -126,8 +116,7 @@ class TestFilters(TestCase):
         reached = False
         for choice in choices:
             reached = True
-            fs_filtered = BookFilterSet(qs, choice.params)
-            qs_filtered = fs_filtered.qs
+            qs_filtered = filter_.apply_filter(qs, choice.params)
             self.assertEqual(len(qs_filtered), choice.count)
             for book in qs_filtered:
                 self.assertEqual(unicode(book.genre), choice.label)
@@ -138,34 +127,27 @@ class TestFilters(TestCase):
         Ensure that a ForeignKey Filter will turn into a 'remove' link when an
         item has been selected.
         """
-        class BookFilterSet(FilterSet):
-            fields = [
-                'genre',
-                ]
-
+        filter_ = ForeignKeyFilter('genre', Book)
         qs = Book.objects.all()
         data = {}
-        fs = BookFilterSet(qs, data)
-        choices = fs.filters[0].get_choices(qs, data)
+        choices = filter_.get_choices(qs, data)
         choice = choices[0]
-        fs_filtered = BookFilterSet(qs, choice.params)
-        qs_filtered = fs_filtered.qs
-        choices2 = fs_filtered.filters[0].get_choices(qs_filtered, choice.params)
+        qs_filtered = filter_.apply_filter(qs, choice.params)
+        choices2 = filter_.get_choices(qs_filtered, choice.params)
 
         # Should have one item
         self.assertEqual(1, len(choices2))
         self.assertEqual(choices2[0].link_type, FILTER_REMOVE)
 
         # 'Clicking' should remove filtering
-        fs_reverted = BookFilterSet(qs, choices2[0].params)
-        self.assertEqual(qs, fs_reverted.qs)
+        qs_reverted = filter_.apply_filter(qs, choices2[0].params)
+        self.assertEqual(qs, qs_reverted)
 
     def test_values_filter(self):
         """
         Tests for ValuesFilter
         """
-        # We combine the tests for brevity, and use the Filter directly rather
-        # than use the FilterSet.
+        # We combine the tests for brevity
         filter_ = ValuesFilter('edition', Book)
         qs = Book.objects.all()
         choices = filter_.get_choices(qs, {})
