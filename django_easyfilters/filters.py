@@ -46,18 +46,21 @@ class Filter(FilterOptions):
             qs = qs.filter(**{self.field: p_val.pop()})
         return qs
 
+    def to_python(self, param):
+        return self.field_obj.to_python(param)
+
     def choices_from_params(self, params):
         """
         For the params passed in (i.e. from query string), retrive a list of
         already 'chosen' options.
         """
-        raise NotImplementedError()
+        return [self.to_python(i) for i in params.getlist(self.query_param)]
 
-    def param_from_choices(self, choice):
+    def param_from_choices(self, choices):
         """
         For a list of choices, return the parameter that should be created.
         """
-        raise NotImplementedError()
+        return map(unicode, choices)
 
     def build_params(self, params, add=None, remove=None):
         params = params.copy()
@@ -68,7 +71,7 @@ class Filter(FilterOptions):
             if add not in chosen:
                 chosen.append(add)
         if chosen:
-            params[self.query_param] = self.param_from_choices(chosen)
+            params.setlist(self.query_param, self.param_from_choices(chosen))
         else:
             del params[self.query_param]
         params.pop('page', None) # links should reset paging
@@ -119,16 +122,6 @@ class Filter(FilterOptions):
 
 
 class SingleValueFilterMixin(object):
-
-    def choices_from_params(self, params):
-        if self.query_param in params:
-            return [params[self.query_param]]
-        else:
-            return []
-
-    def param_from_choices(self, choices):
-        # There can be only one
-        return unicode(choices[0])
 
     def get_values_counts(self, qs, params):
         """
@@ -242,15 +235,6 @@ class ForeignKeyFilter(SingleValueFilterMixin, Filter):
 
 class MultiValueFilterMixin(object):
 
-    def choices_from_params(self, params):
-        if self.query_param in params:
-            return map(int, params[self.query_param].split(','))
-        else:
-            return []
-
-    def param_from_choices(self, choices):
-        return ','.join(map(unicode, choices))
-
     def get_choices(self, qs, params):
         # In general, can filter multiple times, so we can have multiple remove
         # links, and multiple add links, at the same time.
@@ -264,6 +248,9 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
     def __init__(self, *args, **kwargs):
         super(ManyToManyFilter, self).__init__(*args, **kwargs)
         self.rel_model = self.field_obj.rel.to
+
+    def to_python(self, param):
+        return self.field_obj.rel.get_related_field().to_python(param)
 
     def get_choices_add(self, qs, params):
         # It is easiest to base queries around the intermediate table, in order
@@ -316,7 +303,6 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
 
         # We want to preserve order of items in params, so use a dict:
         obj_dict = dict([(obj.pk, obj) for obj in objs])
-
         return [FilterChoice(unicode(obj_dict[choice]),
                              None, # Don't need count for removing
                              self.build_params(params, remove=choice),

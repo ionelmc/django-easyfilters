@@ -3,7 +3,10 @@
 import decimal
 import operator
 
+from django.http import QueryDict
 from django.test import TestCase
+from django.utils.datastructures import MultiValueDict
+
 from django_easyfilters.filterset import FilterSet
 from django_easyfilters.filters import FilterOptions, \
     FILTER_ADD, FILTER_REMOVE, FILTER_ONLY_CHOICE, \
@@ -25,7 +28,7 @@ class TestFilterSet(TestCase):
             fields = []
 
         qs = Book.objects.all()
-        data = {}
+        data = QueryDict('')
         f = BookFilterSet(qs, data)
         self.assertEqual(qs.count(), f.qs.count())
 
@@ -39,13 +42,13 @@ class TestFilterSet(TestCase):
                 ]
 
         qs = Book.objects.all()
-        fs = BookFilterSet(qs, {})
+        fs = BookFilterSet(qs, QueryDict(''))
         rendered = fs.render()
         self.assertTrue('Genre' in rendered)
         self.assertEqual(rendered, unicode(fs))
 
         # And when in 'already filtered' mode:
-        choice = fs.filters[0].get_choices(qs, {})[0]
+        choice = fs.filters[0].get_choices(qs, QueryDict(''))[0]
         fs_filtered = BookFilterSet(qs, choice.params)
         rendered_2 = fs_filtered.render()
         self.assertTrue('Genre' in rendered_2)
@@ -62,7 +65,7 @@ class TestFilterSet(TestCase):
                 'authors',
                 ]
 
-        fs = BookFilterSet(Book.objects.all(), {})
+        fs = BookFilterSet(Book.objects.all(), QueryDict(''))
         self.assertEqual(ForeignKeyFilter, type(fs.filters[0]))
         self.assertEqual(ValuesFilter, type(fs.filters[1]))
         self.assertEqual(ChoicesFilter, type(fs.filters[2]))
@@ -83,7 +86,7 @@ class TestFilters(TestCase):
 
         filter_ = ForeignKeyFilter('genre', Book)
         qs = Book.objects.all()
-        data = {}
+        data = MultiValueDict()
 
         choices = [(c.label, c.count) for c in filter_.get_choices(qs, data)]
 
@@ -106,7 +109,7 @@ class TestFilters(TestCase):
         limited by that filter.
         """
         qs = Book.objects.all()
-        data = {}
+        data = MultiValueDict()
         filter_ = ForeignKeyFilter('genre', Book)
         choices = filter_.get_choices(qs, data)
 
@@ -129,9 +132,10 @@ class TestFilters(TestCase):
         """
         filter_ = ForeignKeyFilter('genre', Book)
         qs = Book.objects.all()
-        data = {}
+        data = MultiValueDict()
         choices = filter_.get_choices(qs, data)
         choice = choices[0]
+
         qs_filtered = filter_.apply_filter(qs, choice.params)
         choices2 = filter_.get_choices(qs_filtered, choice.params)
 
@@ -150,7 +154,7 @@ class TestFilters(TestCase):
         # We combine the tests for brevity
         filter_ = ValuesFilter('edition', Book)
         qs = Book.objects.all()
-        choices = filter_.get_choices(qs, {})
+        choices = filter_.get_choices(qs, MultiValueDict())
 
         for choice in choices:
             count = Book.objects.filter(edition=choice.params.values()[0]).count()
@@ -178,7 +182,7 @@ class TestFilters(TestCase):
         """
         filter_ = ChoicesFilter('binding', Book)
         qs = Book.objects.all()
-        choices = filter_.get_choices(qs, {})
+        choices = filter_.get_choices(qs, MultiValueDict())
         # Check:
         # - order is correct.
         # - all values present (guaranteed by fixture data)
@@ -203,13 +207,11 @@ class TestFilters(TestCase):
         # which can be removed individually.
 
         # First level:
-        choices = filter_.get_choices(qs, {})
+        choices = filter_.get_choices(qs, MultiValueDict())
 
         # Check list is full, and in right order
         self.assertEqual([unicode(v) for v in Author.objects.all()],
                          [choice.label for choice in choices])
-
-        param_to_list = lambda param: map(int, param.split(','))
 
         for choice in choices:
             # For single choice, param will be single integer:
@@ -248,7 +250,7 @@ class TestFilters(TestCase):
 
         # If we select 'emily' as an author:
 
-        data =  {'authors':str(emily.pk)}
+        data =  MultiValueDict({'authors':[str(emily.pk)]})
         qs_emily = filter_.apply_filter(qs, data)
 
         # ...we should get a qs that includes Poems and Wuthering Heights.
@@ -268,7 +270,7 @@ class TestFilters(TestCase):
         self.assertTrue(unicode(emily) in [c.label for c in choices if c.link_type is FILTER_REMOVE])
 
         # If we select again:
-        data =  {'authors': ','.join([str(emily.pk), str(anne.pk)])}
+        data =  MultiValueDict({'authors': [str(emily.pk), str(anne.pk)]})
 
         qs_emily_anne = filter_.apply_filter(qs, data)
 
@@ -294,13 +296,13 @@ class TestFilters(TestCase):
         """
         filter1 = ForeignKeyFilter('genre', Book, order_by_count=True)
         qs = Book.objects.all()
-        choices1 = filter1.get_choices(qs, {})
+        choices1 = filter1.get_choices(qs, MultiValueDict())
 
         # Should be same after sorting by 'count'
         self.assertEqual(choices1, sorted(choices1, key=operator.attrgetter('count'), reverse=True))
 
         filter2 = ForeignKeyFilter('genre', Book, order_by_count=False)
-        choices2 = filter2.get_choices(qs, {})
+        choices2 = filter2.get_choices(qs, MultiValueDict())
 
         # Should be same after sorting by 'label' (that is equal to Genre.name,
         # and Genre ordering is by that field)

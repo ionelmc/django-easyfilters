@@ -1,7 +1,7 @@
 from django import template
+from django.http import QueryDict
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
-from django.utils.http import urlencode
 from django.utils.text import capfirst
 
 from django_easyfilters.filters import FILTER_ADD, FILTER_REMOVE, FILTER_ONLY_CHOICE, \
@@ -31,7 +31,7 @@ class FilterSet(object):
 """
 
     def __init__(self, queryset, params):
-        self.params = dict(params.items())
+        self.params = params
         self.initial_queryset = queryset
         self.model = queryset.model
         self.filters = self.setup_filters()
@@ -47,10 +47,10 @@ class FilterSet(object):
         choices = filter_.get_choices(qs, params)
         ctx = {'filterlabel': capfirst(field_obj.verbose_name)}
         ctx['remove_choices'] = [dict(label=non_breaking_spaces(c.label),
-                                      url=u'?' + urlencode(c.params))
+                                      url=u'?' + c.params.urlencode())
                                  for c in choices if c.link_type == FILTER_REMOVE]
         ctx['add_choices'] = [dict(label=non_breaking_spaces(c.label),
-                                   url=u'?' + urlencode(c.params),
+                                   url=u'?' + c.params.urlencode(),
                                    count=c.count)
                               for c in choices if c.link_type == FILTER_ADD]
         ctx['only_choices'] = [dict(label=non_breaking_spaces(c.label),
