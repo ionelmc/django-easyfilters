@@ -277,7 +277,7 @@ class TestFilters(TestCase):
         # ... but not Wuthering Heights
         self.assertFalse(qs_emily_anne.filter(name='Wuthering Heights').exists())
 
-        # The choices should contain just emily and anne, to remove, but not
+        # The choices should contain just emily and anne to remove, and
         # charlotte should have 'link_type' set to FILTER_ONLY_CHOICE, and
         # params set to None, because there is no point adding a filter when it
         # is the only choice.
