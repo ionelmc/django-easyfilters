@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <title>Book list</title>
+  </head>
+  <body>
+
+    <h1>Books</h1>
+    {{ booksfilter }}
+
+    {% for book in books %}
+      <div>
+        <h2>{{ book.name }}</h2>
+        <p><b>Authors:</b>
+          {% for author in book.authors.all %}
+            {{ author }}{% if not forloop.last %},{% endif %}
+          {% endfor %}
+        <p>Genre: {{ book.genre }}</p>
+      {% endfor %}
+      </div>
+  </body>
+</html>

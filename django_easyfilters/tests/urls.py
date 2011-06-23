@@ -4,9 +4,10 @@ from django.conf.urls.defaults import *
 from django.contrib import admin
 admin.autodiscover()
 
+
 urlpatterns = patterns('',
-    # Normal views
-    (r'^admin/', include(admin.site.urls)),
+                       (r'^books/', 'django_easyfilters.tests.views.books'),
+                       (r'^admin/', include(admin.site.urls)),
 
 )
 
