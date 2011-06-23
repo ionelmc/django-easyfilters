@@ -1,26 +1,5 @@
 [
   {
-    "pk": 1, 
-    "model": "tests.author", 
-    "fields": {
-      "name": "Jane Austen"
-    }
-  }, 
-  {
-    "pk": 2, 
-    "model": "tests.author", 
-    "fields": {
-      "name": "Charlotte Bronte"
-    }
-  }, 
-  {
-    "pk": 3, 
-    "model": "tests.author", 
-    "fields": {
-      "name": "Lewis Carroll"
-    }
-  }, 
-  {
     "pk": 4, 
     "model": "tests.author", 
     "fields": {
@@ -28,10 +7,45 @@
     }
   }, 
   {
+    "pk": 6, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Anne Bront\u00eb"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Charlotte Bront\u00eb"
+    }
+  }, 
+  {
     "pk": 5, 
     "model": "tests.author", 
     "fields": {
       "name": "E. H. Shepard"
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Emily Bront\u00eb"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Jane Austen"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "tests.author", 
+    "fields": {
+      "name": "Lewis Carroll"
     }
   }, 
   {
@@ -46,6 +60,13 @@
     "model": "tests.genre", 
     "fields": {
       "name": "Fantasy"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "tests.genre", 
+    "fields": {
+      "name": "Poetry"
     }
   }, 
   {
@@ -129,6 +150,38 @@
         5
       ], 
       "genre": 3
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Poems", 
+      "edition": 1, 
+      "price": "4.5", 
+      "binding": "H", 
+      "date_published": "1846-05-01", 
+      "authors": [
+        6, 
+        2, 
+        7
+      ], 
+      "genre": 4
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "tests.book", 
+    "fields": {
+      "name": "Wuthering Heights", 
+      "edition": 1, 
+      "price": "44.99", 
+      "binding": "C", 
+      "date_published": "1847-06-22", 
+      "authors": [
+        7
+      ], 
+      "genre": 1
     }
   }
 ]

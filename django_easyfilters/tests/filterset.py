@@ -1,11 +1,13 @@
+# -*- coding: utf-8; -*-
+
 import decimal
 import operator
 
 from django.test import TestCase
 from django_easyfilters.filterset import FilterSet, FilterOptions, FILTER_ADD, FILTER_REMOVE, \
-    RelatedFilter, ValuesFilter, ChoicesFilter
+    RelatedFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter
 
-from models import Book, Genre, BINDING_CHOICES
+from models import Book, Genre, Author, BINDING_CHOICES
 
 
 class TestFilterSet(TestCase):
@@ -55,12 +57,14 @@ class TestFilterSet(TestCase):
                 'genre',
                 'edition',
                 'binding',
+                'authors',
                 ]
 
         fs = BookFilterSet(Book.objects.all(), {})
         self.assertEqual(RelatedFilter, type(fs.filters[0]))
         self.assertEqual(ValuesFilter, type(fs.filters[1]))
         self.assertEqual(ChoicesFilter, type(fs.filters[2]))
+        self.assertEqual(ManyToManyFilter, type(fs.filters[3]))
 
 
 class TestFilters(TestCase):
@@ -126,7 +130,6 @@ class TestFilters(TestCase):
             for book in qs_filtered:
                 self.assertEqual(unicode(book.genre), choice.label)
         self.assertTrue(reached)
-
 
     def test_foreignkey_remove_link(self):
         """
@@ -204,6 +207,99 @@ class TestFilters(TestCase):
         # Check choice db value in params
         for c in choices:
             self.assertTrue(c.params.values()[0] in binding_choices_db)
+
+    def test_manytomany_filter(self):
+        """
+        Tests for ManyToManyFilter
+        """
+        filter_ = ManyToManyFilter('authors', Book)
+        qs = Book.objects.all()
+
+        # ManyToMany can have 'drill down', i.e. multiple levels of filtering,
+        # which can be removed individually.
+
+        # First level:
+        choices = filter_.get_choices(qs, {})
+
+        # Check list is full, and in right order
+        self.assertEqual([unicode(v) for v in Author.objects.all()],
+                         [choice.label for choice in choices])
+
+        param_to_list = lambda param: map(int, param.split(','))
+
+        for choice in choices:
+            # For single choice, param will be single integer:
+            param = int(choice.params[filter_.query_param])
+
+            # Check the count
+            count = Book.objects.filter(authors=int(param)).count()
+            self.assertEqual(choice.count, count)
+
+            author = Author.objects.get(id=param)
+
+            # Check the label
+            self.assertEqual(unicode(author),
+                             choice.label)
+
+            # Check the filtering
+            qs_filtered = filter_.apply_filter(qs, choice.params)
+            self.assertEqual(len(qs_filtered), choice.count)
+
+            for book in qs_filtered:
+                self.assertTrue(author in book.authors.all())
+
+            # Check we've got a 'remove link' on filtered.
+            choices_filtered = filter_.get_choices(qs, choice.params)
+            self.assertEqual(choices_filtered[0].link_type, FILTER_REMOVE)
+
+
+    def test_manytomany_filter_multiple(self):
+        filter_ = ManyToManyFilter('authors', Book)
+        qs = Book.objects.all()
+
+        # Specific example - multiple filtering
+        emily = Author.objects.get(name='Emily Brontë')
+        charlotte = Author.objects.get(name='Charlotte Brontë')
+        anne = Author.objects.get(name='Anne Brontë')
+
+        # If we select 'emily' as an author:
+
+        data =  {'authors':str(emily.pk)}
+        qs_emily = filter_.apply_filter(qs, data)
+
+        # ...we should get a qs that includes Poems and Wuthering Heights.
+        self.assertTrue(qs_emily.filter(name='Poems').exists())
+        self.assertTrue(qs_emily.filter(name='Wuthering Heights').exists())
+        # ...and excludes Jane Eyre
+        self.assertFalse(qs_emily.filter(name='Jane Eyre').exists())
+
+        # We should get a 'choices' that includes charlotte and anne
+        choices = filter_.get_choices(qs_emily, data)
+        self.assertTrue(unicode(anne) in [c.label for c in choices if c.link_type is FILTER_ADD])
+        self.assertTrue(unicode(charlotte) in [c.label for c in choices if c.link_type is FILTER_ADD])
+
+        # ... but not emily, because that is obvious and boring
+        self.assertTrue(unicode(emily) not in [c.label for c in choices if c.link_type is FILTER_ADD])
+        # emily should be in 'remove' links, however.
+        self.assertTrue(unicode(emily) in [c.label for c in choices if c.link_type is FILTER_REMOVE])
+
+        # If we select again:
+        data =  {'authors': ','.join([str(emily.pk), str(anne.pk)])}
+
+        qs_emily_anne = filter_.apply_filter(qs, data)
+
+        # ...we should get a qs that includes Poems
+        self.assertTrue(qs_emily_anne.filter(name='Poems').exists())
+        # ... but not Wuthering Heights
+        self.assertFalse(qs_emily_anne.filter(name='Wuthering Heights').exists())
+
+        # The choices should contain just emily and anne, to remove, but not
+        # charlotte to add, because there is no point adding a filter
+        # when it is the only choice.
+        choices = filter_.get_choices(qs_emily_anne, data)
+        self.assertEqual([(c.label, c.link_type) for c in choices],
+                         [(unicode(emily), FILTER_REMOVE),
+                          (unicode(anne), FILTER_REMOVE)])
 
     def test_order_by_count(self):
         """
