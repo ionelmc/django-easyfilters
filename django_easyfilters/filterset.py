@@ -2,6 +2,7 @@ from collections import namedtuple
 import operator
 
 from django.db import models
+from django import template
 from django.utils.datastructures import SortedDict
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
@@ -227,7 +228,7 @@ class ForeignKeyFilter(SingleValueFilterMixin, Filter):
 
     def display_choice(self, choice):
         lookup = {self.rel_field.name: choice}
-        return self.rel_model.objects.get(**lookup)
+        return unicode(self.rel_model.objects.get(**lookup))
 
     def get_choices_add(self, qs, params):
         count_dict = self.get_values_counts(qs, params)
@@ -329,22 +330,28 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
 
 
 def non_breaking_spaces(val):
-    return u'&nbsp;'.join(escape(part) for part in val.split(u' '))
+    return mark_safe(u'&nbsp;'.join(escape(part) for part in val.split(u' ')))
 
 
 class FilterSet(object):
 
-    remove_filter_template = u'<span class="removefilter"><span class="filterchoice">%(label)s</span> <a href="%(url)s" title="Remove filter">[&laquo;]</a></span> '
+    template = """
+<div class="filterline"><span class="filterlabel">{{ filterlabel }}:</span>
+{% for choice in remove_choices %}
+  <span class="removefilter"><span class="filterchoice">{{ choice.label }}</span>
+  <a href="{{ choice.url }}" title="Remove filter">[&laquo;]</a></span>
+{% endfor %}
+{% if add_choices and remove_choices or only_choices and remove_choices %} | {% endif %}
+{% for choice in add_choices %}
+  <span class="addfilter"><a href="{{ choice.url }}" class="addfilter" title="Add filter">{{ choice.label }}</a>&nbsp;({{ choice.count }})</span>&nbsp;&nbsp;
+{% endfor %}
+{% for choice in only_choices %}
+  <span class="onlychoice">{{ choice.label }}</span>
+{% endfor %}
+</div>
+"""
 
-    add_filter_template =  u'<span class="addfilter"><a href="%(url)s" class="addfilter" title="Add filter">%(label)s</a>&nbsp;(%(count)d)</span>&nbsp;&nbsp; '
-
-    only_choice_template = u'<span class="onlychoice">%(label)s</span>'
-
-    filter_line_template = u'<div class="filterline"><span class="filterlabel">%(label)s:</span> %(remove)s%(separator)s%(add)s%(only)s</div>'
-
-    add_remove_separator = u' | '
-
-    def __init__(self, queryset, params, request=None):
+    def __init__(self, queryset, params):
         self.params = dict(params.items())
         self.initial_queryset = queryset
         self.model = queryset.model
@@ -358,29 +365,20 @@ class FilterSet(object):
 
     def render_filter(self, filter_, qs, params):
         field_obj = self.model._meta.get_field(filter_.field)
-        label = capfirst(field_obj.verbose_name)
-
         choices = filter_.get_choices(qs, params)
-        remove = [self.remove_filter_template %
-               dict(label=escape(c.label),
-                    url=escape(u'?' + urlencode(c.params)))
-               for c in choices if c.link_type == FILTER_REMOVE]
-        add = [self.add_filter_template %
-               dict(label= non_breaking_spaces(c.label),
-                    url=escape(u'?' + urlencode(c.params)),
-                    count=c.count)
-               for c in choices if c.link_type == FILTER_ADD]
-        only = [self.only_choice_template %
-                dict(label=non_breaking_spaces(c.label),
-                     count=c.count)
-                for c in choices if c.link_type == FILTER_ONLY_CHOICE]
+        ctx = {'filterlabel': capfirst(field_obj.verbose_name)}
+        ctx['remove_choices'] = [dict(label=non_breaking_spaces(c.label),
+                                      url=u'?' + urlencode(c.params))
+                                 for c in choices if c.link_type == FILTER_REMOVE]
+        ctx['add_choices'] = [dict(label=non_breaking_spaces(c.label),
+                                   url=u'?' + urlencode(c.params),
+                                   count=c.count)
+                              for c in choices if c.link_type == FILTER_ADD]
+        ctx['only_choices'] = [dict(label=non_breaking_spaces(c.label),
+                                    count=c.count)
+                               for c in choices if c.link_type == FILTER_ONLY_CHOICE]
 
-        return (self.filter_line_template %
-                dict(label=escape(label),
-                     remove=u''.join(remove),
-                     add=u''.join(add),
-                     only=u''.join(only),
-                     separator=self.add_remove_separator if (len(add) + len(only)) and len(remove) else u''))
+        return template.Template(self.template).render(template.Context(ctx))
 
     def render(self):
         return mark_safe(u'\n'.join(self.render_filter(f, self.qs, self.params) for f in self.filters))
