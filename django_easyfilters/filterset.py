@@ -18,8 +18,7 @@ class FilterSet(object):
     template = """
 <div class="filterline"><span class="filterlabel">{{ filterlabel }}:</span>
 {% for choice in remove_choices %}
-  <span class="removefilter"><span class="filterchoice">{{ choice.label }}</span>
-  <a href="{{ choice.url }}" title="Remove filter">[&laquo;]</a></span>
+  <span class="removefilter"><a href="{{ choice.url }}" title="Remove filter">{{ choice.label }} [&laquo;]</a></span>
 {% endfor %}
 {% if add_choices and remove_choices or only_choices and remove_choices %} | {% endif %}
 {% for choice in add_choices %}
