@@ -65,7 +65,7 @@ class Filter(FilterOptions):
     def build_params(self, params, add=None, remove=None):
         params = params.copy()
         chosen = self.choices_from_params(params)
-        if remove:
+        if remove is not None:
             chosen.remove(remove)
         else:
             if add not in chosen:
