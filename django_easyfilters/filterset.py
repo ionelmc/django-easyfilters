@@ -10,6 +10,7 @@ from django.utils.text import capfirst
 
 FILTER_ADD = 'add'
 FILTER_REMOVE = 'remove'
+FILTER_ONLY_CHOICE = 'only'
 
 FilterChoice = namedtuple('FilterChoice', 'label count params link_type')
 
@@ -77,6 +78,15 @@ class Filter(FilterOptions):
         params.pop('page', None) # links should reset paging
         return params
 
+    def normalize_add_choices(self, choices):
+        if len(choices) == 1:
+            # No point giving people a choice of one
+            choices = [FilterChoice(label=choices[0].label,
+                                    count=choices[0].count,
+                                    link_type=FILTER_ONLY_CHOICE,
+                                    params=None)]
+        return choices
+
     def sort_choices(self, qs, params, choices):
         """
         Sorts the choices by applying order_by_count if applicable.
@@ -143,12 +153,8 @@ class SingleValueFilterMixin(object):
         if len(choices_remove) > 0:
             return choices_remove
         else:
-            choices_add = self.get_choices_add(qs, params)
-            if len(choices_add) == 1:
-                # No point giving people a choice of one
-                return []
-            else:
-                return self.sort_choices(qs, params, choices_add)
+            choices_add = self.normalize_add_choices(self.get_choices_add(qs, params))
+            return self.sort_choices(qs, params, choices_add)
 
     def get_choices_add(self, qs, params):
         raise NotImplementedError()
@@ -253,12 +259,8 @@ class MultiValueFilterMixin(object):
         # In general, can filter multiple times, so we can have multiple remove
         # links, and multiple add links, at the same time.
         choices_remove = self.get_choices_remove(qs, params)
-        choices_add = self.get_choices_add(qs, params)
-        if len(choices_add) == 1:
-            # No point adding a filter of nothing
-            choices_add = []
-        else:
-            choices_add = self.sort_choices(qs, params, choices_add)
+        choices_add = self.normalize_add_choices(self.get_choices_add(qs, params))
+        choices_add = self.sort_choices(qs, params, choices_add)
         return choices_remove + choices_add
 
 
@@ -334,9 +336,11 @@ class FilterSet(object):
 
     remove_filter_template = u'<span class="removefilter"><span class="filterchoice">%(label)s</span> <a href="%(url)s" title="Remove filter">[&laquo;]</a></span> '
 
-    add_filter_template =  u'<span class="addfilter"><a href="%(url)s" class="addfilter">%(label)s</a>&nbsp;(%(count)d)</span>&nbsp;&nbsp; '
+    add_filter_template =  u'<span class="addfilter"><a href="%(url)s" class="addfilter" title="Add filter">%(label)s</a>&nbsp;(%(count)d)</span>&nbsp;&nbsp; '
 
-    filter_line_template = u'<div class="filterline"><span class="filterlabel">%(label)s:</span> %(remove)s%(separator)s%(add)s</div>'
+    only_choice_template = u'<span class="onlychoice">%(label)s</span>'
+
+    filter_line_template = u'<div class="filterline"><span class="filterlabel">%(label)s:</span> %(remove)s%(separator)s%(add)s%(only)s</div>'
 
     add_remove_separator = u' | '
 
@@ -366,12 +370,17 @@ class FilterSet(object):
                     url=escape(u'?' + urlencode(c.params)),
                     count=c.count)
                for c in choices if c.link_type == FILTER_ADD]
+        only = [self.only_choice_template %
+                dict(label=non_breaking_spaces(c.label),
+                     count=c.count)
+                for c in choices if c.link_type == FILTER_ONLY_CHOICE]
 
         return (self.filter_line_template %
                 dict(label=escape(label),
                      remove=u''.join(remove),
                      add=u''.join(add),
-                     separator=self.add_remove_separator if len(add) and len(remove) else u''))
+                     only=u''.join(only),
+                     separator=self.add_remove_separator if (len(add) + len(only)) and len(remove) else u''))
 
     def render(self):
         return mark_safe(u'\n'.join(self.render_filter(f, self.qs, self.params) for f in self.filters))

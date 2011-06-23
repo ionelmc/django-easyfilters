@@ -4,7 +4,8 @@ import decimal
 import operator
 
 from django.test import TestCase
-from django_easyfilters.filterset import FilterSet, FilterOptions, FILTER_ADD, FILTER_REMOVE, \
+from django_easyfilters.filterset import FilterSet, FilterOptions, \
+    FILTER_ADD, FILTER_REMOVE, FILTER_ONLY_CHOICE, \
     ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter
 
 from models import Book, Genre, Author, BINDING_CHOICES
@@ -294,12 +295,15 @@ class TestFilters(TestCase):
         self.assertFalse(qs_emily_anne.filter(name='Wuthering Heights').exists())
 
         # The choices should contain just emily and anne, to remove, but not
-        # charlotte to add, because there is no point adding a filter
-        # when it is the only choice.
+        # charlotte should have 'link_type' set to FILTER_ONLY_CHOICE, and
+        # params set to None, because there is no point adding a filter when it
+        # is the only choice.
         choices = filter_.get_choices(qs_emily_anne, data)
         self.assertEqual([(c.label, c.link_type) for c in choices],
                          [(unicode(emily), FILTER_REMOVE),
-                          (unicode(anne), FILTER_REMOVE)])
+                          (unicode(anne), FILTER_REMOVE),
+                          (unicode(charlotte), FILTER_ONLY_CHOICE)])
+        self.assertEqual(choices[2].params, None)
 
     def test_order_by_count(self):
         """
