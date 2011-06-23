@@ -378,7 +378,10 @@ class FilterSet(object):
                                     count=c.count)
                                for c in choices if c.link_type == FILTER_ONLY_CHOICE]
 
-        return template.Template(self.template).render(template.Context(ctx))
+        return self.get_template().render(template.Context(ctx))
+
+    def get_template(self):
+        return template.Template(self.template)
 
     def render(self):
         return mark_safe(u'\n'.join(self.render_filter(f, self.qs, self.params) for f in self.filters))
