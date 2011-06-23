@@ -4,7 +4,8 @@ import decimal
 import operator
 
 from django.test import TestCase
-from django_easyfilters.filterset import FilterSet, FilterOptions, \
+from django_easyfilters.filterset import FilterSet
+from django_easyfilters.filters import FilterOptions, \
     FILTER_ADD, FILTER_REMOVE, FILTER_ONLY_CHOICE, \
     ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter
 
