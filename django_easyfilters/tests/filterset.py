@@ -5,7 +5,7 @@ import operator
 
 from django.test import TestCase
 from django_easyfilters.filterset import FilterSet, FilterOptions, FILTER_ADD, FILTER_REMOVE, \
-    RelatedFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter
+    ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter
 
 from models import Book, Genre, Author, BINDING_CHOICES
 
@@ -61,7 +61,7 @@ class TestFilterSet(TestCase):
                 ]
 
         fs = BookFilterSet(Book.objects.all(), {})
-        self.assertEqual(RelatedFilter, type(fs.filters[0]))
+        self.assertEqual(ForeignKeyFilter, type(fs.filters[0]))
         self.assertEqual(ValuesFilter, type(fs.filters[1]))
         self.assertEqual(ChoicesFilter, type(fs.filters[2]))
         self.assertEqual(ManyToManyFilter, type(fs.filters[3]))
@@ -305,14 +305,14 @@ class TestFilters(TestCase):
         """
         Tests the 'order_by_count' option.
         """
-        filter1 = RelatedFilter('genre', Book, order_by_count=True)
+        filter1 = ForeignKeyFilter('genre', Book, order_by_count=True)
         qs = Book.objects.all()
         choices1 = filter1.get_choices(qs, {})
 
         # Should be same after sorting by 'count'
         self.assertEqual(choices1, sorted(choices1, key=operator.attrgetter('count'), reverse=True))
 
-        filter2 = RelatedFilter('genre', Book, order_by_count=False)
+        filter2 = ForeignKeyFilter('genre', Book, order_by_count=False)
         choices2 = filter2.get_choices(qs, {})
 
         # Should be same after sorting by 'label' (that is equal to Genre.name,

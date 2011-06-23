@@ -100,8 +100,9 @@ FilterOptions), instead of just field_name::
 Done so far
 ===========
 
-* Support for ForeignKey - RelatedFilter
+* Support for ForeignKey - ForeignKeyFilter
 * Support for anything with 'choices' defined - ChoicesFilter
+* Support for ManyToMany - ManyToManyFilter
 * Fallback support for CharField, IntegerField, everything else - ValuesFilter
 * Options:
 
@@ -112,7 +113,6 @@ Done so far
 TODO
 ====
 
-* ManyToManyField
 * DateField, DateTimeField
 * Automatic range-based filters - e.g. for prices
 * More options for customisation

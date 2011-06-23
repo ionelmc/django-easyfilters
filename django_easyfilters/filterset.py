@@ -210,12 +210,12 @@ class ChoicesFilter(ValuesFilter):
         return choices
 
 
-class RelatedFilter(SingleValueFilterMixin, Filter):
+class ForeignKeyFilter(SingleValueFilterMixin, Filter):
     """
     Filter for ForeignKey fields.
     """
     def __init__(self, *args, **kwargs):
-        super(RelatedFilter, self).__init__(*args, **kwargs)
+        super(ForeignKeyFilter, self).__init__(*args, **kwargs)
         self.rel_model = self.field_obj.rel.to
         self.rel_field = self.field_obj.rel.get_related_field()
 
@@ -370,7 +370,7 @@ class FilterSet(object):
             if m2m:
                 klass = ManyToManyFilter
             else:
-                klass = RelatedFilter
+                klass = ForeignKeyFilter
         elif f.choices:
             klass = ChoicesFilter
         else:
