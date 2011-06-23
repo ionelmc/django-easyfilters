@@ -106,13 +106,6 @@ class Filter(FilterOptions):
         """
         return choices
 
-    def display_choice(self, choice):
-        retval = unicode(choice)
-        if retval == u'':
-            return u'(empty)'
-        else:
-            return retval
-
     def get_choices(self, qs, params):
         """
         Returns a list of namedtuples containing (label (as a string), count,
@@ -161,6 +154,13 @@ class ValuesFilter(SingleValueFilterMixin, Filter):
     """
     Fallback Filter for various kinds of simple values.
     """
+    def display_choice(self, choice):
+        retval = unicode(choice)
+        if retval == u'':
+            return u'(empty)'
+        else:
+            return retval
+
     def get_choices_add(self, qs, params):
         """
         Called by 'get_choices', this is usually the one to override.
