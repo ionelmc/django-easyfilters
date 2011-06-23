@@ -332,6 +332,14 @@ def non_breaking_spaces(val):
 
 class FilterSet(object):
 
+    remove_filter_template = u'<span class="removefilter"><span class="filterchoice">%(label)s</span> <a href="%(url)s" title="Remove filter">[&laquo;]</a></span> '
+
+    add_filter_template =  u'<span class="addfilter"><a href="%(url)s" class="addfilter">%(label)s</a>&nbsp;(%(count)d)</span>&nbsp;&nbsp; '
+
+    filter_line_template = u'<div class="filterline"><span class="filterlabel">%(label)s:</span> %(remove)s%(separator)s%(add)s</div>'
+
+    add_remove_separator = u' | '
+
     def __init__(self, queryset, params, request=None):
         self.params = dict(params.items())
         self.initial_queryset = queryset
@@ -345,18 +353,25 @@ class FilterSet(object):
         return queryset
 
     def render_filter(self, filter_, qs, params):
-        out = []
         field_obj = self.model._meta.get_field(filter_.field)
         label = capfirst(field_obj.verbose_name)
-        for c in filter_.get_choices(qs, params):
-            if c.link_type == FILTER_REMOVE:
-                out.append(u'<span class="removefilter"><span class="filterchoice">%s</span> <a href="%s" title="Remove filter">[&laquo;]</a></span> '
-                           % (escape(c.label), escape(u'?' + urlencode(c.params))))
-            else:
-                out.append(u'<span class="addfilter"><a href="%s" class="addfilter">%s</a>&nbsp;(%d)</span>&nbsp;&nbsp; '
-                           % (escape(u'?' + urlencode(c.params)), non_breaking_spaces(c.label), c.count))
-        return (u'<div class="filterline"><span class="filterlabel">%s:</span> %s</div>'
-                % (escape(label), u''.join(out)))
+
+        choices = filter_.get_choices(qs, params)
+        remove = [self.remove_filter_template %
+               dict(label=escape(c.label),
+                    url=escape(u'?' + urlencode(c.params)))
+               for c in choices if c.link_type == FILTER_REMOVE]
+        add = [self.add_filter_template %
+               dict(label= non_breaking_spaces(c.label),
+                    url=escape(u'?' + urlencode(c.params)),
+                    count=c.count)
+               for c in choices if c.link_type == FILTER_ADD]
+
+        return (self.filter_line_template %
+                dict(label=escape(label),
+                     remove=u''.join(remove),
+                     add=u''.join(add),
+                     separator=self.add_remove_separator if len(add) and len(remove) else u''))
 
     def render(self):
         return mark_safe(u'\n'.join(self.render_filter(f, self.qs, self.params) for f in self.filters))
