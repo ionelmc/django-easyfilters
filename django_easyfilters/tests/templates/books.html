@@ -2,20 +2,64 @@
   <head>
     <title>Book list</title>
   </head>
+  <style type="text/css">
+body {
+    font-family: Verdana;
+}
+
+h1 {
+    font-size: 1.4em;
+}
+h2 {
+    font-size: 1.2em;
+    margin: 0.6em -0.4em;
+}
+
+div.book {
+    padding-left: 1em;
+    margin-bottom: 0.6em;
+    border-top: 1px solid #888;
+}
+
+/* Filters */
+.filterline {
+    margin-bottom: 0.5em;
+}
+
+.filterline .filterlabel {
+    font-weight: bold;
+}
+
+.filterline {
+    margin-left: 1em;
+    text-indent: -1em;
+}
+
+.removefilter {
+    font-style: italic;
+    background-color: #e0e0e0;
+}
+.removefilter a:link,
+.removefilter a:visited {
+    text-decoration: none;
+    font-style: normal;
+}
+  </style>
   <body>
 
     <h1>Books</h1>
     {{ booksfilter }}
 
+    <p>The following books were found:</p>
     {% for book in books %}
-      <div>
+      <div class="book">
         <h2>{{ book.name }}</h2>
-        <p><b>Authors:</b>
-          {% for author in book.authors.all %}
-            {{ author }}{% if not forloop.last %},{% endif %}
-          {% endfor %}
-        <p>Genre: {{ book.genre }}</p>
-      {% endfor %}
+        <div><b>Authors:</b>
+        {% for author in book.authors.all %}
+          {{ author }}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+        <br><b>Genre:</b> {{ book.genre }}</div>
       </div>
+    {% endfor %}
   </body>
 </html>
