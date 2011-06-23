@@ -280,15 +280,14 @@ class TestFilters(TestCase):
         self.assertFalse(qs_emily_anne.filter(name='Wuthering Heights').exists())
 
         # The choices should contain just emily and anne to remove, and
-        # charlotte should have 'link_type' set to FILTER_ONLY_CHOICE, and
-        # params set to None, because there is no point adding a filter when it
-        # is the only choice.
+        # charlotte should have 'link_type' FILTER_ADD. Even though it
+        # is the only choice, adding the choice is not necessarily the same as
+        # not adding it (could have books by Rmily and Anne, but not charlotte)
         choices = filter_.get_choices(qs_emily_anne, data)
         self.assertEqual([(c.label, c.link_type) for c in choices],
                          [(unicode(emily), FILTER_REMOVE),
                           (unicode(anne), FILTER_REMOVE),
-                          (unicode(charlotte), FILTER_ONLY_CHOICE)])
-        self.assertEqual(choices[2].params, None)
+                          (unicode(charlotte), FILTER_ADD)])
 
     def test_order_by_count(self):
         """

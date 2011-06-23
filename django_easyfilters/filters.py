@@ -77,14 +77,8 @@ class Filter(FilterOptions):
         params.pop('page', None) # links should reset paging
         return params
 
-    def normalize_add_choices(self, choices):
-        if len(choices) == 1:
-            # No point giving people a choice of one
-            choices = [FilterChoice(label=choices[0].label,
-                                    count=choices[0].count,
-                                    link_type=FILTER_ONLY_CHOICE,
-                                    params=None)]
-        return choices
+    def normalize_add_choices(self, choice):
+        raise NotImplementedError()
 
     def sort_choices(self, qs, params, choices):
         """
@@ -129,6 +123,17 @@ class SingleValueFilterMixin(object):
         for val, count in values_counts:
             count_dict[val] = count
         return count_dict
+
+    def normalize_add_choices(self, choices):
+        if len(choices) == 1 and not self.field_obj.null:
+            # No point giving people a choice of one, since all the results will
+            # already have the selected value (apart from nullable fields, which
+            # might have null)
+            choices = [FilterChoice(label=choices[0].label,
+                                    count=choices[0].count,
+                                    link_type=FILTER_ONLY_CHOICE,
+                                    params=None)]
+        return choices
 
     def get_choices(self, qs, params):
         choices_remove = self.get_choices_remove(qs, params)
@@ -243,6 +248,8 @@ class MultiValueFilterMixin(object):
         choices_add = self.sort_choices(qs, params, choices_add)
         return choices_remove + choices_add
 
+    def normalize_add_choices(self, choices):
+        return choices
 
 class ManyToManyFilter(MultiValueFilterMixin, Filter):
     def __init__(self, *args, **kwargs):
