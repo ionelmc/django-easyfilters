@@ -77,9 +77,6 @@ class Filter(FilterOptions):
         params.pop('page', None) # links should reset paging
         return params
 
-    def normalize_add_choices(self, choice):
-        raise NotImplementedError()
-
     def sort_choices(self, qs, params, choices):
         """
         Sorts the choices by applying order_by_count if applicable.
@@ -188,7 +185,6 @@ class ChoicesFilter(ValuesFilter):
     # 3) make display value = the second element in choices' tuples.
     def __init__(self, *args, **kwargs):
         super(ChoicesFilter, self).__init__(*args, **kwargs)
-        # For performance we cache this rather than build in
         self.choices_dict = dict(self.field_obj.flatchoices)
 
     def display_choice(self, choice):
@@ -244,12 +240,10 @@ class MultiValueFilterMixin(object):
         # In general, can filter multiple times, so we can have multiple remove
         # links, and multiple add links, at the same time.
         choices_remove = self.get_choices_remove(qs, params)
-        choices_add = self.normalize_add_choices(self.get_choices_add(qs, params))
+        choices_add = self.get_choices_add(qs, params)
         choices_add = self.sort_choices(qs, params, choices_add)
         return choices_remove + choices_add
 
-    def normalize_add_choices(self, choices):
-        return choices
 
 class ManyToManyFilter(MultiValueFilterMixin, Filter):
     def __init__(self, *args, **kwargs):
@@ -301,7 +295,6 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
                                         self.build_params(params, add=pk),
                                         FILTER_ADD))
         return choices
-
 
     def get_choices_remove(self, qs, params):
         choices = self.choices_from_params(params)
