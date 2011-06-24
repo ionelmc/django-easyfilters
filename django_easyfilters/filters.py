@@ -29,6 +29,9 @@ class Filter(FilterOptions):
     A Filter creates links/URLs that correspond to some DB filtering,
     and can apply the information from a URL to filter a QuerySet.
     """
+
+    ### Public interface ###
+
     def __init__(self, field, model, **kwargs):
         # State: Filter objects are created as class attributes of FilterSets,
         # and so cannot carry any request specific state. They only have
@@ -41,10 +44,23 @@ class Filter(FilterOptions):
         super(Filter, self).__init__(**kwargs)
 
     def apply_filter(self, qs, params):
+        """
+        Apply the filtering defined in params (request.GET) to the queryset qs,
+        returning the new QuerySet.
+        """
         p_val = self.choices_from_params(params)
         while len(p_val) > 0:
             qs = qs.filter(**{self.field: p_val.pop()})
         return qs
+
+    def get_choices(self, qs, params):
+        """
+        Returns a list of namedtuples containing (label (as a string), count,
+        params, link type)
+        """
+        raise NotImplementedError()
+
+    ### Methods that are used by base implementation above ###
 
     def to_python(self, param):
         return self.field_obj.to_python(param)
@@ -55,6 +71,8 @@ class Filter(FilterOptions):
         already 'chosen' options.
         """
         return [self.to_python(i) for i in params.getlist(self.query_param)]
+
+    ### Utility methods needed by most/all subclasses ###
 
     def param_from_choices(self, choices):
         """
@@ -96,13 +114,6 @@ class Filter(FilterOptions):
         method.
         """
         return choices
-
-    def get_choices(self, qs, params):
-        """
-        Returns a list of namedtuples containing (label (as a string), count,
-        params)
-        """
-        raise NotImplementedError()
 
 
 class SingleValueFilterMixin(object):
