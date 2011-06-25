@@ -48,29 +48,29 @@ class Filter(FilterOptions):
 
     ### Public interface ###
 
-    def __init__(self, field, model, **kwargs):
-        # State: Filter objects are created as class attributes of FilterSets,
-        # and so cannot carry any request specific state. They only have
-        # configuration information.
+    def __init__(self, field, model, params, **kwargs):
         self.field = field
         self.model = model
+        self.params = params
         if kwargs.get('query_param', None) is None:
             kwargs['query_param'] = field
         self.field_obj = self.model._meta.get_field(self.field)
         super(Filter, self).__init__(**kwargs)
+        # Make chosen an immutable sequence, to stop accidental mutation.
+        self.chosen = tuple(self.choices_from_params())
 
-    def apply_filter(self, qs, params):
+    def apply_filter(self, qs):
         """
         Apply the filtering defined in params (request.GET) to the queryset qs,
         returning the new QuerySet.
         """
-        p_vals = self.choices_from_params(params)
-        while len(p_vals) > 0:
-            lookup = self.lookup_from_choice(p_vals.pop())
+        choices = list(self.chosen)
+        while len(choices) > 0:
+            lookup = self.lookup_from_choice(choices.pop())
             qs = qs.filter(**lookup)
         return qs
 
-    def get_choices(self, qs, params):
+    def get_choices(self, qs):
         """
         Returns a list of namedtuples containing (label (as a string), count,
         params, link type)
@@ -79,9 +79,9 @@ class Filter(FilterOptions):
 
     ### Methods that are used by base implementation above ###
 
-    def choices_from_params(self, params):
+    def choices_from_params(self):
         out = []
-        for p in params.getlist(self.query_param):
+        for p in self.params.getlist(self.query_param):
             try:
                 choice = self.choice_from_param(p)
                 out.append(choice)
@@ -110,18 +110,18 @@ class Filter(FilterOptions):
 
     def param_from_choices(self, choices):
         """
-        For a list of choices, return the parameter that should be created.
+        For a list of choices, return the parameter list that should be created.
         """
         return map(unicode, choices)
 
-    def build_params(self, params, add=None, remove=None):
+    def build_params(self, add=None, remove=None):
         """
         Builds a new parameter MultiDict.
         add is an optional item to add,
         remove is an option list of items to remove.
         """
-        params = params.copy()
-        chosen = self.choices_from_params(params)
+        params = self.params.copy()
+        chosen = list(self.chosen)
         if remove is not None:
             for r in remove:
                 chosen.remove(r)
@@ -135,7 +135,7 @@ class Filter(FilterOptions):
         params.pop('page', None) # links should reset paging
         return params
 
-    def sort_choices(self, qs, params, choices):
+    def sort_choices(self, qs, choices):
         """
         Sorts the choices by applying order_by_count if applicable.
 
@@ -144,10 +144,10 @@ class Filter(FilterOptions):
         if self.order_by_count:
             choices.sort(key=operator.attrgetter('count'), reverse=True)
         else:
-            choices = self.sort_choices_custom(qs, params, choices)
+            choices = self.sort_choices_custom(qs, choices)
         return choices
 
-    def sort_choices_custom(self, qs, params, choices):
+    def sort_choices_custom(self, qs, choices):
         """
         Override this to provide a custom sorting method for a field. If sorting
         can be better done in the DB, it should be done in the get_choices_add
@@ -158,7 +158,7 @@ class Filter(FilterOptions):
 
 class SingleValueFilterMixin(object):
 
-    def get_values_counts(self, qs, params):
+    def get_values_counts(self, qs):
         """
         Returns a SortedDict dictionary of {value: count}.
 
@@ -183,24 +183,24 @@ class SingleValueFilterMixin(object):
                                     params=None)]
         return choices
 
-    def get_choices(self, qs, params):
-        choices_remove = self.get_choices_remove(qs, params)
+    def get_choices(self, qs):
+        choices_remove = self.get_choices_remove(qs)
         if len(choices_remove) > 0:
             return choices_remove
         else:
-            choices_add = self.normalize_add_choices(self.get_choices_add(qs, params))
-            return self.sort_choices(qs, params, choices_add)
+            choices_add = self.normalize_add_choices(self.get_choices_add(qs))
+            return self.sort_choices(qs, choices_add)
 
-    def get_choices_add(self, qs, params):
+    def get_choices_add(self, qs):
         raise NotImplementedError()
 
-    def get_choices_remove(self, qs, params):
-        choices = self.choices_from_params(params)
+    def get_choices_remove(self, qs):
+        chosen = self.chosen
         return [FilterChoice(self.display_choice(choice),
                              None, # Don't need count for removing
-                             self.build_params(params, remove=[choice]),
+                             self.build_params(remove=[choice]),
                              FILTER_REMOVE)
-                for choice in choices]
+                for choice in chosen]
 
 
 class ValuesFilter(SingleValueFilterMixin, Filter):
@@ -214,14 +214,14 @@ class ValuesFilter(SingleValueFilterMixin, Filter):
         else:
             return retval
 
-    def get_choices_add(self, qs, params):
+    def get_choices_add(self, qs):
         """
         Called by 'get_choices', this is usually the one to override.
         """
-        count_dict = self.get_values_counts(qs, params)
+        count_dict = self.get_values_counts(qs)
         return [FilterChoice(self.display_choice(val),
                              count,
-                             self.build_params(params, add=val),
+                             self.build_params(add=val),
                              FILTER_ADD)
                 for val, count in count_dict.items()]
 
@@ -242,8 +242,8 @@ class ChoicesFilter(ValuesFilter):
         # 3) above
         return self.choices_dict.get(choice, choice)
 
-    def get_choices_add(self, qs, params):
-        count_dict = self.get_values_counts(qs, params)
+    def get_choices_add(self, qs):
+        count_dict = self.get_values_counts(qs)
         choices = []
         for val, display in self.field_obj.choices:
             # 1), 2) above
@@ -252,7 +252,7 @@ class ChoicesFilter(ValuesFilter):
                 # call display_choice() in case it is overriden.
                 choices.append(FilterChoice(self.display_choice(val),
                                             count_dict[val],
-                                            self.build_params(params, add=val),
+                                            self.build_params(add=val),
                                             FILTER_ADD))
         return choices
 
@@ -270,8 +270,8 @@ class ForeignKeyFilter(SingleValueFilterMixin, Filter):
         lookup = {self.rel_field.name: choice}
         return unicode(self.rel_model.objects.get(**lookup))
 
-    def get_choices_add(self, qs, params):
-        count_dict = self.get_values_counts(qs, params)
+    def get_choices_add(self, qs):
+        count_dict = self.get_values_counts(qs)
         lookup = {self.rel_field.name + '__in': count_dict.keys()}
         objs = self.rel_model.objects.filter(**lookup)
         choices = []
@@ -280,19 +280,19 @@ class ForeignKeyFilter(SingleValueFilterMixin, Filter):
             pk = getattr(o, self.rel_field.attname)
             choices.append(FilterChoice(unicode(o),
                                         count_dict[pk],
-                                        self.build_params(params, add=pk),
+                                        self.build_params(add=pk),
                                         FILTER_ADD))
         return choices
 
 
 class MultiValueFilterMixin(object):
 
-    def get_choices(self, qs, params):
+    def get_choices(self, qs):
         # In general, can filter multiple times, so we can have multiple remove
         # links, and multiple add links, at the same time.
-        choices_remove = self.get_choices_remove(qs, params)
-        choices_add = self.get_choices_add(qs, params)
-        choices_add = self.sort_choices(qs, params, choices_add)
+        choices_remove = self.get_choices_remove(qs)
+        choices_add = self.get_choices_add(qs)
+        choices_add = self.sort_choices(qs, choices_add)
         return choices_remove + choices_add
 
 
@@ -307,7 +307,7 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
         except ValidationError:
             raise ValueError()
 
-    def get_choices_add(self, qs, params):
+    def get_choices_add(self, qs):
         # It is easiest to base queries around the intermediate table, in order
         # to get counts.
         through = self.field_obj.rel.through
@@ -327,7 +327,7 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
 
         # We need to exclude items in other table that we have already filtered
         # on, because they are not interesting.
-        exclude_filter = {fkey_to_other_table.name + '__in': self.choices_from_params(params)}
+        exclude_filter = {fkey_to_other_table.name + '__in': self.chosen}
         m2m_objs = m2m_objs.exclude(**exclude_filter)
 
         # Now get counts:
@@ -346,35 +346,35 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
             pk = o.pk
             choices.append(FilterChoice(unicode(o),
                                         count_dict[pk],
-                                        self.build_params(params, add=pk),
+                                        self.build_params(add=pk),
                                         FILTER_ADD))
         return choices
 
-    def get_choices_remove(self, qs, params):
-        choices = self.choices_from_params(params)
+    def get_choices_remove(self, qs):
+        chosen = self.chosen
         # Do a query in bulk to get objs corresponding to choices.
-        objs = self.rel_model.objects.filter(pk__in=choices)
+        objs = self.rel_model.objects.filter(pk__in=chosen)
 
         # We want to preserve order of items in params, so use a dict:
         obj_dict = dict([(obj.pk, obj) for obj in objs])
         return [FilterChoice(unicode(obj_dict[choice]),
                              None, # Don't need count for removing
-                             self.build_params(params, remove=[choice]),
+                             self.build_params(remove=[choice]),
                              FILTER_REMOVE)
-                for choice in choices]
+                for choice in chosen]
 
 
 class DrillDownMixin(object):
 
-    def get_choices_remove(self, qs, params):
+    def get_choices_remove(self, qs):
         # Due to drill down, if an earlier param is removed,
         # the later params must be removed too.
-        chosen = self.choices_from_params(params)
+        chosen = list(self.chosen)
         out = []
         for i, choice in enumerate(chosen):
             out.append(FilterChoice(self.display_choice(choice),
                                     None,
-                                    self.build_params(params, remove=chosen[i:]),
+                                    self.build_params(remove=chosen[i:]),
                                     FILTER_REMOVE))
         return out
 
@@ -502,8 +502,8 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
     def display_choice(self, choice):
         return choice.display()
 
-    def get_choices_add(self, qs, params):
-        chosen = self.choices_from_params(params)
+    def get_choices_add(self, qs):
+        chosen = list(self.chosen)
         range_type = None
 
         if len(chosen) > 0:
@@ -570,6 +570,6 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
                 continue
             choices.append(FilterChoice(date_choice.display(),
                                         count,
-                                        self.build_params(params, add=date_choice),
+                                        self.build_params(add=date_choice),
                                         FILTER_ADD))
         return choices

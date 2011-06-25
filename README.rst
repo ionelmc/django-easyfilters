@@ -88,13 +88,13 @@ books. You can also use pagination e.g. using django-pagination::
     {% endfor %}
 
 Customisation of the filters can be done using a tuple containing (field_name,
-FilterOptions), instead of just field_name::
+dict of options), instead of just field_name::
 
     class BookFilterSet(FilterSet):
         model = Book
         fields = [
             'binding',
-            ('genre', FilterOptions(order_by_count=True))
+            ('genre', dict(order_by_count=True))
         ]
 
 Done so far

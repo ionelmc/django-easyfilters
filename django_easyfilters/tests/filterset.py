@@ -49,7 +49,7 @@ class TestFilterSet(TestCase):
         self.assertEqual(rendered, unicode(fs))
 
         # And when in 'already filtered' mode:
-        choice = fs.filters[0].get_choices(qs, QueryDict(''))[0]
+        choice = fs.filters[0].get_choices(qs)[0]
         fs_filtered = BookFilterSet(qs, choice.params)
         rendered_2 = fs_filtered.render()
         self.assertTrue('Genre' in rendered_2)
@@ -87,11 +87,11 @@ class TestFilters(TestCase):
         new_g, created = Genre.objects.get_or_create(name='Nonsense')
         assert created
 
-        filter_ = ForeignKeyFilter('genre', Book)
-        qs = Book.objects.all()
         data = MultiValueDict()
+        filter_ = ForeignKeyFilter('genre', Book, data)
+        qs = Book.objects.all()
 
-        choices = [(c.label, c.count) for c in filter_.get_choices(qs, data)]
+        choices = [(c.label, c.count) for c in filter_.get_choices(qs)]
 
         reached = [False, False]
         for g in Genre.objects.all():
@@ -113,8 +113,8 @@ class TestFilters(TestCase):
         """
         qs = Book.objects.all()
         data = MultiValueDict()
-        filter_ = ForeignKeyFilter('genre', Book)
-        choices = filter_.get_choices(qs, data)
+        filter1 = ForeignKeyFilter('genre', Book, data)
+        choices = filter1.get_choices(qs)
 
         # If we use the params from e.g. the first choice, that should produce a
         # filtered qs when fed back in (i.e. when we 'click' on that option we
@@ -122,7 +122,8 @@ class TestFilters(TestCase):
         reached = False
         for choice in choices:
             reached = True
-            qs_filtered = filter_.apply_filter(qs, choice.params)
+            filter2 = ForeignKeyFilter('genre', Book, choice.params)
+            qs_filtered = filter2.apply_filter(qs)
             self.assertEqual(len(qs_filtered), choice.count)
             for book in qs_filtered:
                 self.assertEqual(unicode(book.genre), choice.label)
@@ -133,21 +134,23 @@ class TestFilters(TestCase):
         Ensure that a ForeignKey Filter will turn into a 'remove' link when an
         item has been selected.
         """
-        filter_ = ForeignKeyFilter('genre', Book)
         qs = Book.objects.all()
         data = MultiValueDict()
-        choices = filter_.get_choices(qs, data)
+        filter1 = ForeignKeyFilter('genre', Book, data)
+        choices = filter1.get_choices(qs)
         choice = choices[0]
 
-        qs_filtered = filter_.apply_filter(qs, choice.params)
-        choices2 = filter_.get_choices(qs_filtered, choice.params)
+        filter2 = ForeignKeyFilter('genre', Book, choice.params)
+        qs_filtered = filter2.apply_filter(qs)
+        choices2 = filter2.get_choices(qs_filtered)
 
         # Should have one item
         self.assertEqual(1, len(choices2))
         self.assertEqual(choices2[0].link_type, FILTER_REMOVE)
 
         # 'Clicking' should remove filtering
-        qs_reverted = filter_.apply_filter(qs, choices2[0].params)
+        filter3 = ForeignKeyFilter('genre', Book, choices2[0].params)
+        qs_reverted = filter3.apply_filter(qs)
         self.assertEqual(qs, qs_reverted)
 
     def test_values_filter(self):
@@ -155,22 +158,23 @@ class TestFilters(TestCase):
         Tests for ValuesFilter
         """
         # We combine the tests for brevity
-        filter_ = ValuesFilter('edition', Book)
+        filter1 = ValuesFilter('edition', Book, MultiValueDict())
         qs = Book.objects.all()
-        choices = filter_.get_choices(qs, MultiValueDict())
+        choices = filter1.get_choices(qs)
 
         for choice in choices:
             count = Book.objects.filter(edition=choice.params.values()[0]).count()
             self.assertEqual(choice.count, count)
 
             # Check the filtering
-            qs_filtered = filter_.apply_filter(qs, choice.params)
+            filter2 = ValuesFilter('edition', Book, choice.params)
+            qs_filtered = filter2.apply_filter(qs)
             self.assertEqual(len(qs_filtered), choice.count)
             for book in qs_filtered:
                 self.assertEqual(unicode(book.edition), choice.label)
 
             # Check we've got a 'remove link' on filtered.
-            choices_filtered = filter_.get_choices(qs, choice.params)
+            choices_filtered = filter2.get_choices(qs)
             self.assertEqual(1, len(choices_filtered))
             self.assertEqual(choices_filtered[0].link_type, FILTER_REMOVE)
 
@@ -183,9 +187,9 @@ class TestFilters(TestCase):
         """
         Tests for ChoicesFilter
         """
-        filter_ = ChoicesFilter('binding', Book)
+        filter1 = ChoicesFilter('binding', Book, MultiValueDict())
         qs = Book.objects.all()
-        choices = filter_.get_choices(qs, MultiValueDict())
+        choices = filter1.get_choices(qs)
         # Check:
         # - order is correct.
         # - all values present (guaranteed by fixture data)
@@ -203,14 +207,14 @@ class TestFilters(TestCase):
         """
         Tests for ManyToManyFilter
         """
-        filter_ = ManyToManyFilter('authors', Book)
+        filter1 = ManyToManyFilter('authors', Book, MultiValueDict())
         qs = Book.objects.all()
 
         # ManyToMany can have 'drill down', i.e. multiple levels of filtering,
         # which can be removed individually.
 
         # First level:
-        choices = filter_.get_choices(qs, MultiValueDict())
+        choices = filter1.get_choices(qs)
 
         # Check list is full, and in right order
         self.assertEqual([unicode(v) for v in Author.objects.all()],
@@ -218,7 +222,7 @@ class TestFilters(TestCase):
 
         for choice in choices:
             # For single choice, param will be single integer:
-            param = int(choice.params[filter_.query_param])
+            param = int(choice.params[filter1.query_param])
 
             # Check the count
             count = Book.objects.filter(authors=int(param)).count()
@@ -231,19 +235,19 @@ class TestFilters(TestCase):
                              choice.label)
 
             # Check the filtering
-            qs_filtered = filter_.apply_filter(qs, choice.params)
+            filter2 = ManyToManyFilter('authors', Book, choice.params)
+            qs_filtered = filter2.apply_filter(qs)
             self.assertEqual(len(qs_filtered), choice.count)
 
             for book in qs_filtered:
                 self.assertTrue(author in book.authors.all())
 
             # Check we've got a 'remove link' on filtered.
-            choices_filtered = filter_.get_choices(qs, choice.params)
+            choices_filtered = filter2.get_choices(qs)
             self.assertEqual(choices_filtered[0].link_type, FILTER_REMOVE)
 
 
     def test_manytomany_filter_multiple(self):
-        filter_ = ManyToManyFilter('authors', Book)
         qs = Book.objects.all()
 
         # Specific example - multiple filtering
@@ -254,7 +258,8 @@ class TestFilters(TestCase):
         # If we select 'emily' as an author:
 
         data =  MultiValueDict({'authors':[str(emily.pk)]})
-        qs_emily = filter_.apply_filter(qs, data)
+        filter1 = ManyToManyFilter('authors', Book, data)
+        qs_emily = filter1.apply_filter(qs)
 
         # ...we should get a qs that includes Poems and Wuthering Heights.
         self.assertTrue(qs_emily.filter(name='Poems').exists())
@@ -263,7 +268,7 @@ class TestFilters(TestCase):
         self.assertFalse(qs_emily.filter(name='Jane Eyre').exists())
 
         # We should get a 'choices' that includes charlotte and anne
-        choices = filter_.get_choices(qs_emily, data)
+        choices = filter1.get_choices(qs_emily)
         self.assertTrue(unicode(anne) in [c.label for c in choices if c.link_type is FILTER_ADD])
         self.assertTrue(unicode(charlotte) in [c.label for c in choices if c.link_type is FILTER_ADD])
 
@@ -273,9 +278,10 @@ class TestFilters(TestCase):
         self.assertTrue(unicode(emily) in [c.label for c in choices if c.link_type is FILTER_REMOVE])
 
         # If we select again:
-        data =  MultiValueDict({'authors': [str(emily.pk), str(anne.pk)]})
+        data2 =  MultiValueDict({'authors': [str(emily.pk), str(anne.pk)]})
+        filter2 = ManyToManyFilter('authors', Book, data2)
 
-        qs_emily_anne = filter_.apply_filter(qs, data)
+        qs_emily_anne = filter2.apply_filter(qs)
 
         # ...we should get a qs that includes Poems
         self.assertTrue(qs_emily_anne.filter(name='Poems').exists())
@@ -286,7 +292,7 @@ class TestFilters(TestCase):
         # charlotte should have 'link_type' FILTER_ADD. Even though it
         # is the only choice, adding the choice is not necessarily the same as
         # not adding it (could have books by Rmily and Anne, but not charlotte)
-        choices = filter_.get_choices(qs_emily_anne, data)
+        choices = filter2.get_choices(qs_emily_anne)
         self.assertEqual([(c.label, c.link_type) for c in choices],
                          [(unicode(emily), FILTER_REMOVE),
                           (unicode(anne), FILTER_REMOVE),
@@ -298,38 +304,37 @@ class TestFilters(TestCase):
         (and limit to max_links)
         """
         # This does drill down, and has multiple values.
-        f = DateTimeFilter('date_published', Book, max_links=10)
-
+        f = DateTimeFilter('date_published', Book, MultiValueDict(), max_links=10)
         qs = Book.objects.all()
 
         # We have enough data that it will not show a simple list of years.
-        choices = f.get_choices(qs, MultiValueDict())
+        choices = f.get_choices(qs)
         self.assertTrue(len(choices) <= 10)
 
     def test_datetime_filter_single_year_selected(self):
-        f = DateTimeFilter('date_published', Book, max_links=10)
-        qs = Book.objects.all()
         params = MultiValueDict({'date_published':['1818']})
+        f = DateTimeFilter('date_published', Book, params, max_links=10)
+        qs = Book.objects.all()
 
         # Should get a number of books in queryset.
-        qs_filtered = f.apply_filter(qs, params)
+        qs_filtered = f.apply_filter(qs)
 
         self.assertEqual(list(qs_filtered),
                          list(qs.filter(date_published__year=1818)))
         # We only need 1 query if we've already told it what year to look at.
         with self.assertNumQueries(1):
-            choices = f.get_choices(qs_filtered, params)
+            choices = f.get_choices(qs_filtered)
 
         self.assertTrue(len([c for c in choices if c.link_type == FILTER_ADD]) >= 2)
         self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
 
     def test_datetime_filter_year_range_selected(self):
-        f = DateTimeFilter('date_published', Book, max_links=10)
-        qs = Book.objects.all()
         params = MultiValueDict({'date_published':['1813..1814']})
+        f = DateTimeFilter('date_published', Book, params, max_links=10)
+        qs = Book.objects.all()
 
         # Should get a number of books in queryset.
-        qs_filtered = f.apply_filter(qs, params)
+        qs_filtered = f.apply_filter(qs)
 
         start = date(1813, 1, 1)
         end = date(1815, 1, 1)
@@ -340,7 +345,7 @@ class TestFilters(TestCase):
         # We only need 1 query if we've already told it what years to look at,
         # and there is data for both years.
         with self.assertNumQueries(1):
-            choices = f.get_choices(qs_filtered, params)
+            choices = f.get_choices(qs_filtered)
 
         self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
         self.assertEqual(len([c for c in choices if c.link_type == FILTER_ADD]), 2)
@@ -349,31 +354,32 @@ class TestFilters(TestCase):
 
 
     def test_datetime_filter_invalid_query(self):
-        f = DateTimeFilter('date_published', Book, max_links=10)
-        qs = Book.objects.all()
         params = MultiValueDict({'date_published':['1818xx']})
+        f = DateTimeFilter('date_published', Book, params, max_links=10)
+        f_empty = DateTimeFilter('date_published', Book, MultiValueDict(), max_links=10)
+        qs = Book.objects.all()
 
         # invalid param should be ignored
-        qs_filtered = f.apply_filter(qs, params)
+        qs_filtered = f.apply_filter(qs)
         self.assertEqual(list(qs_filtered),
                          list(qs))
 
-        self.assertEqual(list(f.get_choices(qs, params)),
-                         list(f.get_choices(qs, MultiValueDict({}))))
+        self.assertEqual(list(f.get_choices(qs)),
+                         list(f_empty.get_choices(qs)))
 
     def test_order_by_count(self):
         """
         Tests the 'order_by_count' option.
         """
-        filter1 = ForeignKeyFilter('genre', Book, order_by_count=True)
+        filter1 = ForeignKeyFilter('genre', Book, MultiValueDict(), order_by_count=True)
         qs = Book.objects.all()
-        choices1 = filter1.get_choices(qs, MultiValueDict())
+        choices1 = filter1.get_choices(qs)
 
         # Should be same after sorting by 'count'
         self.assertEqual(choices1, sorted(choices1, key=operator.attrgetter('count'), reverse=True))
 
-        filter2 = ForeignKeyFilter('genre', Book, order_by_count=False)
-        choices2 = filter2.get_choices(qs, MultiValueDict())
+        filter2 = ForeignKeyFilter('genre', Book, MultiValueDict(), order_by_count=False)
+        choices2 = filter2.get_choices(qs)
 
         # Should be same after sorting by 'label' (that is equal to Genre.name,
         # and Genre ordering is by that field)

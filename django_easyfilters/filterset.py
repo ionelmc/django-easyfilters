@@ -34,16 +34,16 @@ class FilterSet(object):
         self.initial_queryset = queryset
         self.model = queryset.model
         self.filters = self.setup_filters()
-        self.qs = self.apply_filters(queryset, params)
+        self.qs = self.apply_filters(queryset)
 
-    def apply_filters(self, queryset, params):
+    def apply_filters(self, queryset):
         for f in self.filters:
-            queryset = f.apply_filter(queryset, params)
+            queryset = f.apply_filter(queryset)
         return queryset
 
-    def render_filter(self, filter_, qs, params):
+    def render_filter(self, filter_, qs):
         field_obj = self.model._meta.get_field(filter_.field)
-        choices = filter_.get_choices(qs, params)
+        choices = filter_.get_choices(qs)
         ctx = {'filterlabel': capfirst(field_obj.verbose_name)}
         ctx['remove_choices'] = [dict(label=non_breaking_spaces(c.label),
                                       url=u'?' + c.params.urlencode())
@@ -62,39 +62,38 @@ class FilterSet(object):
         return template.Template(self.template)
 
     def render(self):
-        return mark_safe(u'\n'.join(self.render_filter(f, self.qs, self.params) for f in self.filters))
+        return mark_safe(u'\n'.join(self.render_filter(f, self.qs) for f in self.filters))
 
     def get_fields(self):
         return self.fields
 
-    def get_filter_for_field(self, field, **kwargs):
+    def get_filter_for_field(self, field):
         f, model, direct, m2m = self.model._meta.get_field_by_name(field)
         if f.rel is not None:
             if m2m:
-                klass = ManyToManyFilter
+                return ManyToManyFilter
             else:
-                klass = ForeignKeyFilter
+                return ForeignKeyFilter
         elif f.choices:
-            klass = ChoicesFilter
+            return ChoicesFilter
         else:
             type_ = f.get_internal_type()
             if type_ == 'DateField' or type_ == 'DateTimeField':
-                klass = DateTimeFilter
+                return DateTimeFilter
             else:
-                klass = ValuesFilter
-        return klass(field, self.model, **kwargs)
+                return ValuesFilter
 
     def setup_filters(self):
         filters = []
         for i, f in enumerate(self.get_fields()):
             if isinstance(f, basestring):
-                f = self.get_filter_for_field(f)
+                opts = {}
+                field_name = f
             else:
-                # (field name, FilterOptions)
-                field = f[0]
-                opts = f[1].__dict__.copy()
-                f = self.get_filter_for_field(field, **opts)
-            filters.append(f)
+                opts = f[1]
+                field_name = f[0]
+            klass = self.get_filter_for_field(field_name)
+            filters.append(klass(field_name, self.model, self.params, **opts))
         return filters
 
     def __unicode__(self):
