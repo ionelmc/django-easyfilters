@@ -17,30 +17,7 @@ FILTER_ONLY_CHOICE = 'only'
 FilterChoice = namedtuple('FilterChoice', 'label count params link_type')
 
 
-# TODO:
-#
-# - change API of Filter, so that it has an explicit, required 'set_params'
-#   method. This will eliminate the overhead of calling 'choices_from_params'
-#   multiple times per request, because after params have been set, we can cache
-#   the choices. It will also mean we don't pass params around everywhere.
-
-
-class FilterOptions(object):
-    """
-    Defines some common options for all Filters.
-
-    A FilterOption instance can be used when defining the 'fields' attribute of
-    a FilterSet. The actual choice of Filter subclass will be done by the
-    FilterSet in this case.
-    """
-    def __init__(self, query_param=None, order_by_count=False,
-                 max_links=12):
-        self.query_param = query_param
-        self.order_by_count = order_by_count
-        self.max_links = max_links
-
-
-class Filter(FilterOptions):
+class Filter(object):
     """
     A Filter creates links/URLs that correspond to some DB filtering,
     and can apply the information from a URL to filter a QuerySet.
@@ -48,14 +25,15 @@ class Filter(FilterOptions):
 
     ### Public interface ###
 
-    def __init__(self, field, model, params, **kwargs):
+    def __init__(self, field, model, params, query_param=None, order_by_count=False):
         self.field = field
         self.model = model
         self.params = params
-        if kwargs.get('query_param', None) is None:
-            kwargs['query_param'] = field
+        if query_param is None:
+            query_param = field
+        self.query_param = query_param
+        self.order_by_count = order_by_count
         self.field_obj = self.model._meta.get_field(self.field)
-        super(Filter, self).__init__(**kwargs)
         # Make chosen an immutable sequence, to stop accidental mutation.
         self.chosen = tuple(self.choices_from_params())
 
@@ -489,6 +467,10 @@ class DateChoice(object):
 
 
 class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
+
+    def __init__(self, *args, **kwargs):
+        self.max_links = kwargs.pop('max_links', 12)
+        super(DateTimeFilter, self).__init__(*args, **kwargs)
 
     def choice_from_param(self, param):
         choice = DateChoice.from_param(param)

@@ -117,13 +117,12 @@ TODO
 * Automatic range-based filters - e.g. for prices
 * More options for customisation
 
-  * max_links
-  * max_links_visible (javascript hiding)
+
   * 'defaults' attribute for FilterSet
 
 * Docs for customisation
 
-  * Options provided by FilterOptions
+  * Options provided by Filters
   * API of Filter
   * API of FilterSet for overriding rendering
 
