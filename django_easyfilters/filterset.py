@@ -31,7 +31,6 @@ class FilterSet(object):
 
     def __init__(self, queryset, params):
         self.params = params
-        self.initial_queryset = queryset
         self.model = queryset.model
         self.filters = self.setup_filters()
         self.qs = self.apply_filters(queryset)
