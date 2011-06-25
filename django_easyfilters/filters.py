@@ -535,7 +535,7 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
             last = date_range['last']
             if first.year == last.year:
                 if first.month == last.month:
-                    range_type == 'day'
+                    range_type = 'day'
                 else:
                     range_type = 'month'
             else:
