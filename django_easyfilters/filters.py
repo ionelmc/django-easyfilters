@@ -1,14 +1,28 @@
 from collections import namedtuple
+from datetime import date
 import operator
+import re
 
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import formats
 from django.utils.datastructures import SortedDict
+from django.utils.text import capfirst
+from django_easyfilters.queries import date_aggregation
 
 FILTER_ADD = 'add'
 FILTER_REMOVE = 'remove'
 FILTER_ONLY_CHOICE = 'only'
 
 FilterChoice = namedtuple('FilterChoice', 'label count params link_type')
+
+
+# TODO:
+#
+# - change API of Filter, so that it has an explicit, required 'set_params'
+#   method. This will eliminate the overhead of calling 'choices_from_params'
+#   multiple times per request, because after params have been set, we can cache
+#   the choices. It will also mean we don't pass params around everywhere.
 
 
 class FilterOptions(object):
@@ -19,9 +33,11 @@ class FilterOptions(object):
     a FilterSet. The actual choice of Filter subclass will be done by the
     FilterSet in this case.
     """
-    def __init__(self, query_param=None, order_by_count=False):
+    def __init__(self, query_param=None, order_by_count=False,
+                 max_links=10):
         self.query_param = query_param
         self.order_by_count = order_by_count
+        self.max_links = max_links
 
 
 class Filter(FilterOptions):
@@ -48,9 +64,10 @@ class Filter(FilterOptions):
         Apply the filtering defined in params (request.GET) to the queryset qs,
         returning the new QuerySet.
         """
-        p_val = self.choices_from_params(params)
-        while len(p_val) > 0:
-            qs = qs.filter(**{self.field: p_val.pop()})
+        p_vals = self.choices_from_params(params)
+        while len(p_vals) > 0:
+            lookup = self.lookup_from_choice(p_vals.pop())
+            qs = qs.filter(**lookup)
         return qs
 
     def get_choices(self, qs, params):
@@ -62,15 +79,32 @@ class Filter(FilterOptions):
 
     ### Methods that are used by base implementation above ###
 
-    def to_python(self, param):
-        return self.field_obj.to_python(param)
-
     def choices_from_params(self, params):
+        out = []
+        for p in params.getlist(self.query_param):
+            try:
+                choice = self.choice_from_param(p)
+                out.append(choice)
+            except ValueError:
+                pass
+        return out
+
+    def choice_from_param(self, param):
         """
-        For the params passed in (i.e. from query string), retrive a list of
-        already 'chosen' options.
+        Returns a native Python object representing something that has been
+        chosen for a filter, converted from the string value in param.
         """
-        return [self.to_python(i) for i in params.getlist(self.query_param)]
+        try:
+            return self.field_obj.to_python(param)
+        except ValidationError:
+            raise ValueError()
+
+    def lookup_from_choice(self, choice):
+        """
+        Converts a choice value to a lookup dictionary that can be passed to
+        QuerySet.filter() to do the filtering for that choice.
+        """
+        return {self.field: choice}
 
     ### Utility methods needed by most/all subclasses ###
 
@@ -81,10 +115,16 @@ class Filter(FilterOptions):
         return map(unicode, choices)
 
     def build_params(self, params, add=None, remove=None):
+        """
+        Builds a new parameter MultiDict.
+        add is an optional item to add,
+        remove is an option list of items to remove.
+        """
         params = params.copy()
         chosen = self.choices_from_params(params)
         if remove is not None:
-            chosen.remove(remove)
+            for r in remove:
+                chosen.remove(r)
         else:
             if add not in chosen:
                 chosen.append(add)
@@ -158,7 +198,7 @@ class SingleValueFilterMixin(object):
         choices = self.choices_from_params(params)
         return [FilterChoice(self.display_choice(choice),
                              None, # Don't need count for removing
-                             self.build_params(params, remove=choice),
+                             self.build_params(params, remove=[choice]),
                              FILTER_REMOVE)
                 for choice in choices]
 
@@ -261,8 +301,11 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
         super(ManyToManyFilter, self).__init__(*args, **kwargs)
         self.rel_model = self.field_obj.rel.to
 
-    def to_python(self, param):
-        return self.field_obj.rel.get_related_field().to_python(param)
+    def choice_from_param(self, param):
+        try:
+            return self.field_obj.rel.get_related_field().to_python(param)
+        except ValidationError:
+            raise ValueError()
 
     def get_choices_add(self, qs, params):
         # It is easiest to base queries around the intermediate table, in order
@@ -316,6 +359,198 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
         obj_dict = dict([(obj.pk, obj) for obj in objs])
         return [FilterChoice(unicode(obj_dict[choice]),
                              None, # Don't need count for removing
-                             self.build_params(params, remove=choice),
+                             self.build_params(params, remove=[choice]),
                              FILTER_REMOVE)
                 for choice in choices]
+
+
+class DrillDownMixin(object):
+
+    def get_choices_remove(self, qs, params):
+        # Due to drill down, if an earlier param is removed,
+        # the later params must be removed too.
+        chosen = self.choices_from_params(params)
+        out = []
+        for i, choice in enumerate(chosen):
+            out.append(FilterChoice(self.display_choice(choice),
+                                    None,
+                                    self.build_params(params, remove=chosen[i:]),
+                                    FILTER_REMOVE))
+        return out
+
+
+year_match = re.compile(r'^\d{4}$')
+month_match = re.compile(r'^\d{4}-\d{2}$')
+day_match = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+
+class DateChoice(object):
+    """
+    Represents a choice of date. Params are converted to this, and this is used
+    to build new params and format links.
+
+    It can represent a year, month or day choice, or a range (start, end, both
+    inclusive) of any of these choice.
+    """
+
+    def __init__(self, range_type, values):
+        self.range_type = range_type
+        self.values = values
+
+    def __unicode__(self):
+        # This is called when converting to URL
+        return '..'.join(self.values)
+
+    def display(self):
+        # Called for user presentable string
+        if len(self.values) == 1:
+            value = self.values[0]
+            if self.range_type == 'year':
+                return value
+            elif self.range_type == 'month':
+                parts = value.split('-')
+                month = date(int(parts[0]), int(parts[1]), 1)
+                return capfirst(formats.date_format(month, 'YEAR_MONTH_FORMAT'))
+        else:
+            return u'-'.join([DateChoice(self.range_type,
+                                         [val]).display()
+                              for val in self.values])
+
+
+    @staticmethod
+    def datetime_to_value(range_type, dt):
+        if range_type == 'year':
+            return '%04d' % dt.year
+        elif range_type == 'month':
+            return '%04d-%02d' % (dt.year, dt.month)
+        else:
+            return '%04d-%02d-%02' % (dt.year, dt.month, dt.day)
+
+    @staticmethod
+    def from_datetime(range_type, dt):
+        return DateChoice(range_type, [DateChoice.datetime_to_value(range_type, dt)])
+
+    @staticmethod
+    def from_datetime_range(range_type, dt1, dt2):
+        return DateChoice(range_type,
+                          [DateChoice.datetime_to_value(range_type, dt1),
+                           DateChoice.datetime_to_value(range_type, dt2)])
+
+    @staticmethod
+    def range_type_from_param(param):
+        if year_match.match(param):
+            return 'year'
+        elif month_match.match(param):
+            return 'month'
+        elif day_match.match(param):
+            return 'day'
+
+    @staticmethod
+    def from_param(param):
+        vals = []
+        if '..' in param:
+            params = param.split('..', 1)
+            range_types = [DateChoice.range_type_from_param(p) for p in params]
+            if None in range_types or range_types[0] != range_types[1]:
+                return None
+            else:
+                return DateChoice(range_types[0], params)
+        else:
+            range_type = DateChoice.range_type_from_param(param)
+            if range_type is not None:
+                return DateChoice(range_type, [param])
+
+    def make_lookup(self, field_name):
+        if len(self.values) == 1:
+            val = self.values[0]
+            # val can contain:
+            # yyyy
+            # yyyy-mm
+            # yyyy-mm-dd
+            # Need to look up last part, converted to int
+            parts = val.split('-')
+            return {field_name + '__' + self.range_type: int(parts[-1])}
+        else:
+            # Should be just two values. First is lower bound, second is upper
+            # bound. Need to convert to datetime objects.
+            start_parts = map(int, self.values[0].split('-'))
+            end_parts = map(int, self.values[1].split('-'))
+            if self.range_type == 'year':
+                return {field_name + '__gte': date(start_parts[0], 1, 1),
+                        field_name + '__lt': date(end_parts[0] + 1, 1, 1)}
+            else:
+                return {}
+
+    def __eq__(self, other):
+        return (other is not None and
+                self.range_type == other.range_type and
+                self.values == other.values)
+
+
+class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
+
+    def choice_from_param(self, param):
+        choice = DateChoice.from_param(param)
+        if choice is None:
+            raise ValueError()
+        return choice
+
+    def lookup_from_choice(self, choice):
+        return choice.make_lookup(self.field)
+
+    def display_choice(self, choice):
+        return choice.display()
+
+    def get_choices_add(self, qs, params):
+        choices = self.choices_from_params(params)
+        range_type = None
+
+        if len(choices) > 0:
+            if choices[-1].range_type == 'year':
+                if len(choices[-1].values) == 1:
+                    # One year, drill down
+                    range_type = 'month'
+                else:
+                    # Range, stay on year
+                    range_type = 'year'
+
+        if range_type is None:
+            # Get some initial idea of range
+            date_range = qs.aggregate(first=models.Min(self.field),
+                                      last=models.Max(self.field))
+            first = date_range['first']
+            last = date_range['last']
+            if first.year == last.year:
+                range_type = 'month'
+            else:
+                range_type = 'year'
+
+        date_qs = qs.dates(self.field, range_type)
+        results = date_aggregation(date_qs)
+
+        if len(results) > self.max_links:
+            # Fold results together
+            div, mod = divmod(len(results), self.max_links)
+            if mod != 0:
+                div += 1
+            date_choice_counts = []
+            i = 0
+            while i < len(results):
+                group = results[i:i+div]
+                count = sum(row[1] for row in group)
+                # build range:
+                choice = DateChoice.from_datetime_range(range_type,
+                                                        group[0][0],
+                                                        group[-1][0])
+                date_choice_counts.append((choice, count))
+                i += div
+        else:
+            date_choice_counts = [(DateChoice.from_datetime(range_type, dt), count)
+                                  for dt, count in results]
+
+        choices = []
+        for date_choice, count in date_choice_counts:
+            choices.append(FilterChoice(date_choice.display(),
+                                        count,
+                                        self.build_params(params, add=date_choice),
+                                        FILTER_ADD))
+        return choices

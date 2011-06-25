@@ -1,5 +1,6 @@
 # -*- coding: utf-8; -*-
 
+from datetime import datetime, date
 import decimal
 import operator
 
@@ -10,7 +11,7 @@ from django.utils.datastructures import MultiValueDict
 from django_easyfilters.filterset import FilterSet
 from django_easyfilters.filters import FilterOptions, \
     FILTER_ADD, FILTER_REMOVE, FILTER_ONLY_CHOICE, \
-    ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter
+    ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter, DateTimeFilter
 
 from models import Book, Genre, Author, BINDING_CHOICES
 
@@ -63,6 +64,7 @@ class TestFilterSet(TestCase):
                 'edition',
                 'binding',
                 'authors',
+                'date_published',
                 ]
 
         fs = BookFilterSet(Book.objects.all(), QueryDict(''))
@@ -70,6 +72,7 @@ class TestFilterSet(TestCase):
         self.assertEqual(ValuesFilter, type(fs.filters[1]))
         self.assertEqual(ChoicesFilter, type(fs.filters[2]))
         self.assertEqual(ManyToManyFilter, type(fs.filters[3]))
+        self.assertEqual(DateTimeFilter, type(fs.filters[4]))
 
 
 class TestFilters(TestCase):
@@ -288,6 +291,75 @@ class TestFilters(TestCase):
                          [(unicode(emily), FILTER_REMOVE),
                           (unicode(anne), FILTER_REMOVE),
                           (unicode(charlotte), FILTER_ADD)])
+
+    def test_datetime_filter_multiple_year_choices(self):
+        """
+        Tests that DateTimeFilter can produce choices spanning a set of years
+        (and limit to max_links)
+        """
+        # This does drill down, and has multiple values.
+        f = DateTimeFilter('date_published', Book, max_links=10)
+
+        qs = Book.objects.all()
+
+        # We have enough data that it will not show a simple list of years.
+        choices = f.get_choices(qs, MultiValueDict())
+        self.assertTrue(len(choices) <= 10)
+
+    def test_datetime_filter_single_year_selected(self):
+        f = DateTimeFilter('date_published', Book, max_links=10)
+        qs = Book.objects.all()
+        params = MultiValueDict({'date_published':['1818']})
+
+        # Should get a number of books in queryset.
+        qs_filtered = f.apply_filter(qs, params)
+
+        self.assertEqual(list(qs_filtered),
+                         list(qs.filter(date_published__year=1818)))
+        # We only need 1 query if we've already told it what year to look at.
+        with self.assertNumQueries(1):
+            choices = f.get_choices(qs_filtered, params)
+
+        self.assertTrue(len([c for c in choices if c.link_type == FILTER_ADD]) >= 2)
+        self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
+
+    def test_datetime_filter_year_range_selected(self):
+        f = DateTimeFilter('date_published', Book, max_links=10)
+        qs = Book.objects.all()
+        params = MultiValueDict({'date_published':['1813..1814']})
+
+        # Should get a number of books in queryset.
+        qs_filtered = f.apply_filter(qs, params)
+
+        start = date(1813, 1, 1)
+        end = date(1815, 1, 1)
+        self.assertEqual(list(qs_filtered),
+                         list(qs.filter(date_published__gte=start,
+                                        date_published__lt=end)))
+
+        # We only need 1 query if we've already told it what years to look at,
+        # and there is data for both years.
+        with self.assertNumQueries(1):
+            choices = f.get_choices(qs_filtered, params)
+
+        self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
+        self.assertEqual(len([c for c in choices if c.link_type == FILTER_ADD]), 2)
+        self.assertEqual([c.label for c in choices if c.link_type == FILTER_ADD],
+                         ['1813', '1814'])
+
+
+    def test_datetime_filter_invalid_query(self):
+        f = DateTimeFilter('date_published', Book, max_links=10)
+        qs = Book.objects.all()
+        params = MultiValueDict({'date_published':['1818xx']})
+
+        # invalid param should be ignored
+        qs_filtered = f.apply_filter(qs, params)
+        self.assertEqual(list(qs_filtered),
+                         list(qs))
+
+        self.assertEqual(list(f.get_choices(qs, params)),
+                         list(f.get_choices(qs, MultiValueDict({}))))
 
     def test_order_by_count(self):
         """

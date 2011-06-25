@@ -4,7 +4,7 @@ from django.utils.html import escape
 from django.utils.text import capfirst
 
 from django_easyfilters.filters import FILTER_ADD, FILTER_REMOVE, FILTER_ONLY_CHOICE, \
-    ValuesFilter, ChoicesFilter, ForeignKeyFilter, ManyToManyFilter
+    ValuesFilter, ChoicesFilter, ForeignKeyFilter, ManyToManyFilter, DateTimeFilter
 
 
 def non_breaking_spaces(val):
@@ -77,7 +77,11 @@ class FilterSet(object):
         elif f.choices:
             klass = ChoicesFilter
         else:
-            klass = ValuesFilter
+            type_ = f.get_internal_type()
+            if type_ == 'DateField' or type_ == 'DateTimeField':
+                klass = DateTimeFilter
+            else:
+                klass = ValuesFilter
         return klass(field, self.model, **kwargs)
 
     def setup_filters(self):
