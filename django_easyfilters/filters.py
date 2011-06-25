@@ -34,7 +34,7 @@ class FilterOptions(object):
     FilterSet in this case.
     """
     def __init__(self, query_param=None, order_by_count=False,
-                 max_links=10):
+                 max_links=12):
         self.query_param = query_param
         self.order_by_count = order_by_count
         self.max_links = max_links
@@ -404,12 +404,14 @@ class DateChoice(object):
         # Called for user presentable string
         if len(self.values) == 1:
             value = self.values[0]
+            parts = value.split('-')
             if self.range_type == 'year':
                 return value
             elif self.range_type == 'month':
-                parts = value.split('-')
                 month = date(int(parts[0]), int(parts[1]), 1)
                 return capfirst(formats.date_format(month, 'YEAR_MONTH_FORMAT'))
+            elif self.range_type == 'day':
+                return str(int(parts[-1]))
         else:
             return u'-'.join([DateChoice(self.range_type,
                                          [val]).display()
@@ -423,7 +425,7 @@ class DateChoice(object):
         elif range_type == 'month':
             return '%04d-%02d' % (dt.year, dt.month)
         else:
-            return '%04d-%02d-%02' % (dt.year, dt.month, dt.day)
+            return '%04d-%02d-%02d' % (dt.year, dt.month, dt.day)
 
     @staticmethod
     def from_datetime(range_type, dt):
@@ -501,17 +503,29 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
         return choice.display()
 
     def get_choices_add(self, qs, params):
-        choices = self.choices_from_params(params)
+        chosen = self.choices_from_params(params)
         range_type = None
 
-        if len(choices) > 0:
-            if choices[-1].range_type == 'year':
-                if len(choices[-1].values) == 1:
+        if len(chosen) > 0:
+            last = chosen[-1]
+            if last.range_type == 'year':
+                if len(last.values) == 1:
                     # One year, drill down
                     range_type = 'month'
                 else:
                     # Range, stay on year
                     range_type = 'year'
+            elif last.range_type == 'month':
+                if len(last.values) == 1:
+                    range_type = 'day'
+                else:
+                    range_type = 'month'
+            elif last.range_type == 'day':
+                if len(last.values) == 1:
+                    # Already down to one day, can't drill any further.
+                    return []
+                else:
+                    range_type = 'day'
 
         if range_type is None:
             # Get some initial idea of range
@@ -520,7 +534,10 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
             first = date_range['first']
             last = date_range['last']
             if first.year == last.year:
-                range_type = 'month'
+                if first.month == last.month:
+                    range_type == 'day'
+                else:
+                    range_type = 'month'
             else:
                 range_type = 'year'
 
@@ -549,6 +566,8 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
 
         choices = []
         for date_choice, count in date_choice_counts:
+            if date_choice in chosen:
+                continue
             choices.append(FilterChoice(date_choice.display(),
                                         count,
                                         self.build_params(params, add=date_choice),
