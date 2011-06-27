@@ -375,11 +375,7 @@ class DrillDownMixin(object):
         return out
 
 
-year_match = re.compile(r'^\d{4}$')
-month_match = re.compile(r'^\d{4}-\d{2}$')
-day_match = re.compile(r'^\d{4}-\d{2}-\d{2}$')
-
-DateRangeTypeBase = namedtuple('DateRangeTypeBase', 'level single label')
+DateRangeTypeBase = namedtuple('DateRangeTypeBase', 'level single label regex')
 class DateRangeType(DateRangeTypeBase):
 
     all = {} # Keep a cache, so that we have unique instances
@@ -410,12 +406,12 @@ class DateRangeType(DateRangeTypeBase):
             # ranges (i.e. multi) if appropriate.
             return DateRangeType.all[(self.level + 1, True)]
 
-YEARGROUP   = DateRangeType(1, False, 'year')
-YEAR        = DateRangeType(1, True,  'year')
-MONTHGROUP  = DateRangeType(2, False, 'month')
-MONTH       = DateRangeType(2, True,  'month')
-DAYGROUP    = DateRangeType(3, False, 'day')
-DAY         = DateRangeType(3, True,  'day')
+YEARGROUP   = DateRangeType(1, False, 'year',  re.compile(r'^(\d{4})..(\d{4})$'))
+YEAR        = DateRangeType(1, True,  'year',  re.compile(r'^(\d{4})$'))
+MONTHGROUP  = DateRangeType(2, False, 'month', re.compile(r'^(\d{4}-\d{2})..(\d{4}-\d{2})$'))
+MONTH       = DateRangeType(2, True,  'month', re.compile(r'^(\d{4}-\d{2})$'))
+DAYGROUP    = DateRangeType(3, False, 'day',   re.compile(r'^(\d{4}-\d{2}-\d{2})..(\d{4}-\d{2}-\d{2})$'))
+DAY         = DateRangeType(3, True,  'day',   re.compile(r'^(\d{4}-\d{2}-\d{2})$'))
 
 
 class DateChoice(object):
@@ -459,7 +455,6 @@ class DateChoice(object):
                                          [val]).display()
                               for val in self.values])
 
-
     @staticmethod
     def datetime_to_value(range_type, dt):
         if range_type == YEAR:
@@ -480,28 +475,11 @@ class DateChoice(object):
                            DateChoice.datetime_to_value(range_type, dt2)])
 
     @staticmethod
-    def range_type_from_param(param):
-        if year_match.match(param):
-            return YEAR
-        elif month_match.match(param):
-            return MONTH
-        elif day_match.match(param):
-            return DAY
-
-    @staticmethod
     def from_param(param):
-        vals = []
-        if '..' in param:
-            params = param.split('..', 1)
-            range_types = [DateChoice.range_type_from_param(p) for p in params]
-            if None in range_types or range_types[0] != range_types[1]:
-                return None
-            else:
-                return DateChoice(range_types[0].to_multi(), params)
-        else:
-            range_type = DateChoice.range_type_from_param(param)
-            if range_type is not None:
-                return DateChoice(range_type, [param])
+        for drt in DateRangeType.all.values():
+            m = drt.regex.match(param)
+            if m is not None:
+                return DateChoice(drt, list(m.groups()))
 
     def make_lookup(self, field_name):
         if self.range_type.single:
