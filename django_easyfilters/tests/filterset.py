@@ -184,6 +184,7 @@ class TestFilters(TestCase):
         # Should have one item
         self.assertEqual(1, len(choices2))
         self.assertEqual(choices2[0].link_type, FILTER_REMOVE)
+        self.assertEqual(choices2[0].label, choice.label)
 
         # 'Clicking' should remove filtering
         filter3 = ForeignKeyFilter('genre', Book, choices2[0].params)

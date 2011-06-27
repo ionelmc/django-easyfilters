@@ -163,16 +163,7 @@ class SingleValueFilterMixin(object):
                                     params=None)]
         return choices
 
-    def get_choices(self, qs):
-        choices_remove = self.get_choices_remove(qs)
-        if len(choices_remove) > 0:
-            return choices_remove
-        else:
-            choices_add = self.normalize_add_choices(self.get_choices_add(qs))
-            return self.sort_choices(qs, choices_add)
-
-    def get_choices_add(self, qs):
-        raise NotImplementedError()
+class DrillDownMixin(object):
 
     def get_choices_remove(self, qs):
         chosen = self.chosen
@@ -263,7 +254,7 @@ class ForeignKeyFilter(SingleValueFilterMixin, Filter):
             obj = self.rel_model.objects.get(**lookup)
         except self.rel_model.DoesNotExist:
             return None
-        return unicode(None)
+        return unicode(obj)
 
     def get_choices_add(self, qs):
         count_dict = self.get_values_counts(qs)
