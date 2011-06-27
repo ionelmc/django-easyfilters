@@ -354,7 +354,7 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
                              None, # Don't need count for removing
                              self.build_params(remove=[choice]),
                              FILTER_REMOVE)
-                for choice in chosen]
+                for choice in chosen if choice in obj_dict]
 
 
 class DrillDownMixin(object):

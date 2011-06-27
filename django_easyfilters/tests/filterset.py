@@ -342,6 +342,14 @@ class TestFilters(TestCase):
                           (unicode(anne), FILTER_REMOVE),
                           (unicode(charlotte), FILTER_ADD)])
 
+    def test_manytomany_filter_invalid_query(self):
+        self.do_invalid_query_param_test(lambda params:
+                                             ManyToManyFilter('authors', Book, params),
+                                         MultiValueDict({'authors':['xxx']}))
+        self.do_missing_related_object_test(lambda params:
+                                                ManyToManyFilter('authors', Book, params),
+                                            MultiValueDict({'authors':['10000']}))
+
     def test_datetime_filter_multiple_year_choices(self):
         """
         Tests that DateTimeFilter can produce choices spanning a set of years
