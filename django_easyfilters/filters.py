@@ -574,8 +574,15 @@ class DateChoice(object):
 
 class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter):
 
+    max_depth_levels = {'year': YEAR.level,
+                        'month': MONTH.level,
+                        None: DAY.level + 1}
+
     def __init__(self, *args, **kwargs):
         self.max_links = kwargs.pop('max_links', 12)
+        self.max_depth = kwargs.pop('max_depth', None)
+        assert self.max_depth in ['year', 'month', None]
+        self.max_depth_level = self.max_depth_levels[self.max_depth]
         super(DateTimeFilter, self).__init__(*args, **kwargs)
 
     def choice_from_param(self, param):
@@ -634,6 +641,12 @@ class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter)
         for date_choice, count in date_choice_counts:
             if date_choice in chosen:
                 continue
+
+            # To ensure we get the bridge choices, which are useful, we check
+            # self.max_depth_level late on and bailout here.
+            if range_type.level > self.max_depth_level:
+                continue
+
             choices.append(FilterChoice(date_choice.display(),
                                         count,
                                         self.build_params(add=date_choice),

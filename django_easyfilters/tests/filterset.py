@@ -552,6 +552,13 @@ class TestFilters(TestCase):
 
         self.assertEqual(choices[1].link_type, FILTER_DISPLAY)
 
+    def test_datetime_filter_max_depth(self):
+        qs = Book.objects.all()
+        params = MultiValueDict({'date_published':['1813']})
+        f = DateTimeFilter('date_published', Book, params, max_depth='year')
+        choices = f.get_choices(f.apply_filter(qs))
+        self.assertEqual(len(choices), 1)
+        self.assertEqual(choices[0].link_type, FILTER_REMOVE)
 
     def test_datetime_filter_invalid_query(self):
         self.do_invalid_query_param_test(lambda params: DateTimeFilter('date_published', Book, params, max_links=10),
