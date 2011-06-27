@@ -3,7 +3,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.utils.text import capfirst
 
-from django_easyfilters.filters import FILTER_ADD, FILTER_REMOVE, FILTER_ONLY_CHOICE, \
+from django_easyfilters.filters import FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY, \
     ValuesFilter, ChoicesFilter, ForeignKeyFilter, ManyToManyFilter, DateTimeFilter
 
 
@@ -17,14 +17,16 @@ class FilterSet(object):
 
     template = """
 <div class="filterline"><span class="filterlabel">{{ filterlabel }}:</span>
-{% for choice in remove_choices %}
-  <span class="removefilter"><a href="{{ choice.url }}" title="Remove filter">{{ choice.label }}&nbsp;&laquo;&nbsp;</a></span>
-{% endfor %}
-{% for choice in add_choices %}
-  <span class="addfilter"><a href="{{ choice.url }}" class="addfilter" title="Add filter">{{ choice.label }}</a>&nbsp;({{ choice.count }})</span>&nbsp;&nbsp;
-{% endfor %}
-{% for choice in only_choices %}
-  <span class="onlychoice">{{ choice.label }}</span>
+{% for choice in choices %}
+  {% if choice.link_type == 'add' %}
+    <span class="addfilter"><a href="{{ choice.url }}" title="Add filter">{{ choice.label }}&nbsp;({{ choice.count }})</a></span>&nbsp;&nbsp;
+  {% else %}
+    {% if choice.link_type == 'remove' %}
+    <span class="removefilter"><a href="{{ choice.url }}" title="Remove filter">{{ choice.label }}&nbsp;&laquo;&nbsp;</a></span>
+    {% else %}
+      <span class="displayfilter">{{ choice.label }}</span>
+    {% endif %}
+  {% endif %}
 {% endfor %}
 </div>
 """
@@ -44,17 +46,12 @@ class FilterSet(object):
         field_obj = self.model._meta.get_field(filter_.field)
         choices = filter_.get_choices(qs)
         ctx = {'filterlabel': capfirst(field_obj.verbose_name)}
-        ctx['remove_choices'] = [dict(label=non_breaking_spaces(c.label),
-                                      url=u'?' + c.params.urlencode())
-                                 for c in choices if c.link_type == FILTER_REMOVE]
-        ctx['add_choices'] = [dict(label=non_breaking_spaces(c.label),
-                                   url=u'?' + c.params.urlencode(),
-                                   count=c.count)
-                              for c in choices if c.link_type == FILTER_ADD]
-        ctx['only_choices'] = [dict(label=non_breaking_spaces(c.label),
-                                    count=c.count)
-                               for c in choices if c.link_type == FILTER_ONLY_CHOICE]
-
+        ctx['choices'] = [dict(label=non_breaking_spaces(c.label),
+                               url=u'?' + c.params.urlencode() \
+                                   if c.link_type != FILTER_DISPLAY else None,
+                               link_type=c.link_type,
+                               count=c.count)
+                          for c in choices]
         return self.get_template().render(template.Context(ctx))
 
     def get_template(self):

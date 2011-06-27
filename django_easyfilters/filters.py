@@ -14,7 +14,7 @@ from django_easyfilters.queries import date_aggregation
 
 FILTER_ADD = 'add'
 FILTER_REMOVE = 'remove'
-FILTER_ONLY_CHOICE = 'only'
+FILTER_DISPLAY = 'display'
 
 FilterChoice = namedtuple('FilterChoice', 'label count params link_type')
 
@@ -160,14 +160,17 @@ class SingleValueMixin(object):
     A mixin for filters where the field conceptually has just one value.
     """
     def normalize_add_choices(self, choices):
-        if len(choices) == 1 and not self.field_obj.null:
+        addchoices = [(i, choice) for i, choice in enumerate(choices)
+                      if choice.link_type == FILTER_ADD]
+        if len(addchoices) == 1 and not self.field_obj.null:
             # No point giving people a choice of one, since all the results will
             # already have the selected value (apart from nullable fields, which
             # might have null)
-            choices = [FilterChoice(label=choices[0].label,
-                                    count=choices[0].count,
-                                    link_type=FILTER_ONLY_CHOICE,
-                                    params=None)]
+            for i, c in addchoices:
+                choices[i] = FilterChoice(label=choices[i].label,
+                                          count=choices[i].count,
+                                          link_type=FILTER_DISPLAY,
+                                          params=None)
         return choices
 
 
@@ -326,6 +329,7 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
     Filter for ForeignKey fields.
     """
     def display_choice(self, choice):
+
         lookup = {self.rel_field.name: choice}
         try:
             obj = self.rel_model.objects.get(**lookup)
@@ -407,14 +411,29 @@ class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
                 for choice in chosen if choice in obj_dict]
 
 
-DateRangeTypeBase = namedtuple('DateRangeTypeBase', 'level single label regex')
-class DateRangeType(DateRangeTypeBase):
+class DateRangeType(object):
 
     all = {} # Keep a cache, so that we have unique instances
 
-    def __init__(self, *args):
-        super(DateRangeType, self).__init__(*args)
-        DateRangeType.all[(self.level, self.single)] = self
+    def __init__(self, level, single, label, regex):
+        self.level, self.single, self.label, self.regex = level, single, label, regex
+        DateRangeType.all[(level, single)] = self
+
+    def __repr__(self):
+        return '<DateRange %d %s %s>' % (self.level,
+                                         "single" if self.single else "multi",
+                                         self.label)
+
+    def __cmp__(self, other):
+        if other is None:
+            return 1
+        else:
+            return cmp((self.level, self.single),
+                       (other.level, other.single))
+
+    @classmethod
+    def get(cls, level, single):
+        return cls.all[(level, single)]
 
     @property
     def dateattr(self):
@@ -435,13 +454,13 @@ class DateRangeType(DateRangeTypeBase):
         """
         Return the same but with 'single=True'
         """
-        return DateRangeType.all[(self.level, True)]
+        return DateRangeType.get(self.level, True)
 
     def to_multi(self):
         """
         Return the same but with 'single=False'
         """
-        return DateRangeType.all[(self.level, False)]
+        return DateRangeType.get(self.level, False)
 
     def drilldown(self):
         if self is DAY:
@@ -451,7 +470,7 @@ class DateRangeType(DateRangeTypeBase):
         else:
             # We always drill down to 'single', and then generate
             # ranges (i.e. multi) if appropriate.
-            return DateRangeType.all[(self.level + 1, True)]
+            return DateRangeType.get(self.level + 1, True)
 
 YEARGROUP   = DateRangeType(1, False, 'year',  re.compile(r'^(\d{4})..(\d{4})$'))
 YEAR        = DateRangeType(1, True,  'year',  re.compile(r'^(\d{4})$'))
@@ -491,7 +510,7 @@ class DateChoice(object):
             value = self.values[0]
             parts = value.split('-')
             if self.range_type == YEAR:
-                return value
+                return parts[0]
             elif self.range_type == MONTH:
                 from django.utils.dates import MONTHS
                 return unicode(MONTHS[int(parts[1])])
@@ -608,6 +627,10 @@ class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter)
         date_choice_counts = self.collapse_results(results, range_type)
 
         choices = []
+        # Additional display links, to give context for choices if necessary.
+        if len(date_choice_counts) > 0:
+            choices.extend(self.bridge_choices(chosen, date_choice_counts))
+
         for date_choice, count in date_choice_counts:
             if date_choice in chosen:
                 continue
@@ -655,3 +678,28 @@ class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter)
             date_choice_counts = [(DateChoice.from_datetime(range_type, dt), count)
                                   for dt, count in results]
         return date_choice_counts
+
+    def bridge_choices(self, chosen, choices):
+        if len(choices) == 0:
+            return []
+        if len(chosen) == 0:
+            chosen_level = 0
+        else:
+            chosen_level = chosen[-1].range_type.level - 1
+
+        # first choice in list can act as template, as it will have all the
+        # values we need.
+        new_choice = choices[0][0]
+        new_level = new_choice.range_type.level
+
+        retval = []
+        while chosen_level < new_level - 1:
+            chosen_level += 1
+            date_choice = DateChoice(DateRangeType.get(chosen_level, True),
+                                     new_choice.values)
+            retval.append(FilterChoice(date_choice.display(),
+                                       None,
+                                       None,
+                                       FILTER_DISPLAY))
+        return retval
+

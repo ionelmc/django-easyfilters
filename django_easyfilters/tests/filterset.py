@@ -10,7 +10,7 @@ from django.utils.datastructures import MultiValueDict
 
 from django_easyfilters.filterset import FilterSet
 from django_easyfilters.filters import \
-    FILTER_ADD, FILTER_REMOVE, FILTER_ONLY_CHOICE, \
+    FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY, \
     ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter, DateTimeFilter
 
 from models import Book, Genre, Author, BINDING_CHOICES
@@ -258,21 +258,15 @@ class TestFilters(TestCase):
         qs = Book.objects.filter(date_published__year=1975)
         self.assertEqual(len(qs), 1)
 
-        filter1 = DateTimeFilter('date_published', Book, MultiValueDict())
+        filter1 = ChoicesFilter('binding', Book, MultiValueDict())
         choices1 = filter1.get_choices(qs)
         self.assertEqual(len(choices1), 1)
-        self.assertEqual(choices1[0].link_type, FILTER_ONLY_CHOICE)
+        self.assertEqual(choices1[0].link_type, FILTER_DISPLAY)
 
-        filter2 = ChoicesFilter('binding', Book, MultiValueDict())
-        choices2 = filter1.get_choices(qs)
+        filter2 = ForeignKeyFilter('genre', Book, MultiValueDict())
+        choices2 = filter2.get_choices(qs)
         self.assertEqual(len(choices2), 1)
-        self.assertEqual(choices2[0].link_type, FILTER_ONLY_CHOICE)
-
-        filter3 = ForeignKeyFilter('genre', Book, MultiValueDict())
-        choices3 = filter3.get_choices(qs)
-        self.assertEqual(len(choices3), 1)
-        self.assertEqual(choices3[0].link_type, FILTER_ONLY_CHOICE)
-
+        self.assertEqual(choices2[0].link_type, FILTER_DISPLAY)
 
     def test_manytomany_filter(self):
         """
@@ -524,6 +518,25 @@ class TestFilters(TestCase):
         self.assertTrue(len(add_choices) >= 2)
 
         self.assertTrue("16" in [c.label for c in add_choices])
+
+    def test_datetime_filter_start_at_year(self):
+        # Tests that the first filter shown is a year, not a day,
+        # even if initial query gets you down to a day.
+        params = MultiValueDict()
+        qs = Book.objects.filter(id=1)
+        f = DateTimeFilter('date_published', Book, params, max_links=10)
+
+        choices = f.get_choices(qs)
+        self.assertEqual(len(choices), 3)
+
+        self.assertEqual(choices[0].link_type, FILTER_DISPLAY)
+        self.assertEqual(choices[0].label, str(qs[0].date_published.year))
+
+        self.assertEqual(choices[1].link_type, FILTER_DISPLAY)
+
+        self.assertEqual(choices[2].link_type, FILTER_DISPLAY)
+        self.assertEqual(choices[2].label, str(qs[0].date_published.day))
+
 
     def test_datetime_filter_invalid_query(self):
         self.do_invalid_query_param_test(lambda params: DateTimeFilter('date_published', Book, params, max_links=10),
