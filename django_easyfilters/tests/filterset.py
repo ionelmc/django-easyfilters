@@ -362,6 +362,7 @@ class TestFilters(TestCase):
         # We have enough data that it will not show a simple list of years.
         choices = f.get_choices(qs)
         self.assertTrue(len(choices) <= 10)
+        self.assertTrue('-' in choices[0].label)
 
     def test_datetime_filter_single_year_selected(self):
         params = MultiValueDict({'date_published':['1818']})

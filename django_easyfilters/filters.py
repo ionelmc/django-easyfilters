@@ -470,7 +470,7 @@ class DateChoice(object):
 
     @staticmethod
     def from_datetime_range(range_type, dt1, dt2):
-        return DateChoice(range_type,
+        return DateChoice(range_type.to_multi(),
                           [DateChoice.datetime_to_value(range_type, dt1),
                            DateChoice.datetime_to_value(range_type, dt2)])
 
