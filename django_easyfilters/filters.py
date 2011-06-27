@@ -1,5 +1,7 @@
 from collections import namedtuple
 from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
+import math
 import operator
 import re
 
@@ -384,6 +386,21 @@ class DateRangeType(DateRangeTypeBase):
         super(DateRangeType, self).__init__(*args)
         DateRangeType.all[(self.level, self.single)] = self
 
+    @property
+    def dateattr(self):
+        """
+        The attribute of a date object that we truncate to when collapsing
+        results.
+        """
+        return self.label
+
+    @property
+    def relativedeltaattr(self):
+        """
+        The attribute to use for calculations using relativedelta
+        """
+        return self.label + 's'
+
     def to_single(self):
         """
         Return the same but with 'single=True'
@@ -491,18 +508,19 @@ class DateChoice(object):
 
         start_parts = map(int, start.split('-'))
         end_parts = map(int, end.split('-'))
-        if self.range_type.label == 'year':
-            return {field_name + '__gte': date(start_parts[0], 1, 1),
-                    field_name + '__lt': date(end_parts[0] + 1, 1, 1)}
-        elif self.range_type.label == 'month':
-            yearadd, nextmonth = divmod(end_parts[1] + 1, 12)
-            return {field_name + '__gte': date(start_parts[0], start_parts[1], 1),
-                    field_name + '__lt': date(end_parts[0] + yearadd, nextmonth, 1) }
-        else:
-            startdate = date(start_parts[0], start_parts[1], start_parts[2])
-            enddate = date(end_parts[0], end_parts[1], end_parts[2]) + timedelta(1)
-            return {field_name + '__gte': startdate,
-                    field_name + '__lt':  enddate}
+
+        # Fill the parts we don't have with '1' so that e.g. 2000 becomes
+        # 2000-1-1
+        start_parts = start_parts + [1] * (3 - len(start_parts))
+        end_parts = end_parts + [1] * (3 - len(end_parts))
+        start_date = date(start_parts[0], start_parts[1], start_parts[2])
+        end_date = date(end_parts[0], end_parts[1], end_parts[2])
+
+        # Now add one year/month/day:
+        end_date = end_date + relativedelta(**{self.range_type.relativedeltaattr: 1})
+
+        return {field_name + '__gte': start_date,
+                field_name + '__lt':  end_date}
 
 
 class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
@@ -557,25 +575,7 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
         date_qs = qs.dates(self.field, range_type.label)
         results = date_aggregation(date_qs)
 
-        if len(results) > self.max_links:
-            # Fold results together
-            div, mod = divmod(len(results), self.max_links)
-            if mod != 0:
-                div += 1
-            date_choice_counts = []
-            i = 0
-            while i < len(results):
-                group = results[i:i+div]
-                count = sum(row[1] for row in group)
-                # build range:
-                choice = DateChoice.from_datetime_range(range_type,
-                                                        group[0][0],
-                                                        group[-1][0])
-                date_choice_counts.append((choice, count))
-                i += div
-        else:
-            date_choice_counts = [(DateChoice.from_datetime(range_type, dt), count)
-                                  for dt, count in results]
+        date_choice_counts = self.collapse_results(results, range_type)
 
         choices = []
         for date_choice, count in date_choice_counts:
@@ -586,3 +586,42 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
                                         self.build_params(add=date_choice),
                                         FILTER_ADD))
         return choices
+
+    def collapse_results(self, results, range_type):
+        if len(results) > self.max_links:
+            # If range_type is month/day, we don't want any possibility of the
+            # buckets wrapping over to the next year/month, so we set first and
+            # last accordingly
+            if range_type == MONTH:
+                first, last = 1, 12
+            elif range_type == DAY:
+                first, last = 1, 31
+            else:
+                first = results[0][0].year
+                last = results[-1][0].year
+
+            # We need to split into even sized buckets, so it looks nice.
+            span =  last - first + 1
+            bucketsize = int(math.ceil(float(span) / self.max_links))
+            numbuckets = int(math.ceil(float(span) / bucketsize))
+
+            buckets = [[] for i in range(numbuckets)]
+            for row in results:
+                val = getattr(row[0], range_type.dateattr)
+                bucketnum = int(math.floor(float(val - first)/bucketsize))
+                buckets[bucketnum].append(row)
+
+            dt_template = results[0][0]
+            date_choice_counts = []
+            for i, bucket in enumerate(buckets):
+                count = sum(row[1] for row in bucket)
+                start_val = first + bucketsize * i
+                start_date = dt_template.replace(**dict({range_type.dateattr: start_val}))
+                end_date = start_date + relativedelta(**dict({range_type.relativedeltaattr: bucketsize - 1}))
+
+                choice = DateChoice.from_datetime_range(range_type, start_date, end_date)
+                date_choice_counts.append((choice, count))
+        else:
+            date_choice_counts = [(DateChoice.from_datetime(range_type, dt), count)
+                                  for dt, count in results]
+        return date_choice_counts
