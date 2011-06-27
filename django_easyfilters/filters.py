@@ -360,14 +360,17 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
 class DrillDownMixin(object):
 
     def get_choices_remove(self, qs):
-        # Due to drill down, if an earlier param is removed,
-        # the later params must be removed too.
+        # Due to drill down, if a broader param is removed, the more specific
+        # params must be removed too. We assume we can do an ordering on
+        # whatever 'choice' objects are in chosen, and 'greater' means 'more
+        # specific'.
         chosen = list(self.chosen)
         out = []
         for i, choice in enumerate(chosen):
+            to_remove = [c for c in chosen if c >= choice]
             out.append(FilterChoice(self.display_choice(choice),
                                     None,
-                                    self.build_params(remove=chosen[i:]),
+                                    self.build_params(remove=to_remove),
                                     FILTER_REMOVE))
         return out
 
@@ -375,6 +378,11 @@ class DrillDownMixin(object):
 year_match = re.compile(r'^\d{4}$')
 month_match = re.compile(r'^\d{4}-\d{2}$')
 day_match = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+
+DateRangeType = namedtuple('DateRangeType', 'order label')
+YEAR  = DateRangeType(1, 'year')
+MONTH = DateRangeType(2, 'month')
+DAY   = DateRangeType(3, 'day')
 
 class DateChoice(object):
     """
@@ -393,17 +401,24 @@ class DateChoice(object):
         # This is called when converting to URL
         return '..'.join(self.values)
 
+    def __repr__(self):
+        return '<DateChoice %s %s>' % (self.range_type, self.__unicode__())
+
+    def __cmp__(self, other):
+        return cmp((self.range_type, self.values),
+                   (other.range_type, other.values))
+
     def display(self):
         # Called for user presentable string
         if len(self.values) == 1:
             value = self.values[0]
             parts = value.split('-')
-            if self.range_type == 'year':
+            if self.range_type == YEAR:
                 return value
-            elif self.range_type == 'month':
+            elif self.range_type == MONTH:
                 month = date(int(parts[0]), int(parts[1]), 1)
                 return capfirst(formats.date_format(month, 'YEAR_MONTH_FORMAT'))
-            elif self.range_type == 'day':
+            elif self.range_type == DAY:
                 return str(int(parts[-1]))
         else:
             return u'-'.join([DateChoice(self.range_type,
@@ -413,9 +428,9 @@ class DateChoice(object):
 
     @staticmethod
     def datetime_to_value(range_type, dt):
-        if range_type == 'year':
+        if range_type == YEAR:
             return '%04d' % dt.year
-        elif range_type == 'month':
+        elif range_type == MONTH:
             return '%04d-%02d' % (dt.year, dt.month)
         else:
             return '%04d-%02d-%02d' % (dt.year, dt.month, dt.day)
@@ -433,11 +448,11 @@ class DateChoice(object):
     @staticmethod
     def range_type_from_param(param):
         if year_match.match(param):
-            return 'year'
+            return YEAR
         elif month_match.match(param):
-            return 'month'
+            return MONTH
         elif day_match.match(param):
-            return 'day'
+            return DAY
 
     @staticmethod
     def from_param(param):
@@ -463,22 +478,17 @@ class DateChoice(object):
             # yyyy-mm-dd
             # Need to look up last part, converted to int
             parts = val.split('-')
-            return {field_name + '__' + self.range_type: int(parts[-1])}
+            return {field_name + '__' + self.range_type.label : int(parts[-1])}
         else:
             # Should be just two values. First is lower bound, second is upper
             # bound. Need to convert to datetime objects.
             start_parts = map(int, self.values[0].split('-'))
             end_parts = map(int, self.values[1].split('-'))
-            if self.range_type == 'year':
+            if self.range_type == YEAR:
                 return {field_name + '__gte': date(start_parts[0], 1, 1),
                         field_name + '__lt': date(end_parts[0] + 1, 1, 1)}
             else:
                 return {}
-
-    def __eq__(self, other):
-        return (other is not None and
-                self.range_type == other.range_type and
-                self.values == other.values)
 
 
 class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
@@ -493,6 +503,11 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
             raise ValueError()
         return choice
 
+    def choices_from_params(self):
+        choices = super(DateTimeFilter, self).choices_from_params()
+        choices.sort()
+        return choices
+
     def lookup_from_choice(self, choice):
         return choice.make_lookup(self.field)
 
@@ -505,24 +520,24 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
 
         if len(chosen) > 0:
             last = chosen[-1]
-            if last.range_type == 'year':
+            if last.range_type == YEAR:
                 if len(last.values) == 1:
                     # One year, drill down
-                    range_type = 'month'
+                    range_type = MONTH
                 else:
                     # Range, stay on year
-                    range_type = 'year'
-            elif last.range_type == 'month':
+                    range_type = YEAR
+            elif last.range_type == MONTH:
                 if len(last.values) == 1:
-                    range_type = 'day'
+                    range_type = DAY
                 else:
-                    range_type = 'month'
-            elif last.range_type == 'day':
+                    range_type = MONTH
+            elif last.range_type == DAY:
                 if len(last.values) == 1:
                     # Already down to one day, can't drill any further.
                     return []
                 else:
-                    range_type = 'day'
+                    range_type = DAY
 
         if range_type is None:
             # Get some initial idea of range
@@ -535,13 +550,13 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
                 return []
             if first.year == last.year:
                 if first.month == last.month:
-                    range_type = 'day'
+                    range_type = DAY
                 else:
-                    range_type = 'month'
+                    range_type = MONTH
             else:
-                range_type = 'year'
+                range_type = YEAR
 
-        date_qs = qs.dates(self.field, range_type)
+        date_qs = qs.dates(self.field, range_type.label)
         results = date_aggregation(date_qs)
 
         if len(results) > self.max_links:
