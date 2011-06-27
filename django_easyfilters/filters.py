@@ -437,36 +437,19 @@ class DateRangeType(object):
 
     @property
     def dateattr(self):
-        """
-        The attribute of a date object that we truncate to when collapsing
-        results.
-        """
+        # The attribute of a date object that we truncate to when collapsing results.
         return self.label
 
     @property
     def relativedeltaattr(self):
-        """
-        The attribute to use for calculations using relativedelta
-        """
+        # The attribute to use for calculations using relativedelta
         return self.label + 's'
-
-    def to_single(self):
-        """
-        Return the same but with 'single=True'
-        """
-        return DateRangeType.get(self.level, True)
-
-    def to_multi(self):
-        """
-        Return the same but with 'single=False'
-        """
-        return DateRangeType.get(self.level, False)
 
     def drilldown(self):
         if self is DAY:
             return None
         if not self.single:
-            return self.to_single()
+            return DateRangeType.get(self.level, True)
         else:
             # We always drill down to 'single', and then generate
             # ranges (i.e. multi) if appropriate.
@@ -517,7 +500,7 @@ class DateChoice(object):
             elif self.range_type == DAY:
                 return str(int(parts[-1]))
         else:
-            return u'-'.join([DateChoice(self.range_type.to_single(),
+            return u'-'.join([DateChoice(DateRangeType.get(self.range_type.level, True),
                                          [val]).display()
                               for val in self.values])
 
@@ -536,7 +519,7 @@ class DateChoice(object):
 
     @staticmethod
     def from_datetime_range(range_type, dt1, dt2):
-        return DateChoice(range_type.to_multi(),
+        return DateChoice(DateRangeType.get(range_type.level, False),
                           [DateChoice.datetime_to_value(range_type, dt1),
                            DateChoice.datetime_to_value(range_type, dt2)])
 
