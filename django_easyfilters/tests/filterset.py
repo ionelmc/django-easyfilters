@@ -78,6 +78,25 @@ class TestFilterSet(TestCase):
 class TestFilters(TestCase):
     fixtures = ['django_easyfilters_tests']
 
+    def do_invalid_query_param_test(self, make_filter, params):
+        """
+        Utility to test filters with invalid query paramters.
+
+        make_filter should a callable that accepts MultiValueDict
+        and returns a filter.
+        """
+        f = make_filter(params)
+        f_empty = make_filter(MultiValueDict())
+        qs = f.model.objects.all()
+
+        # invalid param should be ignored
+        qs_filtered = f.apply_filter(qs)
+        self.assertEqual(list(qs_filtered),
+                         list(qs))
+
+        self.assertEqual(list(f.get_choices(qs)),
+                         list(f_empty.get_choices(qs)))
+
     def test_foreignkey_filters_produced(self):
         """
         A ForeignKey should produce a list of the possible related objects,
@@ -246,7 +265,6 @@ class TestFilters(TestCase):
             choices_filtered = filter2.get_choices(qs)
             self.assertEqual(choices_filtered[0].link_type, FILTER_REMOVE)
 
-
     def test_manytomany_filter_multiple(self):
         qs = Book.objects.all()
 
@@ -352,20 +370,9 @@ class TestFilters(TestCase):
         self.assertEqual([c.label for c in choices if c.link_type == FILTER_ADD],
                          ['1813', '1814'])
 
-
     def test_datetime_filter_invalid_query(self):
-        params = MultiValueDict({'date_published':['1818xx']})
-        f = DateTimeFilter('date_published', Book, params, max_links=10)
-        f_empty = DateTimeFilter('date_published', Book, MultiValueDict(), max_links=10)
-        qs = Book.objects.all()
-
-        # invalid param should be ignored
-        qs_filtered = f.apply_filter(qs)
-        self.assertEqual(list(qs_filtered),
-                         list(qs))
-
-        self.assertEqual(list(f.get_choices(qs)),
-                         list(f_empty.get_choices(qs)))
+        self.do_invalid_query_param_test(lambda params: DateTimeFilter('date_published', Book, params, max_links=10),
+                                         MultiValueDict({'date_published':['1818xx']}))
 
     def test_order_by_count(self):
         """
