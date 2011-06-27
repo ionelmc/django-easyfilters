@@ -127,16 +127,6 @@ class Filter(object):
         """
         if self.order_by_count:
             choices.sort(key=operator.attrgetter('count'), reverse=True)
-        else:
-            choices = self.sort_choices_custom(qs, choices)
-        return choices
-
-    def sort_choices_custom(self, qs, choices):
-        """
-        Override this to provide a custom sorting method for a field. If sorting
-        can be better done in the DB, it should be done in the get_choices_add
-        method.
-        """
         return choices
 
     def normalize_add_choices(self, choices):
