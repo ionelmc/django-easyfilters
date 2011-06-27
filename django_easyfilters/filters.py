@@ -174,11 +174,15 @@ class SingleValueFilterMixin(object):
 
     def get_choices_remove(self, qs):
         chosen = self.chosen
-        return [FilterChoice(self.display_choice(choice),
-                             None, # Don't need count for removing
-                             self.build_params(remove=[choice]),
-                             FILTER_REMOVE)
-                for choice in chosen]
+        choices = []
+        for choice in chosen:
+            display = self.display_choice(choice)
+            if display is not None:
+                choices.append(FilterChoice(display,
+                                            None, # Don't need count for removing
+                                            self.build_params(remove=[choice]),
+                                            FILTER_REMOVE))
+        return choices
 
 
 class ValuesFilter(SingleValueFilterMixin, Filter):
@@ -253,7 +257,11 @@ class ForeignKeyFilter(SingleValueFilterMixin, Filter):
 
     def display_choice(self, choice):
         lookup = {self.rel_field.name: choice}
-        return unicode(self.rel_model.objects.get(**lookup))
+        try:
+            obj = self.rel_model.objects.get(**lookup)
+        except self.rel_model.DoesNotExist:
+            return None
+        return unicode(None)
 
     def get_choices_add(self, qs):
         count_dict = self.get_values_counts(qs)

@@ -80,7 +80,7 @@ class TestFilters(TestCase):
 
     def do_invalid_query_param_test(self, make_filter, params):
         """
-        Utility to test filters with invalid query paramters.
+        Utility to test filters with invalid query parameters.
 
         make_filter should a callable that accepts MultiValueDict
         and returns a filter.
@@ -96,6 +96,24 @@ class TestFilters(TestCase):
 
         self.assertEqual(list(f.get_choices(qs)),
                          list(f_empty.get_choices(qs)))
+
+    def do_missing_related_object_test(self, make_filter, params):
+        """
+        Utility to test filters with query strings representing objects
+        not in the database.
+
+        make_filter should a callable that accepts MultiValueDict
+        and returns a filter.
+        """
+        f = make_filter(params)
+        qs = f.model.objects.all()
+
+        # choices should render without error, and with no
+        # 'remove' links.
+        qs_filtered = f.apply_filter(qs)
+        choices = list(f.get_choices(qs))
+        self.assertFalse(any(c.link_type == FILTER_REMOVE
+                             for c in choices))
 
     def test_foreignkey_filters_produced(self):
         """
@@ -176,6 +194,9 @@ class TestFilters(TestCase):
         self.do_invalid_query_param_test(lambda params:
                                              ForeignKeyFilter('genre', Book, params),
                                          MultiValueDict({'genre':['xxx']}))
+        self.do_missing_related_object_test(lambda params:
+                                                ForeignKeyFilter('genre', Book, params),
+                                            MultiValueDict({'genre':['1000']}))
 
     def test_values_filter(self):
         """
