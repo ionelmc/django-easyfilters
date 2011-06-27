@@ -530,6 +530,9 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
                                       last=models.Max(self.field))
             first = date_range['first']
             last = date_range['last']
+            if first is None or last is None:
+                # No values, can't drill down:
+                return []
             if first.year == last.year:
                 if first.month == last.month:
                     range_type = 'day'

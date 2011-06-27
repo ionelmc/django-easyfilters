@@ -400,6 +400,19 @@ class TestFilters(TestCase):
         self.do_invalid_query_param_test(lambda params: DateTimeFilter('date_published', Book, params, max_links=10),
                                          MultiValueDict({'date_published':['1818xx']}))
 
+    def test_datetime_filter_empty_qs(self):
+        """
+        Tests that DateTimeFilter works when it is passed in an empty QuerySet.
+        """
+        f = DateTimeFilter('date_published', Book, MultiValueDict(), max_links=10)
+        qs = Book.objects.none()
+
+        # We have enough data that it will not show a simple list of years.
+        qs_filtered = f.apply_filter(qs)
+        choices = f.get_choices(qs_filtered)
+        self.assertEqual(len(choices), 0)
+        self.assertEqual(len(qs_filtered), 0)
+
     def test_order_by_count(self):
         """
         Tests the 'order_by_count' option.
