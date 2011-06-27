@@ -685,7 +685,7 @@ class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter)
         if len(chosen) == 0:
             chosen_level = 0
         else:
-            chosen_level = chosen[-1].range_type.level - 1
+            chosen_level = chosen[-1].range_type.level
 
         # first choice in list can act as template, as it will have all the
         # values we need.

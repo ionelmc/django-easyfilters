@@ -537,6 +537,21 @@ class TestFilters(TestCase):
         self.assertEqual(choices[2].link_type, FILTER_DISPLAY)
         self.assertEqual(choices[2].label, str(qs[0].date_published.day))
 
+    def test_datetime_filter_select_year_dsiplay_month(self):
+        # Tests that if a year is selected, and only one thing matches,
+        # the month should be displayed in 'display' mode.
+        qs = Book.objects.filter(id=1)
+        params = MultiValueDict(dict(date_published=[str(qs[0].date_published.year)]))
+        f = DateTimeFilter('date_published', Book, params, max_links=10)
+
+        choices = f.get_choices(qs)
+        self.assertEqual(len(choices), 2)
+
+        self.assertEqual(choices[0].link_type, FILTER_REMOVE)
+        self.assertEqual(choices[0].label, str(qs[0].date_published.year))
+
+        self.assertEqual(choices[1].link_type, FILTER_DISPLAY)
+
 
     def test_datetime_filter_invalid_query(self):
         self.do_invalid_query_param_test(lambda params: DateTimeFilter('date_published', Book, params, max_links=10),
