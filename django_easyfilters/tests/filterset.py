@@ -249,6 +249,31 @@ class TestFilters(TestCase):
         for c in choices:
             self.assertTrue(c.params.values()[0] in binding_choices_db)
 
+    def test_normalize_choices(self):
+        # We shouldn't get links for non-nullable fields when there is only one choice.
+
+        # Make sure there are no other books in 1975
+        clark = Author.objects.get(name='Arthur C. Clarke')
+        Book.objects.filter(date_published__year=1975).exclude(authors=clark.id).delete()
+        qs = Book.objects.filter(date_published__year=1975)
+        self.assertEqual(len(qs), 1)
+
+        filter1 = DateTimeFilter('date_published', Book, MultiValueDict())
+        choices1 = filter1.get_choices(qs)
+        self.assertEqual(len(choices1), 1)
+        self.assertEqual(choices1[0].link_type, FILTER_ONLY_CHOICE)
+
+        filter2 = ChoicesFilter('binding', Book, MultiValueDict())
+        choices2 = filter1.get_choices(qs)
+        self.assertEqual(len(choices2), 1)
+        self.assertEqual(choices2[0].link_type, FILTER_ONLY_CHOICE)
+
+        filter3 = ForeignKeyFilter('genre', Book, MultiValueDict())
+        choices3 = filter3.get_choices(qs)
+        self.assertEqual(len(choices3), 1)
+        self.assertEqual(choices3[0].link_type, FILTER_ONLY_CHOICE)
+
+
     def test_manytomany_filter(self):
         """
         Tests for ManyToManyFilter
