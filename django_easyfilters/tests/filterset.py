@@ -427,28 +427,65 @@ class TestFilters(TestCase):
         (e.g. day) should be removed too.
         """
         # This should hold whichever order the params are defined:
-        params1 = MultiValueDict({'date_published': ['1818',
+        params1 = MultiValueDict({'date_published': ['1818-08-24',
+                                                     '1818-08-24..1818-08-30',
                                                      '1818-08',
-                                                     '1818-08-24']})
-        params2 = MultiValueDict({'date_published': ['1818-08-24',
-                                                     '1818-08',
+                                                     '1818-08..1818-10',
+                                                     '1818..1819',
                                                      '1818']})
+        params2 = MultiValueDict({'date_published': ['1818..1819',
+                                                     '1818',
+                                                     '1818-08..1818-10',
+                                                     '1818-08',
+                                                     '1818-08-24..1818-08-30',
+                                                     '1818-08-24',
+                                                     ]})
+
         for p in [params1, params2]:
             f = DateTimeFilter('date_published', Book, p)
             qs = Book.objects.all()
             qs_filtered = f.apply_filter(qs)
             choices = f.get_choices(qs_filtered)
-            # First choice should be for '1818' and remove all 'date_published'
-            self.assertEqual(choices[0].label, '1818')
+
+            # First choice should be for '1818-1819' and remove all 'date_published'
+            self.assertEqual(choices[0].label, '1818-1819')
             self.assertEqual(choices[0].link_type, FILTER_REMOVE)
-            self.assertEqual(choices[0].params.getlist('date_published'), [])
-            # Second choice should remove all but one 'date_published'
+            self.assertEqual(choices[0].params.getlist('date_published'),
+                             [])
+
             self.assertEqual(choices[1].link_type, FILTER_REMOVE)
-            self.assertEqual(choices[1].params.getlist('date_published'), ['1818'])
+            self.assertEqual(choices[1].params.getlist('date_published'),
+                             ['1818..1819'])
 
             self.assertEqual(choices[2].link_type, FILTER_REMOVE)
-            self.assertEqual(choices[2].params.getlist('date_published'), ['1818',
-                                                                           '1818-08'])
+            self.assertEqual(choices[2].params.getlist('date_published'),
+                             ['1818..1819',
+                              '1818',
+                              ])
+
+            self.assertEqual(choices[3].link_type, FILTER_REMOVE)
+            self.assertEqual(choices[3].params.getlist('date_published'),
+                             ['1818..1819',
+                              '1818',
+                              '1818-08..1818-10',
+                              ])
+
+            self.assertEqual(choices[4].link_type, FILTER_REMOVE)
+            self.assertEqual(choices[4].params.getlist('date_published'),
+                             ['1818..1819',
+                              '1818',
+                              '1818-08..1818-10',
+                              '1818-08',
+                              ])
+
+            self.assertEqual(choices[5].link_type, FILTER_REMOVE)
+            self.assertEqual(choices[5].params.getlist('date_published'),
+                             ['1818..1819',
+                              '1818',
+                              '1818-08..1818-10',
+                              '1818-08',
+                              '1818-08-24..1818-08-30',
+                              ])
 
     def test_order_by_count(self):
         """

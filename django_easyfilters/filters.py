@@ -379,10 +379,44 @@ year_match = re.compile(r'^\d{4}$')
 month_match = re.compile(r'^\d{4}-\d{2}$')
 day_match = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 
-DateRangeType = namedtuple('DateRangeType', 'order label')
-YEAR  = DateRangeType(1, 'year')
-MONTH = DateRangeType(2, 'month')
-DAY   = DateRangeType(3, 'day')
+DateRangeTypeBase = namedtuple('DateRangeTypeBase', 'level single label')
+class DateRangeType(DateRangeTypeBase):
+
+    all = {} # Keep a cache, so that we have unique instances
+
+    def __init__(self, *args):
+        super(DateRangeType, self).__init__(*args)
+        DateRangeType.all[(self.level, self.single)] = self
+
+    def to_single(self):
+        """
+        Return the same but with 'single=True'
+        """
+        return DateRangeType.all[(self.level, True)]
+
+    def to_multi(self):
+        """
+        Return the same but with 'single=False'
+        """
+        return DateRangeType.all[(self.level, False)]
+
+    def drilldown(self):
+        if self is DAY:
+            return None
+        if not self.single:
+            return self.to_single()
+        else:
+            # We always drill down to 'single', and then generate
+            # ranges (i.e. multi) if appropriate.
+            return DateRangeType.all[(self.level + 1, True)]
+
+YEARGROUP   = DateRangeType(1, False, 'year')
+YEAR        = DateRangeType(1, True,  'year')
+MONTHGROUP  = DateRangeType(2, False, 'month')
+MONTH       = DateRangeType(2, True,  'month')
+DAYGROUP    = DateRangeType(3, False, 'day')
+DAY         = DateRangeType(3, True,  'day')
+
 
 class DateChoice(object):
     """
@@ -410,7 +444,7 @@ class DateChoice(object):
 
     def display(self):
         # Called for user presentable string
-        if len(self.values) == 1:
+        if self.range_type.single:
             value = self.values[0]
             parts = value.split('-')
             if self.range_type == YEAR:
@@ -421,7 +455,7 @@ class DateChoice(object):
             elif self.range_type == DAY:
                 return str(int(parts[-1]))
         else:
-            return u'-'.join([DateChoice(self.range_type,
+            return u'-'.join([DateChoice(self.range_type.to_single(),
                                          [val]).display()
                               for val in self.values])
 
@@ -463,14 +497,14 @@ class DateChoice(object):
             if None in range_types or range_types[0] != range_types[1]:
                 return None
             else:
-                return DateChoice(range_types[0], params)
+                return DateChoice(range_types[0].to_multi(), params)
         else:
             range_type = DateChoice.range_type_from_param(param)
             if range_type is not None:
                 return DateChoice(range_type, [param])
 
     def make_lookup(self, field_name):
-        if len(self.values) == 1:
+        if self.range_type.single:
             val = self.values[0]
             # val can contain:
             # yyyy
@@ -484,7 +518,7 @@ class DateChoice(object):
             # bound. Need to convert to datetime objects.
             start_parts = map(int, self.values[0].split('-'))
             end_parts = map(int, self.values[1].split('-'))
-            if self.range_type == YEAR:
+            if self.range_type == YEARGROUP:
                 return {field_name + '__gte': date(start_parts[0], 1, 1),
                         field_name + '__lt': date(end_parts[0] + 1, 1, 1)}
             else:
@@ -519,25 +553,9 @@ class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
         range_type = None
 
         if len(chosen) > 0:
-            last = chosen[-1]
-            if last.range_type == YEAR:
-                if len(last.values) == 1:
-                    # One year, drill down
-                    range_type = MONTH
-                else:
-                    # Range, stay on year
-                    range_type = YEAR
-            elif last.range_type == MONTH:
-                if len(last.values) == 1:
-                    range_type = DAY
-                else:
-                    range_type = MONTH
-            elif last.range_type == DAY:
-                if len(last.values) == 1:
-                    # Already down to one day, can't drill any further.
-                    return []
-                else:
-                    range_type = DAY
+            range_type = chosen[-1].range_type.drilldown()
+            if range_type is None:
+                return []
 
         if range_type is None:
             # Get some initial idea of range
