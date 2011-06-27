@@ -239,10 +239,17 @@ class ForeignKeyFilter(SingleValueFilterMixin, Filter):
     """
     Filter for ForeignKey fields.
     """
-    def __init__(self, *args, **kwargs):
-        super(ForeignKeyFilter, self).__init__(*args, **kwargs)
+    def __init__(self, field, model, params, **kwargs):
+        self.field_obj = model._meta.get_field(field)
         self.rel_model = self.field_obj.rel.to
         self.rel_field = self.field_obj.rel.get_related_field()
+        super(ForeignKeyFilter, self).__init__(field, model, params, **kwargs)
+
+    def choice_from_param(self, param):
+        try:
+            return self.rel_field.to_python(param)
+        except ValidationError:
+            raise ValueError()
 
     def display_choice(self, choice):
         lookup = {self.rel_field.name: choice}

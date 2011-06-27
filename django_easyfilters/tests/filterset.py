@@ -172,6 +172,11 @@ class TestFilters(TestCase):
         qs_reverted = filter3.apply_filter(qs)
         self.assertEqual(qs, qs_reverted)
 
+    def test_foreignkey_invalid_query(self):
+        self.do_invalid_query_param_test(lambda params:
+                                             ForeignKeyFilter('genre', Book, params),
+                                         MultiValueDict({'genre':['xxx']}))
+
     def test_values_filter(self):
         """
         Tests for ValuesFilter
