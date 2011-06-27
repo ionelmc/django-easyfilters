@@ -708,6 +708,8 @@ class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter)
         retval = []
         while chosen_level < new_level - 1:
             chosen_level += 1
+            if chosen_level > self.max_depth_level:
+                continue
             date_choice = DateChoice(DateRangeType.get(chosen_level, True),
                                      new_choice.values)
             retval.append(FilterChoice(date_choice.display(),
