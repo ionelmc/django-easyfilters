@@ -378,6 +378,7 @@ class TestFilters(TestCase):
         with self.assertNumQueries(1):
             choices = f.get_choices(qs_filtered)
 
+        # There are at least 2 books in 1818, in different months.
         self.assertTrue(len([c for c in choices if c.link_type == FILTER_ADD]) >= 2)
         self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
 
@@ -400,10 +401,56 @@ class TestFilters(TestCase):
         with self.assertNumQueries(1):
             choices = f.get_choices(qs_filtered)
 
+        # There are at least 2 books in 1813..1814, on different years
         self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
         self.assertEqual(len([c for c in choices if c.link_type == FILTER_ADD]), 2)
         self.assertEqual([c.label for c in choices if c.link_type == FILTER_ADD],
                          ['1813', '1814'])
+
+    def test_datetime_filter_single_month_selected(self):
+        params = MultiValueDict({'date_published':['1847-10']})
+        f = DateTimeFilter('date_published', Book, params, max_links=10)
+        qs = Book.objects.all()
+
+        # Should get a number of books in queryset.
+        qs_filtered = f.apply_filter(qs)
+
+        self.assertEqual(list(qs_filtered),
+                         list(qs.filter(date_published__year=1847,
+                                        date_published__month=10)))
+
+        # We only need 1 query if we've already told it what month to look at.
+        with self.assertNumQueries(1):
+            choices = f.get_choices(qs_filtered)
+
+        # There are at least 2 books for Oct 1847, on different days
+        self.assertTrue(len([c for c in choices if c.link_type == FILTER_ADD]) >= 2)
+        self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
+
+    def test_datetime_filter_month_range_selected(self):
+        params = MultiValueDict({'date_published':['1818-08..1818-09']})
+        f = DateTimeFilter('date_published', Book, params, max_links=10)
+        qs = Book.objects.all()
+
+        # Should get a number of books in queryset.
+        qs_filtered = f.apply_filter(qs)
+
+        start = date(1818, 8, 1)
+        end = date(1818, 10, 1)
+        self.assertEqual(list(qs_filtered),
+                         list(qs.filter(date_published__gte=start,
+                                        date_published__lt=end)))
+
+        # We only need 1 query if we've already told it what months to look at,
+        # and there is data for both months.
+        with self.assertNumQueries(1):
+            choices = f.get_choices(qs_filtered)
+
+        self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
+        # There are at least 2 books in this range, in different months
+        self.assertEqual(len([c for c in choices if c.link_type == FILTER_ADD]), 2)
+        self.assertEqual([c.label for c in choices if c.link_type == FILTER_ADD],
+                         ['August', 'September'])
 
     def test_datetime_filter_invalid_query(self):
         self.do_invalid_query_param_test(lambda params: DateTimeFilter('date_published', Book, params, max_links=10),

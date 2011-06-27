@@ -446,8 +446,8 @@ class DateChoice(object):
             if self.range_type == YEAR:
                 return value
             elif self.range_type == MONTH:
-                month = date(int(parts[0]), int(parts[1]), 1)
-                return capfirst(formats.date_format(month, 'YEAR_MONTH_FORMAT'))
+                from django.utils.dates import MONTHS
+                return unicode(MONTHS[int(parts[1])])
             elif self.range_type == DAY:
                 return str(int(parts[-1]))
         else:
@@ -482,25 +482,24 @@ class DateChoice(object):
                 return DateChoice(drt, list(m.groups()))
 
     def make_lookup(self, field_name):
+        # It's easier to do this all using datetime comparisons, than have a
+        # separate path for the single year/month/day case.
         if self.range_type.single:
-            val = self.values[0]
-            # val can contain:
-            # yyyy
-            # yyyy-mm
-            # yyyy-mm-dd
-            # Need to look up last part, converted to int
-            parts = val.split('-')
-            return {field_name + '__' + self.range_type.label : int(parts[-1])}
+            start, end = self.values[0], self.values[0]
         else:
-            # Should be just two values. First is lower bound, second is upper
-            # bound. Need to convert to datetime objects.
-            start_parts = map(int, self.values[0].split('-'))
-            end_parts = map(int, self.values[1].split('-'))
-            if self.range_type == YEARGROUP:
-                return {field_name + '__gte': date(start_parts[0], 1, 1),
-                        field_name + '__lt': date(end_parts[0] + 1, 1, 1)}
-            else:
-                return {}
+            start, end = self.values
+
+        start_parts = map(int, start.split('-'))
+        end_parts = map(int, end.split('-'))
+        if self.range_type.label == 'year':
+            return {field_name + '__gte': date(start_parts[0], 1, 1),
+                    field_name + '__lt': date(end_parts[0] + 1, 1, 1)}
+        elif self.range_type.label == 'month':
+            yearadd, nextmonth = divmod(end_parts[1] + 1, 12)
+            return {field_name + '__gte': date(start_parts[0], start_parts[1], 1),
+                    field_name + '__lt': date(end_parts[0] + yearadd, nextmonth, 1) }
+        else:
+            return {}
 
 
 class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
