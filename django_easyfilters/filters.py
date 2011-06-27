@@ -1,5 +1,5 @@
 from collections import namedtuple
-from datetime import date
+from datetime import date, timedelta
 import operator
 import re
 
@@ -482,7 +482,7 @@ class DateChoice(object):
                 return DateChoice(drt, list(m.groups()))
 
     def make_lookup(self, field_name):
-        # It's easier to do this all using datetime comparisons, than have a
+        # It's easier to do this all using datetime comparisons than have a
         # separate path for the single year/month/day case.
         if self.range_type.single:
             start, end = self.values[0], self.values[0]
@@ -499,7 +499,10 @@ class DateChoice(object):
             return {field_name + '__gte': date(start_parts[0], start_parts[1], 1),
                     field_name + '__lt': date(end_parts[0] + yearadd, nextmonth, 1) }
         else:
-            return {}
+            startdate = date(start_parts[0], start_parts[1], start_parts[2])
+            enddate = date(end_parts[0], end_parts[1], end_parts[2]) + timedelta(1)
+            return {field_name + '__gte': startdate,
+                    field_name + '__lt':  enddate}
 
 
 class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):

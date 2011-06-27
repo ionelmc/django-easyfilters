@@ -452,6 +452,53 @@ class TestFilters(TestCase):
         self.assertEqual([c.label for c in choices if c.link_type == FILTER_ADD],
                          ['August', 'September'])
 
+    def test_datetime_filter_single_day_selected(self):
+        params = MultiValueDict({'date_published':['1847-10-16']})
+        f = DateTimeFilter('date_published', Book, params, max_links=10)
+        qs = Book.objects.all()
+
+        # Should get a number of books in queryset.
+        qs_filtered = f.apply_filter(qs)
+
+        self.assertEqual(list(qs_filtered),
+                         list(qs.filter(date_published__year=1847,
+                                        date_published__month=10,
+                                        date_published__day=16)))
+
+        # We need 0 queries if we've already told it what day to look at.
+        with self.assertNumQueries(0):
+            choices = f.get_choices(qs_filtered)
+
+        # There can be no add links.
+        self.assertEqual(len([c for c in choices if c.link_type == FILTER_ADD]), 0)
+        self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
+
+    def test_datetime_filter_day_range_selected(self):
+        params = MultiValueDict({'date_published':['1847-10-10..1847-10-23']})
+        f = DateTimeFilter('date_published', Book, params, max_links=10)
+        qs = Book.objects.all()
+
+        # Should get a number of books in queryset.
+        qs_filtered = f.apply_filter(qs)
+
+        start = date(1847, 10, 10)
+        end = date(1847, 10, 24)
+        self.assertEqual(list(qs_filtered),
+                         list(qs.filter(date_published__gte=start,
+                                        date_published__lt=end)))
+
+        # We only need 1 query if we've already told it what days to look at,
+        # and there is data for more than one day.
+        with self.assertNumQueries(1):
+            choices = f.get_choices(qs_filtered)
+
+        self.assertEqual(len([c for c in choices if c.link_type == FILTER_REMOVE]), 1)
+        # There are at least 2 books in this range, on different days.
+        add_choices = [c for c in choices if c.link_type == FILTER_ADD]
+        self.assertTrue(len(add_choices) >= 2)
+
+        self.assertTrue("16" in [c.label for c in add_choices])
+
     def test_datetime_filter_invalid_query(self):
         self.do_invalid_query_param_test(lambda params: DateTimeFilter('date_published', Book, params, max_links=10),
                                          MultiValueDict({'date_published':['1818xx']}))
