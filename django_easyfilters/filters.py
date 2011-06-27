@@ -36,6 +36,10 @@ class Filter(object):
         self.query_param = query_param
         self.order_by_count = order_by_count
         self.field_obj = self.model._meta.get_field(self.field)
+
+        if self.field_obj.rel is not None:
+            self.rel_model = self.field_obj.rel.to
+            self.rel_field = self.field_obj.rel.get_related_field()
         # Make chosen an immutable sequence, to stop accidental mutation.
         self.chosen = tuple(self.choices_from_params())
 
@@ -135,35 +139,8 @@ class Filter(object):
         """
         return choices
 
-
-class SingleValueFilterMixin(object):
-
-    def get_values_counts(self, qs):
-        """
-        Returns a SortedDict dictionary of {value: count}.
-
-        The order is the underlying order produced by sorting ascending on the
-        DB field.
-        """
-        values_counts = qs.values_list(self.field).order_by(self.field).annotate(models.Count(self.field))
-
-        count_dict = SortedDict()
-        for val, count in values_counts:
-            count_dict[val] = count
-        return count_dict
-
     def normalize_add_choices(self, choices):
-        if len(choices) == 1 and not self.field_obj.null:
-            # No point giving people a choice of one, since all the results will
-            # already have the selected value (apart from nullable fields, which
-            # might have null)
-            choices = [FilterChoice(label=choices[0].label,
-                                    count=choices[0].count,
-                                    link_type=FILTER_ONLY_CHOICE,
-                                    params=None)]
         return choices
-
-class DrillDownMixin(object):
 
     def get_choices_remove(self, qs):
         chosen = self.chosen
@@ -178,10 +155,122 @@ class DrillDownMixin(object):
         return choices
 
 
-class ValuesFilter(SingleValueFilterMixin, Filter):
+class SingleValueMixin(object):
+    """
+    A mixin for filters where the field conceptually has just one value.
+    """
+    def normalize_add_choices(self, choices):
+        if len(choices) == 1 and not self.field_obj.null:
+            # No point giving people a choice of one, since all the results will
+            # already have the selected value (apart from nullable fields, which
+            # might have null)
+            choices = [FilterChoice(label=choices[0].label,
+                                    count=choices[0].count,
+                                    link_type=FILTER_ONLY_CHOICE,
+                                    params=None)]
+        return choices
+
+
+class ChooseOnceMixin(SingleValueMixin):
+    """
+    A mixin for filters where you can only choose the filter once, and then
+    remove the filter.
+    """
+    def get_choices(self, qs):
+        choices_remove = self.get_choices_remove(qs)
+        if len(choices_remove) > 0:
+            return choices_remove
+        else:
+            choices_add = self.normalize_add_choices(self.get_choices_add(qs))
+            return self.sort_choices(qs, choices_add)
+
+    def get_choices_add(self, qs):
+        raise NotImplementedError()
+
+
+class ChooseAgainMixin(object):
+    """
+    A mixin for filters where it is possible to choose the filter more than
+    once.
+    """
+    # This includes drill down, as well as many-valued fields.
+    def get_choices(self, qs):
+        # In general, can filter multiple times, so we can have multiple remove
+        # links, and multiple add links, at the same time.
+        choices_remove = self.get_choices_remove(qs)
+        choices_add = self.normalize_add_choices(self.get_choices_add(qs))
+        choices_add = self.sort_choices(qs, choices_add)
+        return choices_remove + choices_add
+
+
+class RelatedObjectMixin(object):
+    """
+    Mixin for fields that need to validate params against related field.
+    """
+    def choice_from_param(self, param):
+        try:
+            return self.rel_field.to_python(param)
+        except ValidationError:
+            raise ValueError()
+
+
+class SimpleQueryMixin(object):
+    """
+    Mixin for filters that do a simple DB query on main table to get counts.
+    """
+    def get_values_counts(self, qs):
+        """
+        Returns a SortedDict dictionary of {value: count}.
+
+        The order is the underlying order produced by sorting ascending on the
+        DB field.
+        """
+        values_counts = qs.values_list(self.field).order_by(self.field).annotate(models.Count(self.field))
+
+        count_dict = SortedDict()
+        for val, count in values_counts:
+            count_dict[val] = count
+        return count_dict
+
+
+class DrillDownMixin(object):
+
+    def get_choices_remove(self, qs):
+        # Due to drill down, if a broader param is removed, the more specific
+        # params must be removed too. We assume we can do an ordering on
+        # whatever 'choice' objects are in chosen, and 'greater' means 'more
+        # specific'.
+        chosen = list(self.chosen)
+        out = []
+        for i, choice in enumerate(chosen):
+            to_remove = [c for c in chosen if c >= choice]
+            out.append(FilterChoice(self.display_choice(choice),
+                                    None,
+                                    self.build_params(remove=to_remove),
+                                    FILTER_REMOVE))
+        return out
+
+
+### Concrete filter classes that are used by FilterSet ###
+
+class ValuesFilter(ChooseOnceMixin, SimpleQueryMixin, Filter):
     """
     Fallback Filter for various kinds of simple values.
     """
+    def get_values_counts(self, qs):
+        """
+        Returns a SortedDict dictionary of {value: count}.
+
+        The order is the underlying order produced by sorting ascending on the
+        DB field.
+        """
+        values_counts = qs.values_list(self.field).order_by(self.field).annotate(models.Count(self.field))
+
+        count_dict = SortedDict()
+        for val, count in values_counts:
+            count_dict[val] = count
+        return count_dict
+
     def display_choice(self, choice):
         retval = unicode(choice)
         if retval == u'':
@@ -232,22 +321,10 @@ class ChoicesFilter(ValuesFilter):
         return choices
 
 
-class ForeignKeyFilter(SingleValueFilterMixin, Filter):
+class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Filter):
     """
     Filter for ForeignKey fields.
     """
-    def __init__(self, field, model, params, **kwargs):
-        self.field_obj = model._meta.get_field(field)
-        self.rel_model = self.field_obj.rel.to
-        self.rel_field = self.field_obj.rel.get_related_field()
-        super(ForeignKeyFilter, self).__init__(field, model, params, **kwargs)
-
-    def choice_from_param(self, param):
-        try:
-            return self.rel_field.to_python(param)
-        except ValidationError:
-            raise ValueError()
-
     def display_choice(self, choice):
         lookup = {self.rel_field.name: choice}
         try:
@@ -271,27 +348,7 @@ class ForeignKeyFilter(SingleValueFilterMixin, Filter):
         return choices
 
 
-class MultiValueFilterMixin(object):
-
-    def get_choices(self, qs):
-        # In general, can filter multiple times, so we can have multiple remove
-        # links, and multiple add links, at the same time.
-        choices_remove = self.get_choices_remove(qs)
-        choices_add = self.get_choices_add(qs)
-        choices_add = self.sort_choices(qs, choices_add)
-        return choices_remove + choices_add
-
-
-class ManyToManyFilter(MultiValueFilterMixin, Filter):
-    def __init__(self, *args, **kwargs):
-        super(ManyToManyFilter, self).__init__(*args, **kwargs)
-        self.rel_model = self.field_obj.rel.to
-
-    def choice_from_param(self, param):
-        try:
-            return self.field_obj.rel.get_related_field().to_python(param)
-        except ValidationError:
-            raise ValueError()
+class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
 
     def get_choices_add(self, qs):
         # It is easiest to base queries around the intermediate table, in order
@@ -348,24 +405,6 @@ class ManyToManyFilter(MultiValueFilterMixin, Filter):
                              self.build_params(remove=[choice]),
                              FILTER_REMOVE)
                 for choice in chosen if choice in obj_dict]
-
-
-class DrillDownMixin(object):
-
-    def get_choices_remove(self, qs):
-        # Due to drill down, if a broader param is removed, the more specific
-        # params must be removed too. We assume we can do an ordering on
-        # whatever 'choice' objects are in chosen, and 'greater' means 'more
-        # specific'.
-        chosen = list(self.chosen)
-        out = []
-        for i, choice in enumerate(chosen):
-            to_remove = [c for c in chosen if c >= choice]
-            out.append(FilterChoice(self.display_choice(choice),
-                                    None,
-                                    self.build_params(remove=to_remove),
-                                    FILTER_REMOVE))
-        return out
 
 
 DateRangeTypeBase = namedtuple('DateRangeTypeBase', 'level single label regex')
@@ -514,7 +553,7 @@ class DateChoice(object):
                 field_name + '__lt':  end_date}
 
 
-class DateTimeFilter(MultiValueFilterMixin, DrillDownMixin, Filter):
+class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter):
 
     def __init__(self, *args, **kwargs):
         self.max_links = kwargs.pop('max_links', 12)
