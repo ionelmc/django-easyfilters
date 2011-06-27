@@ -537,7 +537,7 @@ class TestFilters(TestCase):
         self.assertEqual(choices[2].link_type, FILTER_DISPLAY)
         self.assertEqual(choices[2].label, str(qs[0].date_published.day))
 
-    def test_datetime_filter_select_year_dsiplay_month(self):
+    def test_datetime_filter_select_year_display_month(self):
         # Tests that if a year is selected, and only one thing matches,
         # the month should be displayed in 'display' mode.
         qs = Book.objects.filter(id=1)

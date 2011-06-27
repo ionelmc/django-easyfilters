@@ -693,6 +693,9 @@ class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter)
         return date_choice_counts
 
     def bridge_choices(self, chosen, choices):
+        # Returns FILTER_DISPLAY type choices to bridge from what is chosen
+        # (which might be nothing) to the first 'add' link, to give context to
+        # the link.
         if len(choices) == 0:
             return []
         if len(chosen) == 0:
