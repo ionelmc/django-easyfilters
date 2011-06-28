@@ -37,10 +37,12 @@ class DateAggregateCompiler(SQLCompiler):
                 elif needs_string_cast:
                     vals = [typecast_timestamp(str(row[0])),
                             row[1]]
+                else:
+                    vals = row
                 yield vals
 
     def as_sql(self, qn=None):
-        sql = ('SELECT %s, COUNT(%s) FROM (%s) GROUP BY (%s) ORDER BY (%s)' % (
+        sql = ('SELECT %s, COUNT(%s) FROM (%s) subquery GROUP BY (%s) ORDER BY (%s)' % (
                 DateWithAlias.alias, DateWithAlias.alias, self.query.subquery,
                 DateWithAlias.alias, DateWithAlias.alias)
                )
