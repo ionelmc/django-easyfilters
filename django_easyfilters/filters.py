@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import formats
 from django.utils.datastructures import SortedDict
+from django.utils.dates import MONTHS
 from django.utils.text import capfirst
 from django_easyfilters.queries import date_aggregation
 
@@ -15,7 +16,7 @@ try:
     from collections import namedtuple
     FilterChoice = namedtuple('FilterChoice', 'label count params link_type')
 except ImportError:
-    # We don't use it a tuple, so this will do:
+    # We don't use it as a tuple, so this will do:
     class FilterChoice(object):
         def __init__(self, label, count, params, link_type):
             self.label, self.count, self.params, self.link_type = label, count, params, link_type
@@ -55,9 +56,9 @@ class Filter(object):
         Apply the filtering defined in params (request.GET) to the queryset qs,
         returning the new QuerySet.
         """
-        choices = list(self.chosen)
-        while len(choices) > 0:
-            lookup = self.lookup_from_choice(choices.pop())
+        chosen = list(self.chosen)
+        while len(chosen) > 0:
+            lookup = self.lookup_from_choice(chosen.pop())
             qs = qs.filter(**lookup)
         return qs
 
@@ -491,7 +492,6 @@ class DateChoice(object):
             if self.range_type == YEAR:
                 return parts[0]
             elif self.range_type == MONTH:
-                from django.utils.dates import MONTHS
                 return unicode(MONTHS[int(parts[1])])
             elif self.range_type == DAY:
                 return str(int(parts[-1]))
@@ -693,8 +693,7 @@ class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter)
             date_choice = DateChoice(DateRangeType.get(chosen_level, True),
                                      new_choice.values)
             retval.append(FilterChoice(date_choice.display(),
-                                       None,
-                                       None,
+                                       None, None,
                                        FILTER_DISPLAY))
         return retval
 
