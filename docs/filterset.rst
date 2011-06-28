@@ -55,8 +55,8 @@ FilterSet
 
    .. method:: get_template(field_name)
 
-      This method can be overriden to render the filterset. It is called for
-      each field in the filterset, with the field name being passed in.
+      This method is called for each field in the filterset, with the field name
+      being passed in.
 
       It is expected to return a Django Template instance. This template will
       then be rendered with the following Context data:
