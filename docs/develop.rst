@@ -2,6 +2,8 @@
 Development
 ===========
 
+Python 2.6 is required for running the test suites and demo app.
+
 First, ensure the directory containing the ``django_easyfilters`` directory is
 on your Python path (virtualenv recommended). Django is a required dependency.
 
