@@ -20,7 +20,7 @@ def find_package_data(pkg, filetypes):
 
 setup(
     name = "django-easyfilters",
-    version = '0.1',
+    version = '0.1.1',
     packages = find_packages(),
     author = "Luke Plant",
     author_email = "L.Plant.98@cantab.net",
