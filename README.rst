@@ -18,8 +18,10 @@ PyPI page: http://pypi.python.org/pypi/django-easyfilters
 
 Docs
 ====
+
 See the docs/ directory, especially docs/overview.rst
 
+Also hosted here: http://packages.python.org/django-easyfilters
 
 Demo
 ====
