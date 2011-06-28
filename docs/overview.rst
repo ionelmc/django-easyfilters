@@ -2,7 +2,7 @@
 Overview
 ========
 
-Suppose your model.py looks something like this:
+Suppose your models.py looks something like this:
 
 .. code-block:: python
 
@@ -17,7 +17,7 @@ Suppose your model.py looks something like this:
 (with BINDING_CHOICES, Author and Genre omitted for brevity).
 
 You might want to present a list of Book objects, allowing the user to filter on
-the various fields. Assuming your have a views.py is something like this:
+the various fields. Assuming your views.py is something like this:
 
 .. code-block:: python
 
@@ -35,7 +35,8 @@ and the template is like this:
        {# etc #}
     {% endfor %}
 
-To add the filters, in views.py, you add the following:
+To add the filters, in views.py, you would add a FilterSet subclass and change
+the view code as follow:
 
 .. code-block:: python
 
