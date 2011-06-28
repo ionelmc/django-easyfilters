@@ -52,9 +52,9 @@ class FilterSet(object):
                                link_type=c.link_type,
                                count=c.count)
                           for c in choices]
-        return self.get_template().render(template.Context(ctx))
+        return self.get_template(filter_.field).render(template.Context(ctx))
 
-    def get_template(self):
+    def get_template(self, field_name):
         return template.Template(self.template)
 
     def render(self):
