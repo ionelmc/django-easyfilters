@@ -1,4 +1,3 @@
-from collections import namedtuple
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 import math
@@ -12,11 +11,19 @@ from django.utils.datastructures import SortedDict
 from django.utils.text import capfirst
 from django_easyfilters.queries import date_aggregation
 
+try:
+    from collections import namedtuple
+    FilterChoice = namedtuple('FilterChoice', 'label count params link_type')
+except ImportError:
+    # We don't use it a tuple, so this will do:
+    class FilterChoice(object):
+        def __init__(self, label, count, params, link_type):
+            self.label, self.count, self.params, self.link_type = label, count, params, link_type
+
+
 FILTER_ADD = 'add'
 FILTER_REMOVE = 'remove'
 FILTER_DISPLAY = 'display'
-
-FilterChoice = namedtuple('FilterChoice', 'label count params link_type')
 
 
 class Filter(object):

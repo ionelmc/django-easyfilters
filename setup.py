@@ -30,9 +30,11 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.5",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
         "Framework :: Django",
         "Topic :: Software Development :: User Interfaces",
         ],
-    install_requires = ['django >= 1.3', 'dateutil'],
+    install_requires = ['django >= 1.3', 'python-dateutil'],
 )
