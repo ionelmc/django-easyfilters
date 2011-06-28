@@ -15,7 +15,6 @@ def find_package_data(pkg, filetypes):
         for x in range(0, 20):
             pattern = pkg + '/' + ('*/' * x) + f
             out.extend([p[len(pkg)+1:] for p in glob.glob(pattern)])
-    print out
     return out
 
 
