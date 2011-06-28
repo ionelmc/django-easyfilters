@@ -10,6 +10,12 @@ This library provides filters similar in some ways to ``list_filter`` and
 admin. Importantly, it also includes result counts for the choices. It is
 designed to be very easy to get started with.
 
+Download/install
+================
+Just install as a Python library.
+
+PyPI page: http://pypi.python.org/pypi/django-easyfilters
+
 Docs
 ====
 See the docs/ directory, especially docs/overview.rst
