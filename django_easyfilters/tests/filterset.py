@@ -569,9 +569,8 @@ class TestFilters(TestCase):
         Tests that DateTimeFilter works when it is passed in an empty QuerySet.
         """
         f = DateTimeFilter('date_published', Book, MultiValueDict(), max_links=10)
-        qs = Book.objects.none()
+        qs = Book.objects.filter(id=1000)
 
-        # We have enough data that it will not show a simple list of years.
         qs_filtered = f.apply_filter(qs)
         choices = f.get_choices(qs_filtered)
         self.assertEqual(len(choices), 0)
