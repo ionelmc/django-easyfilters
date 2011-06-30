@@ -10,6 +10,7 @@ from django_easyfilters.filters import FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY
 def non_breaking_spaces(val):
     # This helps a lot with presentation, by stopping the links+count from being
     # split over a line end.
+    val = val.replace(u'-', u'\u2011')
     return mark_safe(u'&nbsp;'.join(escape(part) for part in val.split(u' ')))
 
 
