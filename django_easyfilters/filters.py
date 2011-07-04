@@ -252,6 +252,28 @@ class DrillDownMixin(object):
         return out
 
 
+class RangeFilterMixin(ChooseAgainMixin, SingleValueMixin, DrillDownMixin):
+
+    # choice_type must be set to a class that provides the static method
+    # 'from_param' and instance methods 'make_lookup' and 'display', and the
+    # __cmp__ and __eq__ methods for sorting.
+    choice_type = None
+
+    def choice_from_param(self, param):
+        return self.choice_type.from_param(param)
+
+    def choices_from_params(self):
+        choices = super(RangeFilterMixin, self).choices_from_params()
+        choices.sort()
+        return choices
+
+    def lookup_from_choice(self, choice):
+        return choice.make_lookup(self.field)
+
+    def display_choice(self, choice):
+        return choice.display()
+
+
 ### Concrete filter classes that are used by FilterSet ###
 
 class ValuesFilter(ChooseOnceMixin, SimpleQueryMixin, Filter):
@@ -556,7 +578,9 @@ class DateChoice(object):
                 field_name + '__lt':  end_date}
 
 
-class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter):
+class DateTimeFilter(RangeFilterMixin, Filter):
+
+    choice_type = DateChoice
 
     max_depth_levels = {'year': YEAR.level,
                         'month': MONTH.level,
@@ -568,20 +592,6 @@ class DateTimeFilter(ChooseAgainMixin, SingleValueMixin, DrillDownMixin, Filter)
         assert self.max_depth in ['year', 'month', None]
         self.max_depth_level = self.max_depth_levels[self.max_depth]
         super(DateTimeFilter, self).__init__(*args, **kwargs)
-
-    def choice_from_param(self, param):
-        return DateChoice.from_param(param)
-
-    def choices_from_params(self):
-        choices = super(DateTimeFilter, self).choices_from_params()
-        choices.sort()
-        return choices
-
-    def lookup_from_choice(self, choice):
-        return choice.make_lookup(self.field)
-
-    def display_choice(self, choice):
-        return choice.display()
 
     def get_choices_add(self, qs):
         chosen = list(self.chosen)
