@@ -10,7 +10,7 @@ from django.utils import formats
 from django.utils.datastructures import SortedDict
 from django.utils.dates import MONTHS
 from django.utils.text import capfirst
-from django_easyfilters.queries import date_aggregation
+from django_easyfilters.queries import date_aggregation, value_counts
 
 try:
     from collections import namedtuple
@@ -226,12 +226,7 @@ class SimpleQueryMixin(object):
         The order is the underlying order produced by sorting ascending on the
         DB field.
         """
-        values_counts = qs.values_list(self.field).order_by(self.field).annotate(models.Count(self.field))
-
-        count_dict = SortedDict()
-        for val, count in values_counts:
-            count_dict[val] = count
-        return count_dict
+        return value_counts(qs, self.field)
 
 
 class DrillDownMixin(object):
@@ -382,13 +377,7 @@ class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
 
         # Now get counts:
         field_name = fkey_other.name
-        values_counts = m2m_objs.values_list(field_name).order_by(field_name).annotate(models.Count(field_name))
-
-        count_dict = SortedDict()
-        for val, count in values_counts:
-            count_dict[val] = count
-
-        return count_dict
+        return value_counts(m2m_objs, field_name)
 
     def get_choices_add(self, qs):
         count_dict = self.get_values_counts(qs)

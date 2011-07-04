@@ -1,7 +1,9 @@
-from django.db.models.sql.datastructures import Date
-from django.db.models.sql.subqueries import AggregateQuery
+from django.db import models
 from django.db.models.sql.compiler import SQLCompiler
 from django.db.models.sql.constants import MULTI
+from django.db.models.sql.datastructures import Date
+from django.db.models.sql.subqueries import AggregateQuery
+from django.utils.datastructures import SortedDict
 
 
 # Some fairly brittle, low level stuff, to get the aggregation
@@ -72,3 +74,16 @@ def date_aggregation(date_qs):
     query = DateAggregateQuery(date_qs.model)
     query.add_subquery(date_q, date_qs.db)
     return query.get_counts(date_qs.db)
+
+
+def value_counts(qs, fieldname):
+    """
+    Performs a simple query returning the count of each value of
+    the field 'fieldname' in the QuerySet, returning the results
+    as a SortedDict of value: count
+    """
+    values_counts = qs.values_list(fieldname).order_by(fieldname).annotate(models.Count(fieldname))
+    count_dict = SortedDict()
+    for val, count in values_counts:
+        count_dict[val] = count
+    return count_dict
