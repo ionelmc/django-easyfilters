@@ -713,7 +713,7 @@ def make_numeric_range_choice(to_python, to_str):
             if len(self.values) == 1:
                 return {field_name: self.values[0]}
             else:
-                return {field_name + '__gte': self.values[0],
+                return {field_name + '__gt': self.values[0],
                         field_name + '__lte': self.values[1]}
 
         def __unicode__(self):
@@ -738,6 +738,7 @@ def make_numeric_range_choice(to_python, to_str):
                                 other.values[1] - other.values[0])
 
     return NumericRangeChoice
+
 
 class NumericRangeFilter(RangeFilterMixin, Filter):
 

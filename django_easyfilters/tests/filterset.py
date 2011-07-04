@@ -681,7 +681,7 @@ class TestFilters(TestCase):
 
         qs_filtered = filter1.apply_filter(qs)
         self.assertEqual(list(qs_filtered),
-                         list(qs.filter(price__gte=Decimal('3.50'),
+                         list(qs.filter(price__gt=Decimal('3.50'),
                                         price__lte=Decimal('4.00'))))
 
 
