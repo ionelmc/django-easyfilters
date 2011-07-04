@@ -1,7 +1,7 @@
 # -*- coding: utf-8; -*-
 
 from datetime import datetime, date
-import decimal
+from decimal import Decimal
 import operator
 
 from django.http import QueryDict
@@ -11,7 +11,7 @@ from django.utils.datastructures import MultiValueDict
 from django_easyfilters.filterset import FilterSet
 from django_easyfilters.filters import \
     FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY, \
-    ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter, DateTimeFilter
+    ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter, DateTimeFilter, NumericRangeFilter
 
 from models import Book, Genre, Author, BINDING_CHOICES
 
@@ -65,6 +65,7 @@ class TestFilterSet(TestCase):
                 'binding',
                 'authors',
                 'date_published',
+                'price',
                 ]
 
         fs = BookFilterSet(Book.objects.all(), QueryDict(''))
@@ -73,6 +74,7 @@ class TestFilterSet(TestCase):
         self.assertEqual(ChoicesFilter, type(fs.filters[2]))
         self.assertEqual(ManyToManyFilter, type(fs.filters[3]))
         self.assertEqual(DateTimeFilter, type(fs.filters[4]))
+        self.assertEqual(NumericRangeFilter, type(fs.filters[5]))
 
 
 class TestFilters(TestCase):
@@ -641,6 +643,47 @@ class TestFilters(TestCase):
                               '1818-08',
                               '1818-08-24..1818-08-30',
                               ])
+
+
+    def test_numericrange_filter_simple_vals(self):
+        # If data is less than max_links, we should get a simple list of values.
+        filter1 = NumericRangeFilter('price', Book, MultiValueDict(), max_links=20)
+
+        # Limit to single value to force the case
+        qs = Book.objects.filter(price=Decimal('3.50'))
+
+        # Should only take 2 queries - one to find out how many distinct values,
+        # one to get the counts.
+        with self.assertNumQueries(2):
+            choices = filter1.get_choices(qs)
+
+        self.assertEqual(len(choices), 1)
+        self.assertTrue('3.5' in choices[0].label)
+
+    def test_numericrange_filter_range_choices(self):
+        # If data is more than max_links, we should get a range
+        filter1 = NumericRangeFilter('price', Book, MultiValueDict(), max_links=8)
+
+        qs = Book.objects.all()
+        # Should take 3 queries - one to find out how many distinct values,
+        # one to find a range, one to get the counts.
+        with self.assertNumQueries(3):
+            choices = filter1.get_choices(qs)
+
+        self.assertTrue(len(choices) <= 8)
+        total_count = sum(c.count for c in choices)
+        self.assertEqual(total_count, qs.count())
+
+    def test_numericrange_filter_apply_filter(self):
+        params = MultiValueDict({'price': ['3.50..4.00']})
+        filter1 = NumericRangeFilter('price', Book, params)
+        qs = Book.objects.all()
+
+        qs_filtered = filter1.apply_filter(qs)
+        self.assertEqual(list(qs_filtered),
+                         list(qs.filter(price__gte=Decimal('3.50'),
+                                        price__lte=Decimal('4.00'))))
+
 
     def test_order_by_count(self):
         """

@@ -7,10 +7,9 @@ import re
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import formats
-from django.utils.datastructures import SortedDict
 from django.utils.dates import MONTHS
 from django.utils.text import capfirst
-from django_easyfilters.queries import date_aggregation, value_counts
+from django_easyfilters.queries import date_aggregation, value_counts, numeric_range_counts
 
 try:
     from collections import namedtuple
@@ -479,6 +478,7 @@ class DateChoice(object):
         return '<DateChoice %s %s>' % (self.range_type, self.__unicode__())
 
     def __cmp__(self, other):
+        # 'greater' means more specific.
         return cmp((self.range_type, self.values),
                    (other.range_type, other.values))
 
@@ -683,3 +683,103 @@ class DateTimeFilter(RangeFilterMixin, Filter):
                                        FILTER_DISPLAY))
         return retval
 
+
+def make_numeric_range_choice(to_python, to_str):
+    """
+    Returns a Choice class that represents a numeric choice range,
+    using the passed in 'to_python' and 'to_str' callables to do
+    conversion to/from native data types.
+    """
+
+    class NumericRangeChoice(object):
+        def __init__(self, values):
+            self.values = values
+
+        def display(self):
+            return '-'.join(map(str, self.values))
+
+        @classmethod
+        def from_param(cls, param):
+            vals = []
+            for p in param.split('..', 1):
+                try:
+                    val = to_python(p)
+                    vals.append(val)
+                except ValidationError:
+                    raise ValueError()
+            return cls(vals)
+
+        def make_lookup(self, field_name):
+            if len(self.values) == 1:
+                return {field_name: self.values[0]}
+            else:
+                return {field_name + '__gte': self.values[0],
+                        field_name + '__lte': self.values[1]}
+
+        def __unicode__(self):
+            return '..'.join(map(to_str, self.values))
+
+        def __repr__(self):
+            return '<NumericChoice %s>' % self.__unicode__()
+
+        def __cmp__(self, other):
+            # 'greater' means more specific.
+            if other is None:
+                return cmp(self.values, None)
+            else:
+                if len(self.values) != len(other.values):
+                    # one value is more specific than two
+                    return -cmp(len(self.values), len(other.values))
+                elif len(self.values) == 1:
+                    return 0
+                else:
+                    # Larger difference means less specific
+                    return -cmp(self.values[1] - self.values[0],
+                                other.values[1] - other.values[0])
+
+    return NumericRangeChoice
+
+class NumericRangeFilter(RangeFilterMixin, Filter):
+
+    def __init__(self, field, model, params, **kwargs):
+        self.max_links = kwargs.pop('max_links', 5)
+        field_obj = model._meta.get_field(field)
+        self.choice_type = make_numeric_range_choice(field_obj.to_python, str)
+        super(NumericRangeFilter, self).__init__(field, model, params, **kwargs)
+
+    def get_choices_add(self, qs):
+        chosen = list(self.chosen)
+        range_type = None
+
+        all_vals = qs.values_list(self.field).distinct()
+
+        num = all_vals.count()
+
+        choices = []
+        if num <= self.max_links:
+            val_counts = value_counts(qs, self.field)
+            for v, count in val_counts.items():
+                choice = self.choice_type([v])
+                choices.append(FilterChoice(choice.display(),
+                                            count,
+                                            self.build_params(add=choice),
+                                            FILTER_ADD))
+        else:
+            val_range = qs.aggregate(lower=models.Min(self.field),
+                                     upper=models.Max(self.field))
+            lower = val_range['lower']
+            upper = val_range['upper']
+
+            # TODO - round to produce nice looking ranges.
+            step = (upper - lower)/self.max_links
+            ranges = [(lower + step * i, lower + step * (i+1)) for i in xrange(self.max_links)]
+
+            val_counts = numeric_range_counts(qs, self.field, ranges)
+            for vals, count in val_counts.items():
+                choice = self.choice_type(vals)
+                choices.append(FilterChoice(choice.display(),
+                                            count,
+                                            self.build_params(add=choice),
+                                            FILTER_ADD))
+
+        return choices

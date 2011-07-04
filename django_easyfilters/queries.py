@@ -79,3 +79,76 @@ def value_counts(qs, fieldname):
     for val, count in values_counts:
         count_dict[val] = count
     return count_dict
+
+
+class NumericAggregateQuery(AggregateQuery):
+    # Need to override to return a compiler not in django.db.models.sql.compiler
+    def get_compiler(self, using=None, connection=None):
+        return  NumericAggregateCompiler(self, connection, using)
+
+    def get_counts(self, using):
+        from django.db import connections
+        connection = connections[using]
+        return list(self.get_compiler(using, connection).results_iter())
+
+
+class NumericAggregateCompiler(SQLCompiler):
+    def results_iter(self):
+        for rows in self.execute_sql(MULTI):
+            for row in rows:
+                yield row
+
+    def as_sql(self, qn=None):
+        sql = ('SELECT %s, COUNT(%s) FROM (%s) subquery GROUP BY (%s) ORDER BY (%s)' % (
+                NumericValueRange.alias, NumericValueRange.alias, self.query.subquery,
+                NumericValueRange.alias, NumericValueRange.alias)
+               )
+        params = self.query.sub_params
+        return (sql, params)
+
+
+class NumericValueRange(object):
+    alias = 'easyfilter_number_range_alias'
+    def __init__(self, col, ranges):
+        # ranges is list of (lower, upper) bounds we want to find, where 'lower'
+        # is inclusive and upper is exclusive.
+        self.col = col
+        self.ranges = ranges
+
+    # TODO - do we need 'relabel_aliases', like 'Date'?
+
+    def as_sql(self, qn, connection):
+        if isinstance(self.col, (list, tuple)):
+            col = '%s.%s' % tuple([qn(c) for c in self.col])
+        else:
+            col = self.col
+
+        # Build up case expression.
+        clause = (['CASE '] +
+                  ['WHEN %s >= %s AND %s < %s THEN %s ' % (col, val[0], col, val[1], i)
+                   for i, val in enumerate(self.ranges)] +
+                  ['ELSE %s END ' % len(self.ranges)] +
+                  ['as %s' % self.alias])
+        return ''.join(clause)
+
+
+def numeric_range_counts(qs, fieldname, ranges):
+
+    # Build the query:
+    query = qs.values_list(fieldname).query.clone()
+    query.select[0] = NumericValueRange(query.select[0], ranges)
+
+    agg_query = NumericAggregateQuery(qs.model)
+    agg_query.add_subquery(query, qs.db)
+    results = agg_query.get_counts(qs.db)
+
+    count_dict = SortedDict()
+    for val, count in results:
+        try:
+            r = ranges[val]
+        except IndexError:
+            # Include in the top range - this could be a rounding error
+            r = ranges[-1]
+        count_dict[r] = count
+    return count_dict
+
