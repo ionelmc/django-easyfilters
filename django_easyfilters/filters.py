@@ -684,6 +684,15 @@ class DateTimeFilter(RangeFilterMixin, Filter):
         return retval
 
 
+class RangeEnd(object):
+    """
+    Simple structure to store part of a range
+    """
+    def __init__(self, value, inclusive):
+        # value is some generic value, inclusive is a bool specifying where this
+        # value is included as part of the range.
+        self.value, self.inclusive = value, inclusive
+
 def make_numeric_range_choice(to_python, to_str):
     """
     Returns a Choice class that represents a numeric choice range,
@@ -693,31 +702,40 @@ def make_numeric_range_choice(to_python, to_str):
 
     class NumericRangeChoice(object):
         def __init__(self, values):
+            # Values are instances of RangeEnd
             self.values = values
 
         def display(self):
-            return '-'.join(map(str, self.values))
+            return '-'.join([str(v.value) for v in self.values])
 
         @classmethod
         def from_param(cls, param):
             vals = []
             for p in param.split('..', 1):
+                inclusive = False
+                if p.endswith('i'):
+                    inclusive = True
+                    p = p[:-1]
+
                 try:
                     val = to_python(p)
-                    vals.append(val)
+                    vals.append(RangeEnd(val, inclusive))
                 except ValidationError:
                     raise ValueError()
             return cls(vals)
 
         def make_lookup(self, field_name):
             if len(self.values) == 1:
-                return {field_name: self.values[0]}
+                return {field_name: self.values[0].value}
             else:
-                return {field_name + '__gt': self.values[0],
-                        field_name + '__lte': self.values[1]}
+                return {field_name + '__gt' + ('e' if self.values[0].inclusive else ''):
+                            self.values[0].value,
+                        field_name + '__lt' + ('e' if self.values[1].inclusive else ''):
+                            self.values[1].value}
 
         def __unicode__(self):
-            return '..'.join(map(to_str, self.values))
+            return '..'.join([to_str(v.value) + ('i' if v.inclusive else '')
+                              for v in self.values])
 
         def __repr__(self):
             return '<NumericChoice %s>' % self.__unicode__()
@@ -734,8 +752,8 @@ def make_numeric_range_choice(to_python, to_str):
                     return 0
                 else:
                     # Larger difference means less specific
-                    return -cmp(self.values[1] - self.values[0],
-                                other.values[1] - other.values[0])
+                    return -cmp(self.values[1].value - self.values[0].value,
+                                other.values[1].value - other.values[0].value)
 
     return NumericRangeChoice
 
@@ -760,7 +778,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
         if num <= self.max_links:
             val_counts = value_counts(qs, self.field)
             for v, count in val_counts.items():
-                choice = self.choice_type([v])
+                choice = self.choice_type([RangeEnd(v, True)])
                 choices.append(FilterChoice(choice.display(),
                                             count,
                                             self.build_params(add=choice),
@@ -776,8 +794,14 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
             ranges = [(lower + step * i, lower + step * (i+1)) for i in xrange(self.max_links)]
 
             val_counts = numeric_range_counts(qs, self.field, ranges)
-            for vals, count in val_counts.items():
-                choice = self.choice_type(vals)
+            for i, (vals, count) in enumerate(val_counts.items()):
+                # For the lower bound, we make it inclusive only if it the first
+                # choice. The upper bound is always inclusive. This gives
+                # filters that behave sensibly e.g. with 10-20, 20-30, 30-40,
+                # the first will include 10 and 20, the second will exlude 20.
+                lower_inclusive = i == 0
+                choice = self.choice_type([RangeEnd(vals[0], lower_inclusive),
+                                           RangeEnd(vals[1], True)])
                 choices.append(FilterChoice(choice.display(),
                                             count,
                                             self.build_params(add=choice),

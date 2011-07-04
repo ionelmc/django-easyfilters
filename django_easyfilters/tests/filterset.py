@@ -674,16 +674,37 @@ class TestFilters(TestCase):
         total_count = sum(c.count for c in choices)
         self.assertEqual(total_count, qs.count())
 
+        # First choice should be inclusive on first and last
+        p0 = choices[0].params.getlist('price')[0]
+        self.assertTrue('..' in p0)
+        self.assertTrue('i' in p0.split('..')[0])
+        self.assertTrue('i' in p0.split('..')[1])
+
+        # Second choice should be exlusive on first,
+        # inclusive on second.
+        p1 = choices[1].params.getlist('price')[0]
+        self.assertTrue('..' in p1)
+        self.assertTrue('i' not in p1.split('..')[0])
+        self.assertTrue('i' in p1.split('..')[1])
+
     def test_numericrange_filter_apply_filter(self):
-        params = MultiValueDict({'price': ['3.50..4.00']})
-        filter1 = NumericRangeFilter('price', Book, params)
         qs = Book.objects.all()
 
-        qs_filtered = filter1.apply_filter(qs)
-        self.assertEqual(list(qs_filtered),
+        # exclusive
+        params1 = MultiValueDict({'price': ['3.50..4.00']})
+        filter1 = NumericRangeFilter('price', Book, params1)
+        qs_filtered1 = filter1.apply_filter(qs)
+        self.assertEqual(list(qs_filtered1),
                          list(qs.filter(price__gt=Decimal('3.50'),
-                                        price__lte=Decimal('4.00'))))
+                                        price__lt=Decimal('4.00'))))
 
+        # inclusive
+        params2 = MultiValueDict({'price': ['3.50i..4.00i']})
+        filter2 = NumericRangeFilter('price', Book, params2)
+        qs_filtered2 = filter2.apply_filter(qs)
+        self.assertEqual(list(qs_filtered2),
+                         list(qs.filter(price__gte=Decimal('3.50'),
+                                        price__lte=Decimal('4.00'))))
 
     def test_order_by_count(self):
         """
