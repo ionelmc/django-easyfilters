@@ -413,7 +413,9 @@ class DateRangeType(object):
     all = {} # Keep a cache, so that we have unique instances
 
     def __init__(self, level, single, label, regex):
-        self.level, self.single, self.label, self.regex = level, single, label, regex
+        self.level, self.single, self.label = level, single, label
+        self.regex = re.compile((r'^(%s)$' % regex) if single else
+                                (r'^(%s)..(%s)$' % (regex, regex)))
         DateRangeType.all[(level, single)] = self
 
     def __repr__(self):
@@ -452,12 +454,14 @@ class DateRangeType(object):
             # ranges (i.e. multi) if appropriate.
             return DateRangeType.get(self.level + 1, True)
 
-YEARGROUP   = DateRangeType(1, False, 'year',  re.compile(r'^(\d{4})..(\d{4})$'))
-YEAR        = DateRangeType(1, True,  'year',  re.compile(r'^(\d{4})$'))
-MONTHGROUP  = DateRangeType(2, False, 'month', re.compile(r'^(\d{4}-\d{2})..(\d{4}-\d{2})$'))
-MONTH       = DateRangeType(2, True,  'month', re.compile(r'^(\d{4}-\d{2})$'))
-DAYGROUP    = DateRangeType(3, False, 'day',   re.compile(r'^(\d{4}-\d{2}-\d{2})..(\d{4}-\d{2}-\d{2})$'))
-DAY         = DateRangeType(3, True,  'day',   re.compile(r'^(\d{4}-\d{2}-\d{2})$'))
+
+_y, _ym, _ymd = r'\d{4}', r'\d{4}-\d{2}', r'\d{4}-\d{2}-\d{2}'
+YEARGROUP   = DateRangeType(1, False, 'year',  _y)
+YEAR        = DateRangeType(1, True,  'year',  _y)
+MONTHGROUP  = DateRangeType(2, False, 'month', _ym)
+MONTH       = DateRangeType(2, True,  'month', _ym)
+DAYGROUP    = DateRangeType(3, False, 'day',   _ymd)
+DAY         = DateRangeType(3, True,  'day',   _ymd)
 
 
 class DateChoice(object):
