@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.backends.util import typecast_timestamp
 from django.db.models.sql.compiler import SQLCompiler
 from django.db.models.sql.constants import MULTI
 from django.db.models.sql.datastructures import Date
@@ -23,20 +24,11 @@ class DateAggregateQuery(AggregateQuery):
 
 class DateAggregateCompiler(SQLCompiler):
     def results_iter(self):
-        resolve_columns = hasattr(self, 'resolve_columns')
-        if resolve_columns:
-            from django.db.models.fields import DateTimeField, IntegerField
-            fields = [DateTimeField(), IntegerField]
-        else:
-            from django.db.backends.util import typecast_timestamp
-            needs_string_cast = self.connection.features.needs_datetime_string_cast
+        needs_string_cast = self.connection.features.needs_datetime_string_cast
 
-        offset = len(self.query.extra_select)
         for rows in self.execute_sql(MULTI):
             for row in rows:
-                if resolve_columns:
-                    vals = self.resolve_columns(row, fields)
-                elif needs_string_cast:
+                if needs_string_cast:
                     vals = [typecast_timestamp(str(row[0])),
                             row[1]]
                 else:
