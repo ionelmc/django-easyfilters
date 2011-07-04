@@ -280,20 +280,6 @@ class ValuesFilter(ChooseOnceMixin, SimpleQueryMixin, Filter):
     """
     Fallback Filter for various kinds of simple values.
     """
-    def get_values_counts(self, qs):
-        """
-        Returns a SortedDict dictionary of {value: count}.
-
-        The order is the underlying order produced by sorting ascending on the
-        DB field.
-        """
-        values_counts = qs.values_list(self.field).order_by(self.field).annotate(models.Count(self.field))
-
-        count_dict = SortedDict()
-        for val, count in values_counts:
-            count_dict[val] = count
-        return count_dict
-
     def display_choice(self, choice):
         retval = unicode(choice)
         if retval == u'':
