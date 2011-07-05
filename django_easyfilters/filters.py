@@ -728,10 +728,9 @@ def make_numeric_range_choice(to_python, to_str):
             if len(self.values) == 1:
                 return {field_name: self.values[0].value}
             else:
-                return {field_name + '__gt' + ('e' if self.values[0].inclusive else ''):
-                            self.values[0].value,
-                        field_name + '__lt' + ('e' if self.values[1].inclusive else ''):
-                            self.values[1].value}
+                start, end = self.values[0], self.values[1]
+                return {field_name + '__gt' + ('e' if start.inclusive else ''): start.value,
+                        field_name + '__lt' + ('e' if end.inclusive else ''): end.value}
 
         def __unicode__(self):
             return '..'.join([to_str(v.value) + ('i' if v.inclusive else '')
