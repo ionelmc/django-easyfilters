@@ -761,6 +761,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
 
     def __init__(self, field, model, params, **kwargs):
         self.max_links = kwargs.pop('max_links', 5)
+        self.ranges = kwargs.pop('ranges', None)
         field_obj = model._meta.get_field(field)
         self.choice_type = make_numeric_range_choice(field_obj.to_python, str)
         super(NumericRangeFilter, self).__init__(field, model, params, **kwargs)
@@ -769,12 +770,15 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
         chosen = list(self.chosen)
         range_type = None
 
+        if self.ranges is not None and len(chosen) > 0:
+            return []
+
         all_vals = qs.values_list(self.field).distinct()
 
         num = all_vals.count()
 
         choices = []
-        if num <= self.max_links:
+        if num <= self.max_links and self.ranges is None:
             val_counts = value_counts(qs, self.field)
             for v, count in val_counts.items():
                 choice = self.choice_type([RangeEnd(v, True)])
@@ -783,14 +787,17 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
                                             self.build_params(add=choice),
                                             FILTER_ADD))
         else:
-            val_range = qs.aggregate(lower=models.Min(self.field),
-                                     upper=models.Max(self.field))
-            lower = val_range['lower']
-            upper = val_range['upper']
+            if self.ranges is None:
+                val_range = qs.aggregate(lower=models.Min(self.field),
+                                         upper=models.Max(self.field))
+                lower = val_range['lower']
+                upper = val_range['upper']
 
-            # TODO - round to produce nice looking ranges.
-            step = (upper - lower)/self.max_links
-            ranges = [(lower + step * i, lower + step * (i+1)) for i in xrange(self.max_links)]
+                # TODO - round to produce nice looking ranges.
+                step = (upper - lower)/self.max_links
+                ranges = [(lower + step * i, lower + step * (i+1)) for i in xrange(self.max_links)]
+            else:
+                ranges = self.ranges
 
             val_counts = numeric_range_counts(qs, self.field, ranges)
             for i, (vals, count) in enumerate(val_counts.items()):

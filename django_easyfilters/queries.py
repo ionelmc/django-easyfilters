@@ -125,8 +125,10 @@ class NumericValueRange(object):
 
         # Build up case expression.
         clause = (['CASE '] +
-                  ['WHEN %s >= %s AND %s < %s THEN %s ' % (col, val[0], col, val[1], i)
+                  ['WHEN %s > %s AND %s <= %s THEN %s ' % (col, val[0], col, val[1], i)
                    for i, val in enumerate(self.ranges)] +
+                  # An inclusive lower limit for the first item in ranges:
+                  ['WHEN %s = %s THEN 0 ' % (col, self.ranges[0][0])] +
                   ['ELSE %s END ' % len(self.ranges)] +
                   ['as %s' % self.alias])
         return ''.join(clause)

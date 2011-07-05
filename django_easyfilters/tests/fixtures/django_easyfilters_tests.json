@@ -124,7 +124,7 @@
     "fields": {
       "name": "Pride and Prejudice", 
       "edition": 3, 
-      "price": "5.99", 
+      "price": "5", 
       "binding": "P", 
       "date_published": "1813-01-28", 
       "authors": [
@@ -247,7 +247,7 @@
     "fields": {
       "name": "The Tenant of Wildfell Hall", 
       "edition": 1, 
-      "price": "6.5", 
+      "price": "6", 
       "binding": "P", 
       "date_published": "1848-10-04", 
       "authors": [

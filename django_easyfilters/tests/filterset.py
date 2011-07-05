@@ -706,6 +706,44 @@ class TestFilters(TestCase):
                          list(qs.filter(price__gte=Decimal('3.50'),
                                         price__lte=Decimal('4.00'))))
 
+    def test_numericrange_filter_manual_ranges(self):
+        """
+        Test we can specify 'ranges' and it works as expected.
+        """
+        # Also tests that aggregation works as expected with regards to
+        # lower/upper limits.
+        qs = Book.objects.all()
+
+        ranges = [(Decimal('3.50'), Decimal('5.00')),
+                  (Decimal('5.00'), Decimal('6.00'))]
+        # There are books with prices exactly equal to 3.50/5.00/6.00 which
+        # makes this test real.
+
+        self.assertTrue(qs.filter(price=Decimal('3.50')).exists())
+        self.assertTrue(qs.filter(price=Decimal('5.00')).exists())
+        self.assertTrue(qs.filter(price=Decimal('6.00')).exists())
+
+        filter1 = NumericRangeFilter('price', Book, MultiValueDict(), ranges=ranges)
+        choices = filter1.get_choices(qs)
+        self.assertEqual(choices[0].count, qs.filter(price__gte=Decimal('3.50'), price__lte=Decimal('5.00')).count())
+        self.assertEqual(choices[1].count, qs.filter(price__gt=Decimal('5.00'), price__lte=Decimal('6.00')).count())
+
+
+    def test_numericrange_filter_manual_ranges_no_drill_down(self):
+        # We shouldn't get drilldown if ranges is specified manually.
+
+        ranges = [(Decimal('3.50'), Decimal('5.00')),
+                  (Decimal('5.00'), Decimal('6.00'))]
+        params1 = MultiValueDict({'price': ['3.50i..5.00i']})
+        filter1 = NumericRangeFilter('price', Book, params1, ranges=ranges)
+
+        qs = Book.objects.all()
+        qs_filtered1 = filter1.apply_filter(qs)
+        choices = filter1.get_choices(qs_filtered1)
+        self.assertEqual(len(choices), 1)
+        self.assertEqual(choices[0].link_type, FILTER_REMOVE)
+
+
     def test_order_by_count(self):
         """
         Tests the 'order_by_count' option.
