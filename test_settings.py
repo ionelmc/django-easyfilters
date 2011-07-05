@@ -22,3 +22,4 @@ DEBUG = True
 
 SITE_ID = 1
 
+STATIC_URL = '/static/'
