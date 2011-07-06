@@ -35,8 +35,8 @@ and the template is like this:
        {# etc #}
     {% endfor %}
 
-To add the filters, in views.py, you would add a FilterSet subclass and change
-the view code as follow:
+To add the filters, in views.py add a FilterSet subclass and change the view
+code as follow:
 
 .. code-block:: python
 
@@ -62,8 +62,8 @@ Notice that the ``books`` item put in the context has been replaced by
 applied to it, as defined by BookFilterSet and the information from the query
 string (request.GET).
 
-The ``booksfilter`` item has been added, in order for the filters to be
-displayed on the template.
+The ``booksfilter`` item has been added to the context in order for the filters
+to be displayed on the template.
 
 Then, in the template, just add ``{{ booksfilter }}`` to the template.
 books. You can also use pagination e.g. using django-pagination:
@@ -82,16 +82,6 @@ books. You can also use pagination e.g. using django-pagination:
        {# etc #}
     {% endfor %}
 
-Customisation of the filters can be done using a tuple containing (``field_name``,
-dict of options), instead of just ``field_name``::
-
-    class BookFilterSet(FilterSet):
-        model = Book
-        fields = [
-            'binding',
-            ('genre', dict(order_by_count=True))
-        ]
-
-See :doc:`the Filters documentation <filters>` for options that can be
-specified. See :doc:`the FilterSet documentation <filterset>` for ways to
-customize the rendering of the filters.
+Customisation of the filters can be done in various ways - see :doc:`the
+FilterSet documentation <filterset>` for how to do this, and :doc:`the Filters
+documentation <filters>` for options that can be specified.

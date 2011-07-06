@@ -18,10 +18,9 @@ FilterSet
           genre = models.ForeignKey(Genre)
           date_published = models.DateField()
 
-   You could create a BookFilterSet like this:
+   ...you could create a BookFilterSet like this:
 
    .. code-block:: python
-
 
        class BookFilterSet(FilterSet):
            fields = [
@@ -30,10 +29,23 @@ FilterSet
                'date_published',
            ]
 
-   The items in the fields attribute can also be two-tuples containing first
+   Each item in the fields attribute can also be a two-tuple containing first
    the field name and second a dictionary of options to be passed to the
-   :doc:`filters <filters>` as keyword arguments.
+   :doc:`filters <filters>` as keyword arguments, or a three-tuple containing
+   the field name, a dictionary of options, and a Filter class. In this way you
+   can override default options and the default filter type used e.g.:
 
+   .. code-block:: python
+
+       from django_easyfilters.filters import ValuesFilter
+
+       class BookFilterSet(FilterSet):
+           fields = [
+               ('genre', dict(order_by_count=True)),
+               ('date_published', {}, ValuesFilter),
+           ]
+
+   This also allows :ref:`custom Filter classes <custom-filter-classes>` to be used.
 
    To use the BookFilterSet, please see :doc:`the overview instructions
    <overview>`. The public API of ``FilterSet`` for use consists of:
@@ -49,9 +61,8 @@ FilterSet
       This attribute contains the input QuerySet filtered according to the data
       in ``params``.
 
-
-   In addition, there are methods that can be overridden to customise the FilterSet:
-
+   In addition, there are methods/attributes that can be overridden to customise
+   the FilterSet:
 
    .. method:: get_template(field_name)
 
@@ -76,3 +87,8 @@ FilterSet
 
         * ``count``: for those that are ``add`` links, the number of items in
           the QuerySet that match that choice.
+
+   .. attribute:: template
+
+      A string containing a Django template, used to render all the filters.  It
+      is used by the default ``get_template`` method, see above.

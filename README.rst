@@ -35,18 +35,11 @@ http://www.christchurchbradford.org.uk/sermons/
 Status
 ======
 
-The library is in a useful state, but not quite 'complete'. The main glaring
-feature omission in nice handling of Decimal fields (or other numeric fields that need
-to be treated as a continuum of values) to provide range-base selection.
-
-The internal API of Filter and FilterSet are not firmed up, but are not far from
-being so. Test coverage is extensive.
-
-Feedback regarding API or features is very welcome!
+The library is in a useful state and is used in production. Test coverage is
+extensive. Feedback regarding API or features is very welcome!
 
 TODO
 ====
 
-* Automatic range-based filters for DecimalFields - e.g. for prices
-* Ability to specify 'defaults' attribute for FilterSet
+* Possible: ability to specify 'defaults' attribute for FilterSet
 * Allow the automatic 'page' resetting to be customized

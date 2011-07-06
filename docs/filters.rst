@@ -8,10 +8,6 @@ When you specify the ``fields`` attribute on a
 classes will be chosen depending on the type of field. They are listed below,
 with the keyword argument options that they take.
 
-At the moment, all other methods of Filter and subclasses are considered private
-implementation details, until all the Filters are implemented and the API firms
-up.
-
 .. class:: Filter
 
    This is the base class for all filters, and has provides some options:
@@ -61,6 +57,84 @@ up.
      If ``'year'`` or ``'month'`` is specified, the drill-down will be limited
      to that level.
 
+.. class:: NumericRangeFilter
+
+   This filter produces ranges of values for a numeric field. It is the default
+   filter for decimal fields, but can also be used with integer fields. It
+   attempts to make the ranges 'look nice' using rounded numbers in an automatic
+   way. It uses 'drill-down' like DateTimeFilter.
+
+   It takes the following options:
+
+   * ``max_links``
+
+     Default: 5
+
+     The maximum number of links to display. If there fewer distinct values
+     than this in the data, single values will be shown, otherwise ranges.
+
+   * ``ranges``
+
+     Default: None
+
+     If this is specified, it will override the (initial) automatic range. The
+     value should be a list of ranges, where each item in the list is either:
+
+     * a two-tuple containing the beginning and end range values
+
+     * a three-tuple containing the beginning and end range values
+       and a custom label.
+
+   * ``drilldown``
+
+     Default: True
+
+     If ``False``, only one level of choices will be displayed.
+
+   The 'end points' of ranges are handled in the following way: the lower bound
+   is exclusive, and the upper bound is inclusive, apart from for the first
+   range, where both are inclusive. This is designed for a fairly intuitive
+   behaviour.
+
 .. class:: ValuesFilter
 
    This is the fallback that is used when nothing else matches.
+
+.. _custom-filter-classes:
+
+Custom Filter classes
+=====================
+
+As described in the :class:`~django_easyfilters.FilterSet` documentation, you
+can provide your own Filter class for a field. If you do so, it is expected to
+have the following API:
+
+* ``__init__(field, model, params, **kwargs)``
+
+  Constructor. ``field`` is the string identifying the field, ``model`` is the
+  model class, ``params`` is a QueryDict (i.e. request.GET). ``kwargs`` contains
+  any custom options specified for the filter.
+
+* ``apply_filter(qs)``
+
+  This method takes the QuerySet ``qs`` and returns a QuerySet that has filters
+  applied to it, where the filter parameters are defined in the ``params`` that
+  were passed to the constructor. The method must be able to extract the
+  relevant parameter, if it exists, and filter the QuerySet accordingly.
+
+* ``get_choices(qs)``
+
+  This method is passed a fully filtered QuerySet, and must return a list of
+  choices to present to the user. The choices should be instances of
+  ``django_easyfilters.filters.FilterChoice``, which has the attributes:
+
+  * label: User presentable text string for the choice
+  * link_type: choice of FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY
+  * count: the number of items for this choice (only for FILTER_ADD)
+  * params: parameters used to create a link for this option, as a QueryDict
+
+At the moment, all other methods of Filter and subclasses are considered private
+implementation details. You can subclass Filter if you want, and use its
+functionality, but it may change without warning.
+
+
