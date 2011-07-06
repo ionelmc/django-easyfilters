@@ -10,6 +10,7 @@ from django.utils import formats
 from django.utils.dates import MONTHS
 from django.utils.text import capfirst
 from django_easyfilters.queries import date_aggregation, value_counts, numeric_range_counts
+from django_easyfilters.ranges import auto_ranges
 
 try:
     from collections import namedtuple
@@ -790,12 +791,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
             if self.ranges is None:
                 val_range = qs.aggregate(lower=models.Min(self.field),
                                          upper=models.Max(self.field))
-                lower = val_range['lower']
-                upper = val_range['upper']
-
-                # TODO - round to produce nice looking ranges.
-                step = (upper - lower)/self.max_links
-                ranges = [(lower + step * i, lower + step * (i+1)) for i in xrange(self.max_links)]
+                ranges = auto_ranges(val_range['lower'], val_range['upper'], self.max_links)
             else:
                 ranges = self.ranges
 
