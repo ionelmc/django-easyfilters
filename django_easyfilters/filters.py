@@ -229,25 +229,7 @@ class SimpleQueryMixin(object):
         return value_counts(qs, self.field)
 
 
-class DrillDownMixin(object):
-
-    def get_choices_remove(self, qs):
-        # Due to drill down, if a broader param is removed, the more specific
-        # params must be removed too. We assume we can do an ordering on
-        # whatever 'choice' objects are in chosen, and 'greater' means 'more
-        # specific'.
-        chosen = list(self.chosen)
-        out = []
-        for i, choice in enumerate(chosen):
-            to_remove = [c for c in chosen if c >= choice]
-            out.append(FilterChoice(self.display_choice(choice),
-                                    None,
-                                    self.build_params(remove=to_remove),
-                                    FILTER_REMOVE))
-        return out
-
-
-class RangeFilterMixin(ChooseAgainMixin, SingleValueMixin, DrillDownMixin):
+class RangeFilterMixin(ChooseAgainMixin, SingleValueMixin):
 
     # choice_type must be set to a class that provides the static method
     # 'from_param' and instance methods 'make_lookup' and 'display', and the
@@ -267,6 +249,21 @@ class RangeFilterMixin(ChooseAgainMixin, SingleValueMixin, DrillDownMixin):
 
     def display_choice(self, choice):
         return choice.display()
+
+    def get_choices_remove(self, qs):
+        # Due to drill down, if a broader param is removed, the more specific
+        # params must be removed too. We assume we can do an ordering on
+        # whatever 'choice' objects are in chosen, and 'greater' means 'more
+        # specific'.
+        chosen = list(self.chosen)
+        out = []
+        for i, choice in enumerate(chosen):
+            to_remove = [c for c in chosen if c >= choice]
+            out.append(FilterChoice(self.display_choice(choice),
+                                    None,
+                                    self.build_params(remove=to_remove),
+                                    FILTER_REMOVE))
+        return out
 
 
 ### Concrete filter classes that are used by FilterSet ###
