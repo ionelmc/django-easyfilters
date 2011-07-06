@@ -763,6 +763,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
 
     def __init__(self, field, model, params, **kwargs):
         self.max_links = kwargs.pop('max_links', 5)
+        self.drilldown = kwargs.pop('drilldown', True)
         self.ranges = kwargs.pop('ranges', None)
         field_obj = model._meta.get_field(field)
         self.choice_type = make_numeric_range_choice(field_obj.to_python, str)
@@ -787,7 +788,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
         chosen = list(self.chosen)
         range_type = None
 
-        if self.ranges is not None and len(chosen) > 0:
+        if not self.drilldown and len(chosen) > 0:
             return []
 
         all_vals = qs.values_list(self.field).distinct()
@@ -795,7 +796,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
         num = all_vals.count()
 
         choices = []
-        if num <= self.max_links and self.ranges is None:
+        if num <= self.max_links:
             val_counts = value_counts(qs, self.field)
             for v, count in val_counts.items():
                 choice = self.choice_type([RangeEnd(v, True)])

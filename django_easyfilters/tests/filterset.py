@@ -752,13 +752,12 @@ class TestFilters(TestCase):
         self.assertEqual(choices[0].label, "$4 or less")
         self.assertEqual(choices[1].label, "$4.00 - $6.00")
 
-    def test_numericrange_filter_manual_ranges_no_drill_down(self):
+    def test_numericrange_filter_drilldown(self):
+        # Can specify to turn off drilldown
         # We shouldn't get drilldown if ranges is specified manually.
 
-        ranges = [(Decimal('3.50'), Decimal('5.00')),
-                  (Decimal('5.00'), Decimal('6.00'))]
         params1 = MultiValueDict({'price': ['3.50i..5.00i']})
-        filter1 = NumericRangeFilter('price', Book, params1, ranges=ranges)
+        filter1 = NumericRangeFilter('price', Book, params1, drilldown=False)
 
         qs = Book.objects.all()
         qs_filtered1 = filter1.apply_filter(qs)
