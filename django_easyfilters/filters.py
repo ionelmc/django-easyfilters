@@ -801,8 +801,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
                 # choice. The upper bound is always inclusive. This gives
                 # filters that behave sensibly e.g. with 10-20, 20-30, 30-40,
                 # the first will include 10 and 20, the second will exlude 20.
-                lower_inclusive = i == 0
-                choice = self.choice_type([RangeEnd(vals[0], lower_inclusive),
+                choice = self.choice_type([RangeEnd(vals[0], i == 0),
                                            RangeEnd(vals[1], True)])
                 choices.append(FilterChoice(choice.display(),
                                             count,
