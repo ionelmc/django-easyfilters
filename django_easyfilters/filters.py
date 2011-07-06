@@ -768,6 +768,21 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
         self.choice_type = make_numeric_range_choice(field_obj.to_python, str)
         super(NumericRangeFilter, self).__init__(field, model, params, **kwargs)
 
+    def display_choice(self, c):
+        if self.ranges is None:
+            return c.display()
+        if len(c.values) == 1:
+            return c.display()
+        for r in self.ranges:
+            if r[0] == c.values[0].value and r[1] == c.values[1].value:
+                # found a match in ranges
+                if len(r) > 2:
+                    # found a label, so use it
+                    return r[2]
+                else:
+                    return c.display()
+        return c.display()
+
     def get_choices_add(self, qs):
         chosen = list(self.chosen)
         range_type = None
@@ -784,7 +799,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
             val_counts = value_counts(qs, self.field)
             for v, count in val_counts.items():
                 choice = self.choice_type([RangeEnd(v, True)])
-                choices.append(FilterChoice(choice.display(),
+                choices.append(FilterChoice(self.display_choice(choice),
                                             count,
                                             self.build_params(add=choice),
                                             FILTER_ADD))
@@ -804,7 +819,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
                 # the first will include 10 and 20, the second will exlude 20.
                 choice = self.choice_type([RangeEnd(vals[0], i == 0),
                                            RangeEnd(vals[1], True)])
-                choices.append(FilterChoice(choice.display(),
+                choices.append(FilterChoice(self.display_choice(choice),
                                             count,
                                             self.build_params(add=choice),
                                             FILTER_ADD))
