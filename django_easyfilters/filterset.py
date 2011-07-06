@@ -85,13 +85,17 @@ class FilterSet(object):
     def setup_filters(self):
         filters = []
         for i, f in enumerate(self.get_fields()):
+            klass = None
             if isinstance(f, basestring):
                 opts = {}
                 field_name = f
             else:
                 opts = f[1]
                 field_name = f[0]
-            klass = self.get_filter_for_field(field_name)
+                if len(f) > 2:
+                    klass = f[2]
+            if klass is None:
+                klass = self.get_filter_for_field(field_name)
             filters.append(klass(field_name, self.model, self.params, **opts))
         return filters
 

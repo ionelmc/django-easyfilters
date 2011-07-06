@@ -76,6 +76,15 @@ class TestFilterSet(TestCase):
         self.assertEqual(DateTimeFilter, type(fs.filters[4]))
         self.assertEqual(NumericRangeFilter, type(fs.filters[5]))
 
+    def test_specify_custom_filter(self):
+        class AuthorFilterSet(FilterSet):
+            fields = [
+                ('likes', {}, NumericRangeFilter)
+                ]
+
+        fs = AuthorFilterSet(Author.objects.all(), QueryDict(''))
+        self.assertEqual(NumericRangeFilter, type(fs.filters[0]))
+
 
 class TestFilters(TestCase):
     fixtures = ['django_easyfilters_tests']
