@@ -72,3 +72,13 @@ class TestRanges(unittest.TestCase):
                          [(Decimal('3'), Decimal('4')),
                           (Decimal('4'), Decimal('5')),
                           (Decimal('5'), Decimal('6'))])
+
+    def test_auto_ranges_type(self):
+        """
+        auto_ranges should return the same type of thing it is passed
+        """
+        r = auto_ranges(1, 10, 10)
+        self.assertEqual(type(r[0][0]), int)
+
+        r2 = auto_ranges(Decimal('1'), Decimal('10'), 10)
+        self.assertEqual(type(r2[0][0]), Decimal)

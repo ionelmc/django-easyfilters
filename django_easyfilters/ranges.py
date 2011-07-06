@@ -22,6 +22,8 @@ def auto_ranges(lower, upper, max_items):
 
     assert lower < upper
 
+    input_type = type(lower)
+
     # Convert to decimals.
     lower_d = Decimal(lower)
     upper_d = Decimal(upper)
@@ -58,10 +60,14 @@ def auto_ranges(lower, upper, max_items):
         # If we are less than max_items, go with this.  (Note that smaller steps
         # are tried first).
         if num_steps <= max_items:
-            ranges = [(lower_r + c_step * i, lower_r + c_step * (i + 1))
-                      for i in xrange(num_steps)]
-            # make sure top item is rounded value
-            ranges[-1] = (ranges[-1][0],  upper_r)
+            ranges = []
+            for i in xrange(num_steps):
+                lower_i = input_type(lower_r + c_step * i)
+                upper_i = input_type(lower_r + c_step * (i + 1))
+                if i == num_steps - 1:
+                    # make sure top item is rounded value
+                    upper_i = input_type(upper_r)
+                ranges.append((lower_i, upper_i))
             return ranges
 
     assert False, "Can't find a candidate set of ranges, logic error"
