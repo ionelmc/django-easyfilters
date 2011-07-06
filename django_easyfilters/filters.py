@@ -694,6 +694,7 @@ class RangeEnd(object):
         # value is included as part of the range.
         self.value, self.inclusive = value, inclusive
 
+
 def make_numeric_range_choice(to_python, to_str):
     """
     Returns a Choice class that represents a numeric choice range,

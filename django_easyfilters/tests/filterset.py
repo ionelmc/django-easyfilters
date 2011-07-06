@@ -728,7 +728,6 @@ class TestFilters(TestCase):
         self.assertEqual(choices[0].count, qs.filter(price__gte=Decimal('3.50'), price__lte=Decimal('5.00')).count())
         self.assertEqual(choices[1].count, qs.filter(price__gt=Decimal('5.00'), price__lte=Decimal('6.00')).count())
 
-
     def test_numericrange_filter_manual_ranges_no_drill_down(self):
         # We shouldn't get drilldown if ranges is specified manually.
 
@@ -742,7 +741,6 @@ class TestFilters(TestCase):
         choices = filter1.get_choices(qs_filtered1)
         self.assertEqual(len(choices), 1)
         self.assertEqual(choices[0].link_type, FILTER_REMOVE)
-
 
     def test_order_by_count(self):
         """
