@@ -1,0 +1,93 @@
+<html>
+  <head>
+    <title>Author list</title>
+  </head>
+  <style type="text/css">
+body {
+    font-family: Verdana;
+}
+
+h1 {
+    font-size: 1.4em;
+}
+h2 {
+    font-size: 1.2em;
+    margin: 0.6em -0.4em;
+}
+
+div.book {
+    padding-left: 1em;
+    margin-bottom: 0.6em;
+    border-top: 1px solid #888;
+}
+
+/* Filters */
+.filterline {
+    margin-bottom: 0.5em;
+    margin-left: 1em;
+    text-indent: -1em;
+    line-height: 1.8em;
+}
+
+.filterline .filterlabel {
+    font-weight: bold;
+}
+
+
+.removefilter a:link,
+.removefilter a:visited,
+.addfilter a:link,
+.addfilter a:visited {
+    text-decoration: none;
+}
+
+.removefilter a:link,
+.removefilter a:visited {
+    border-radius: 4px;
+    padding: 0px 1px 2px 3px;
+    border: 1px solid #113399;
+    background-color: #113399;
+    color: white;
+}
+
+.addfilter a:link,
+.addfilter a:visited {
+    border-radius: 4px;
+    padding: 0px 1px 2px 3px;
+    border: 1px solid #f0f0f0;
+    background-color: #f0f0f0;
+    color: black;
+}
+
+/* :hover come after to override */
+.addfilter a:hover,
+.removefilter a:hover {
+    border-radius: 4px;
+    padding: 0px 1px 2px 3px;
+    border: 1px solid #3355bb;
+    background-color: #3355bb;
+    color: white;
+}
+
+.displayfilter {
+    border-radius: 4px;
+    padding: 0px 1px 2px 3px;
+    border: 1px solid #303030;
+    background-color: white;
+    color: #505050;
+}
+
+  </style>
+  <body>
+
+    <h1>Authors</h1>
+    {{ authorsfilter }}
+
+    <p>The following authors were found:</p>
+    {% for author in authors %}
+      <div class="author">
+        <h2>{{ author.name }}</h2>
+      </div>
+    {% endfor %}
+  </body>
+</html>

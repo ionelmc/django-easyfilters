@@ -9,6 +9,7 @@ BINDING_CHOICES = [
 
 class Author(models.Model):
     name = models.CharField(max_length=50)
+    likes = models.IntegerField(default=0)
 
     def __unicode__(self):
         return self.name

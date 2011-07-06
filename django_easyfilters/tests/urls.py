@@ -7,6 +7,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
                        (r'^books/', 'django_easyfilters.tests.views.books'),
+                       (r'^authors/', 'django_easyfilters.tests.views.authors'),
                        (r'^admin/', include(admin.site.urls)),
 
 )

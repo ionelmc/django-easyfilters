@@ -3,70 +3,80 @@
     "pk": 4, 
     "model": "tests.author", 
     "fields": {
-      "name": "A. A. Milne"
+      "name": "A. A. Milne", 
+      "likes": 1234
     }
   }, 
   {
     "pk": 6, 
     "model": "tests.author", 
     "fields": {
-      "name": "Anne Bront\u00eb"
+      "name": "Anne Bront\u00eb", 
+      "likes": 678
     }
   }, 
   {
     "pk": 10, 
     "model": "tests.author", 
     "fields": {
-      "name": "Arthur C. Clarke"
+      "name": "Arthur C. Clarke", 
+      "likes": 890
     }
   }, 
   {
     "pk": 9, 
     "model": "tests.author", 
     "fields": {
-      "name": "Charles Dickens"
+      "name": "Charles Dickens", 
+      "likes": 777
     }
   }, 
   {
     "pk": 2, 
     "model": "tests.author", 
     "fields": {
-      "name": "Charlotte Bront\u00eb"
+      "name": "Charlotte Bront\u00eb", 
+      "likes": 1534
     }
   }, 
   {
     "pk": 5, 
     "model": "tests.author", 
     "fields": {
-      "name": "E. H. Shepard"
+      "name": "E. H. Shepard", 
+      "likes": 970
     }
   }, 
   {
     "pk": 7, 
     "model": "tests.author", 
     "fields": {
-      "name": "Emily Bront\u00eb"
+      "name": "Emily Bront\u00eb", 
+      "likes": 456
     }
   }, 
   {
     "pk": 8, 
     "model": "tests.author", 
     "fields": {
-      "name": "George Orwell"
+      "name": "George Orwell", 
+      "likes": 912
     }
   }, 
   {
     "pk": 1, 
     "model": "tests.author", 
     "fields": {
-      "name": "Jane Austen"
+      "name": "Jane Austen", 
+      "likes": 533
     }
   }, 
   {
     "pk": 3, 
     "model": "tests.author", 
     "fields": {
-      "name": "Lewis Carroll"
+      "name": "Lewis Carroll", 
+      "likes": 1101
     }
   }, 
   {

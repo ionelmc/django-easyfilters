@@ -10,6 +10,11 @@ class BookAdmin(admin.ModelAdmin):
     list_editable = ["binding", "genre", "price", "date_published", "edition"]
     list_filter = ["genre", "authors", "binding", "price"]
 
+
+class AuthorAdmin(admin.ModelAdmin):
+    list_display = ["id", "name", "likes"]
+    list_editable = ["name", "likes"]
+
 admin.site.register(Book, BookAdmin)
-admin.site.register(Author)
+admin.site.register(Author, AuthorAdmin)
 admin.site.register(Genre)
