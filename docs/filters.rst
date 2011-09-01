@@ -10,7 +10,7 @@ with the keyword argument options that they take.
 
 .. class:: Filter
 
-   This is the base class for all filters, and has provides some options:
+   This is the base class for all filters, and provides some options:
 
    * ``query_param``:
 
@@ -34,8 +34,9 @@ with the keyword argument options that they take.
 
 .. class:: ChoicesFilter
 
-   This is used for fields that have 'choices' defined. The choices presented
-   will be in the order specified in 'choices'.
+   This is used for fields that have 'choices' defined (normally passed in to
+   the field constructor). The choices presented will be in the order specified
+   in 'choices'.
 
 .. class:: DateTimeFilter
 
@@ -70,8 +71,8 @@ with the keyword argument options that they take.
 
      Default: 5
 
-     The maximum number of links to display. If there fewer distinct values
-     than this in the data, single values will be shown, otherwise ranges.
+     The maximum number of links to display. If there are fewer distinct values
+     than this in the data, single values will be shown, and ranges otherwise.
 
    * ``ranges``
 
@@ -112,8 +113,8 @@ have the following API:
 * ``__init__(field, model, params, **kwargs)``
 
   Constructor. ``field`` is the string identifying the field, ``model`` is the
-  model class, ``params`` is a QueryDict (i.e. request.GET). ``kwargs`` contains
-  any custom options specified for the filter.
+  model class, ``params`` is a QueryDict (i.e. normally request.GET). ``kwargs``
+  contains any custom options specified for the filter.
 
 * ``apply_filter(qs)``
 

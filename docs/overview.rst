@@ -17,9 +17,11 @@ Suppose your models.py looks something like this:
 (with BINDING_CHOICES, Author and Genre omitted for brevity).
 
 You might want to present a list of Book objects, allowing the user to filter on
-the various fields. Assuming your views.py is something like this:
+the various fields. Your views.py would be something like this:
 
 .. code-block:: python
+
+    from django.shortcuts import render
 
     from myapp.models import Book
 
@@ -40,7 +42,9 @@ code as follow:
 
 .. code-block:: python
 
+    from django.shortcuts import render
     from django_easyfilters import FilterSet
+
     from myapp.models import Book
 
     class BookFilterSet(FilterSet):
@@ -66,7 +70,7 @@ The ``booksfilter`` item has been added to the context in order for the filters
 to be displayed on the template.
 
 Then, in the template, just add ``{{ booksfilter }}`` to the template.
-books. You can also use pagination e.g. using django-pagination:
+You can also use pagination e.g. using django-pagination:
 
 .. code-block:: django
 
