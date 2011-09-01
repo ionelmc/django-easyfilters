@@ -20,12 +20,12 @@ def find_package_data(pkg, filetypes):
 
 setup(
     name = "django-easyfilters",
-    version = '0.1.1',
+    version = '0.2',
     packages = find_packages(),
     author = "Luke Plant",
     author_email = "L.Plant.98@cantab.net",
     url = "https://bitbucket.org/spookylukey/django-easyfilters/",
-    description = "Intelligently add links that filter a list of Django model objects.",
+    description = "Easy creation of link-based filtering for a list of Django model objects.",
     long_description = (
                         read('README.rst')
                         + "\n\n" +
