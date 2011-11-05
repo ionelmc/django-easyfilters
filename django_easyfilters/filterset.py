@@ -14,7 +14,7 @@ def non_breaking_spaces(val):
     return mark_safe(u'&nbsp;'.join(escape(part) for part in val.split(u' ')))
 
 
-class cached_property(object):
+class cachedproperty(object):
     """
     Decorator that creates converts a method with a single
     self argument into a property cached on the instance.
