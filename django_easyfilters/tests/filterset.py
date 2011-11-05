@@ -85,6 +85,35 @@ class TestFilterSet(TestCase):
         fs = AuthorFilterSet(Author.objects.all(), QueryDict(''))
         self.assertEqual(NumericRangeFilter, type(fs.filters[0]))
 
+    def test_default_title(self):
+        class BookFilterSet(FilterSet):
+            fields = [
+                'genre',
+                'binding',
+                'authors',
+                ]
+
+        qs = Book.objects.all()
+        data = QueryDict('binding=H&genre=6')
+        f = BookFilterSet(qs, data)
+        self.assertEqual(f.title, "Classics, Hardback")
+
+    def test_custom_title(self):
+        class BookFilterSet(FilterSet):
+            fields = [
+                'genre',
+                'binding',
+                'authors',
+                ]
+            title_fields = [
+                'genre',
+                ]
+
+        qs = Book.objects.all()
+        data = QueryDict('binding=H&genre=6')
+        f = BookFilterSet(qs, data)
+        self.assertEqual(f.title, "Classics")
+
 
 class TestFilters(TestCase):
     fixtures = ['django_easyfilters_tests']

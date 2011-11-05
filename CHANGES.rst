@@ -1,3 +1,9 @@
+Version 0.3
+-----------
+
+* Added the ``FilterSet.title`` attribute, and the ``title_fields`` attribute
+  that can be used to control it.
+
 Version 0.2
 -----------
 

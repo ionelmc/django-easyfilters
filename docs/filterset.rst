@@ -61,6 +61,11 @@ FilterSet
       This attribute contains the input QuerySet filtered according to the data
       in ``params``.
 
+   .. attribute:: title
+
+      This attribute contains a title summarising the filters that have
+      been selected.
+
    In addition, there are methods/attributes that can be overridden to customise
    the FilterSet:
 
@@ -92,3 +97,9 @@ FilterSet
 
       A string containing a Django template, used to render all the filters.  It
       is used by the default ``get_template`` method, see above.
+
+   .. attribute:: title_fields
+
+      By default, the fields used to create the ``title`` attribute are all
+      fields specified in the ``fields`` attribute, in that order. Specify
+      ``title_fields`` to override this.

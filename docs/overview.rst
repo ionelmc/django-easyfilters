@@ -86,6 +86,31 @@ You can also use pagination e.g. using django-pagination:
        {# etc #}
     {% endfor %}
 
+The ``FilterSet`` also provides a 'title' attribute that can be used to provide
+a simple summary of what has been selected so far. It is made up of a comma
+separated list of chosen fields. For example, if the user has selected genre
+'Classics' and binding 'Hardback' in the example above, you would get the following::
+
+    >>> books = Book.objects.all()
+    >>> booksfilter = BookFilterSet(books, request.GET)
+    >>> booksfilter.title
+    "Harback, Classics"
+
+The fields used for the ``title`` attribute, and the order they are used, can be
+customised by adding a ``title_fields`` attribute to your ``FilterSet``:
+
+.. code-block:: python
+
+    class BookFilterSet(FilterSet):
+        fields = [
+            'binding',
+            'authors',
+            'genre',
+            'price',
+            ]
+
+        title_fields = ['genre', 'binding']
+
 Customisation of the filters can be done in various ways - see :doc:`the
 FilterSet documentation <filterset>` for how to do this, and :doc:`the Filters
 documentation <filters>` for options that can be specified.
