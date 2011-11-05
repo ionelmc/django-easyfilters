@@ -1,3 +1,8 @@
+Version 0.3.1
+-------------
+
+* Fixed crasher in 0.3
+
 Version 0.3
 -----------
 
