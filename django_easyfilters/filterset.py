@@ -29,7 +29,7 @@ class cachedproperty(object):
 
 class FilterSet(object):
 
-    template = """
+    template = u"""
 <div class="filterline"><span class="filterlabel">{{ filterlabel }}:</span>
 {% for choice in choices %}
   {% if choice.link_type == 'add' %}
