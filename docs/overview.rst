@@ -94,7 +94,7 @@ separated list of chosen fields. For example, if the user has selected genre
     >>> books = Book.objects.all()
     >>> booksfilter = BookFilterSet(books, request.GET)
     >>> booksfilter.title
-    "Harback, Classics"
+    u"Hardback, Classics"
 
 The fields used for the ``title`` attribute, and the order they are used, can be
 customised by adding a ``title_fields`` attribute to your ``FilterSet``:
