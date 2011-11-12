@@ -131,7 +131,7 @@ class FilterSet(object):
         return u", ".join(c.label
                           for f in title_fields
                           for c in self.get_filter_choices(f)
-                          if c.link_type != FILTER_ADD)
+                          if c.link_type == FILTER_REMOVE)
 
     def __unicode__(self):
         return self.render()
