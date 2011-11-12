@@ -1,3 +1,8 @@
+Version 0.3.2
+-------------
+
+* Correction to new ``FilterSet.title`` attribute.
+
 Version 0.3.1
 -------------
 
