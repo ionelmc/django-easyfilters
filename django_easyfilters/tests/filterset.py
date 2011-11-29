@@ -3,6 +3,7 @@
 from datetime import datetime, date
 from decimal import Decimal
 import operator
+import re
 
 from django.http import QueryDict
 from django.test import TestCase
@@ -811,3 +812,33 @@ class TestFilters(TestCase):
         # Should be same after sorting by 'label' (that is equal to Genre.name,
         # and Genre ordering is by that field)
         self.assertEqual(choices2, sorted(choices2, key=operator.attrgetter('label')))
+
+
+class TestCustomFilters(TestCase):
+
+    fixtures = ['django_easyfilters_tests']
+
+    def test_render_choice_object(self):
+        for field, filter_class, test_str in [
+            ('genre', ForeignKeyFilter, u"~~Fantasy"),
+            ('authors', ManyToManyFilter, u"~~Charles"),
+            ('binding', ValuesFilter, u"~~H~~"),
+            ('binding', ChoicesFilter, u"~~Hardback~~"),
+            ('price', NumericRangeFilter, re.compile(u"\~\~\d+")),
+            ('date_published', DateTimeFilter, re.compile('\~\~\d{4}')),
+            ]:
+
+            class CustomFilter(filter_class):
+                def render_choice_object(self, obj):
+                    return u"~~%s~~" % super(CustomFilter, self).render_choice_object(obj)
+
+            class BookFilterSet(FilterSet):
+                fields = [
+                    (field, {}, CustomFilter)
+                    ]
+
+            fs = BookFilterSet(Book.objects.all(), QueryDict(''))
+            if hasattr(test_str, 'search'):
+                self.assertTrue(test_str.search(fs.render()), "%s does not allow customization via render_choice_object" % filter_class)
+            else:
+                self.assertTrue(test_str in fs.render(), "%s does not allow customization via render_choice_object" % filter_class)

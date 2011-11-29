@@ -144,13 +144,40 @@ class Filter(object):
         chosen = self.chosen
         choices = []
         for choice in chosen:
-            display = self.display_choice(choice)
-            if display is not None:
-                choices.append(FilterChoice(display,
-                                            None, # Don't need count for removing
-                                            self.build_params(remove=[choice]),
-                                            FILTER_REMOVE))
+            display_obj = self.display_object_from_choice(choice)
+            if display_obj is None:
+                continue
+            choices.append(FilterChoice(self.render_choice_object(display_obj),
+                                        None, # Don't need count for removing
+                                        self.build_params(remove=[choice]),
+                                        FILTER_REMOVE))
         return choices
+
+    def display_object_from_choice(self, choice):
+        """
+        Converts a raw 'choice' (derived from the query string)
+        into an object that will be displayed.
+
+        The 'choice' object passed could be a string, but some subclasses
+        convert to a more convenient type of object.
+
+        This method allows subclasses to do expensive conversion work (e.g. that
+        requires a DB lookup).
+
+        If it returns 'None', the 'remove' link will not be displayed.
+        """
+        return choice
+
+    def render_choice_object(self, choice_obj):
+        """
+        Converts an object that is available for choosing (that usually is the
+        result of a database lookup) or has been chosen already into a unicode
+        object for display.
+
+        The choice object could be the 'raw' query string or database value,
+        or transformed into something more convenient (e.g. a model instance)
+        """
+        return unicode(choice_obj)
 
 
 class SingleValueMixin(object):
@@ -247,9 +274,6 @@ class RangeFilterMixin(ChooseAgainMixin, SingleValueMixin):
     def lookup_from_choice(self, choice):
         return choice.make_lookup(self.field)
 
-    def display_choice(self, choice):
-        return choice.display()
-
     def get_choices_remove(self, qs):
         # Due to drill down, if a broader param is removed, the more specific
         # params must be removed too. We assume we can do an ordering on
@@ -259,7 +283,10 @@ class RangeFilterMixin(ChooseAgainMixin, SingleValueMixin):
         out = []
         for i, choice in enumerate(chosen):
             to_remove = [c for c in chosen if c >= choice]
-            out.append(FilterChoice(self.display_choice(choice),
+            display_obj = self.display_object_from_choice(choice)
+            if display_obj is None:
+                continue
+            out.append(FilterChoice(self.render_choice_object(display_obj),
                                     None,
                                     self.build_params(remove=to_remove),
                                     FILTER_REMOVE))
@@ -272,8 +299,8 @@ class ValuesFilter(ChooseOnceMixin, SimpleQueryMixin, Filter):
     """
     Fallback Filter for various kinds of simple values.
     """
-    def display_choice(self, choice):
-        retval = unicode(choice)
+    def render_choice_object(self, choice):
+        retval = super(ValuesFilter, self).render_choice_object(choice)
         if retval == u'':
             return u'(empty)'
         else:
@@ -284,7 +311,7 @@ class ValuesFilter(ChooseOnceMixin, SimpleQueryMixin, Filter):
         Called by 'get_choices', this is usually the one to override.
         """
         count_dict = self.get_values_counts(qs)
-        return [FilterChoice(self.display_choice(val),
+        return [FilterChoice(self.render_choice_object(val),
                              count,
                              self.build_params(add=val),
                              FILTER_ADD)
@@ -303,7 +330,7 @@ class ChoicesFilter(ValuesFilter):
         super(ChoicesFilter, self).__init__(*args, **kwargs)
         self.choices_dict = dict(self.field_obj.flatchoices)
 
-    def display_choice(self, choice):
+    def render_choice_object(self, choice):
         # 3) above
         return self.choices_dict.get(choice, choice)
 
@@ -313,9 +340,7 @@ class ChoicesFilter(ValuesFilter):
         for val, display in self.field_obj.choices:
             # 1), 2) above
             if val in count_dict:
-                # We could use the value 'display' here, but for consistency
-                # call display_choice() in case it is overriden.
-                choices.append(FilterChoice(self.display_choice(val),
+                choices.append(FilterChoice(self.render_choice_object(val),
                                             count_dict[val],
                                             self.build_params(add=val),
                                             FILTER_ADD))
@@ -326,14 +351,13 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
     """
     Filter for ForeignKey fields.
     """
-    def display_choice(self, choice):
-
+    def display_object_from_choice(self, choice):
         lookup = {self.rel_field.name: choice}
         try:
             obj = self.rel_model.objects.get(**lookup)
         except self.rel_model.DoesNotExist:
             return None
-        return unicode(obj)
+        return obj
 
     def get_choices_add(self, qs):
         count_dict = self.get_values_counts(qs)
@@ -343,7 +367,7 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
 
         for o in objs:
             pk = getattr(o, self.rel_field.attname)
-            choices.append(FilterChoice(unicode(o),
+            choices.append(FilterChoice(self.render_choice_object(o),
                                         count_dict[pk],
                                         self.build_params(add=pk),
                                         FILTER_ADD))
@@ -381,7 +405,7 @@ class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
         # Now, need to lookup objects on related table, to display them.
         objs = self.rel_model.objects.filter(pk__in=count_dict.keys())
 
-        return [FilterChoice(unicode(o),
+        return [FilterChoice(self.render_choice_object(o),
                              count_dict[o.pk],
                              self.build_params(add=o.pk),
                              FILTER_ADD)
@@ -395,7 +419,7 @@ class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
         # We want to preserve order of items in params, so use the original
         # 'chosen' list, rather than objs.
         obj_dict = dict([(obj.pk, obj) for obj in objs])
-        return [FilterChoice(unicode(obj_dict[choice]),
+        return [FilterChoice(self.render_choice_object(obj_dict[choice]),
                              None, # Don't need count for removing
                              self.build_params(remove=[choice]),
                              FILTER_REMOVE)
@@ -566,6 +590,9 @@ class DateTimeFilter(RangeFilterMixin, Filter):
         self.max_depth_level = self.max_depth_levels[self.max_depth]
         super(DateTimeFilter, self).__init__(*args, **kwargs)
 
+    def render_choice_object(self, choice):
+        return choice.display()
+
     def get_choices_add(self, qs):
         chosen = list(self.chosen)
         range_type = None
@@ -611,7 +638,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             if range_type.level > self.max_depth_level:
                 continue
 
-            choices.append(FilterChoice(date_choice.display(),
+            choices.append(FilterChoice(self.render_choice_object(date_choice),
                                         count,
                                         self.build_params(add=date_choice),
                                         FILTER_ADD))
@@ -679,7 +706,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
                 continue
             date_choice = DateChoice(DateRangeType.get(chosen_level, True),
                                      new_choice.values)
-            retval.append(FilterChoice(date_choice.display(),
+            retval.append(FilterChoice(self.render_choice_object(date_choice),
                                        None, None,
                                        FILTER_DISPLAY))
         return retval
@@ -769,7 +796,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
         self.choice_type = make_numeric_range_choice(field_obj.to_python, str)
         super(NumericRangeFilter, self).__init__(field, model, params, **kwargs)
 
-    def display_choice(self, c):
+    def render_choice_object(self, c):
         if self.ranges is None:
             return c.display()
         if len(c.values) == 1:
@@ -800,7 +827,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
             val_counts = value_counts(qs, self.field)
             for v, count in val_counts.items():
                 choice = self.choice_type([RangeEnd(v, True)])
-                choices.append(FilterChoice(self.display_choice(choice),
+                choices.append(FilterChoice(self.render_choice_object(choice),
                                             count,
                                             self.build_params(add=choice),
                                             FILTER_ADD))
@@ -820,7 +847,7 @@ class NumericRangeFilter(RangeFilterMixin, Filter):
                 # the first will include 10 and 20, the second will exlude 20.
                 choice = self.choice_type([RangeEnd(vals[0], i == 0),
                                            RangeEnd(vals[1], True)])
-                choices.append(FilterChoice(self.display_choice(choice),
+                choices.append(FilterChoice(self.render_choice_object(choice),
                                             count,
                                             self.build_params(add=choice),
                                             FILTER_ADD))

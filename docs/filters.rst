@@ -134,8 +134,26 @@ have the following API:
   * count: the number of items for this choice (only for FILTER_ADD)
   * params: parameters used to create a link for this option, as a QueryDict
 
-At the moment, all other methods of Filter and subclasses are considered private
-implementation details. You can subclass Filter if you want, and use its
-functionality, but it may change without warning.
+If you want to use a provided Filter and subclass from it, at the moment only
+the following additional methods are considered public:
+
+* ``render_choice_object(choice)``
+
+  This method is responsible for generating the label for a choice (whether it
+  is an 'add' or 'remove' choice). It is passed a choice object that is derived
+  either from the query string (for 'remove' choices) or from the database (for
+  'add' choices).
+
+  Different subclasses of Filter pass different types of object in. Currently
+  the following can be relied on:
+
+  * :class:`ForeignKeyFilter` and :class:`ManyToManyFilter` pass in the related
+    database model instances as 'choice'.
+
+  * :class:`ValuesFilter` and :class:`ChoicesFilter` pass in the underlying raw
+    database value as 'choice'.
+
+All other methods of Filter and subclasses are considered private implementation
+details and may change without warning.
 
 
