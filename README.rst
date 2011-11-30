@@ -45,7 +45,7 @@ File bugs/feature request in the 'issues' in BitBucket:
 
 https://bitbucket.org/spookylukey/django-easyfilters/issues?status=new&status=open
 
-Or drop `me <http://lukeplant.me.uk/>` an email, I always like to hear when
+Or drop `me <http://lukeplant.me.uk/>`_ an email, I always like to hear when
 people are using my stuff.
 
 TODO
