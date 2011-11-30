@@ -407,10 +407,10 @@ class TestFilters(TestCase):
         # ... but not Wuthering Heights
         self.assertFalse(qs_emily_anne.filter(name='Wuthering Heights').exists())
 
-        # The choices should contain just emily and anne to remove, and
-        # charlotte should have 'link_type' FILTER_ADD. Even though it
+        # The choices should contain just Emily and Anne to remove, and
+        # Charlotte should have 'link_type' FILTER_ADD. Even though it
         # is the only choice, adding the choice is not necessarily the same as
-        # not adding it (could have books by Rmily and Anne, but not charlotte)
+        # not adding it (could have books by Emily and Anne, but not Charlotte)
         choices = filter2.get_choices(qs_emily_anne)
         self.assertEqual([(c.label, c.link_type) for c in choices],
                          [(unicode(emily), FILTER_REMOVE),
