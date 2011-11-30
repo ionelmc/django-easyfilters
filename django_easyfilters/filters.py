@@ -503,11 +503,11 @@ class DateChoice(object):
         if self.range_type.single:
             value = self.values[0]
             parts = value.split('-')
-            if self.range_type == YEAR:
+            if self.range_type is YEAR:
                 return parts[0]
-            elif self.range_type == MONTH:
+            elif self.range_type is MONTH:
                 return unicode(MONTHS[int(parts[1])])
-            elif self.range_type == DAY:
+            elif self.range_type is DAY:
                 return str(int(parts[-1]))
         else:
             return u'-'.join([DateChoice(DateRangeType.get(self.range_type.level, True),
@@ -516,9 +516,9 @@ class DateChoice(object):
 
     @staticmethod
     def datetime_to_value(range_type, dt):
-        if range_type == YEAR:
+        if range_type is YEAR:
             return '%04d' % dt.year
-        elif range_type == MONTH:
+        elif range_type is MONTH:
             return '%04d-%02d' % (dt.year, dt.month)
         else:
             return '%04d-%02d-%02d' % (dt.year, dt.month, dt.day)
@@ -640,9 +640,9 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             # If range_type is month/day, we don't want any possibility of the
             # buckets wrapping over to the next year/month, so we set first and
             # last accordingly
-            if range_type == MONTH:
+            if range_type is MONTH:
                 first, last = 1, 12
-            elif range_type == DAY:
+            elif range_type is DAY:
                 first, last = 1, 31
             else:
                 first = results[0][0].year
