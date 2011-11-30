@@ -1,3 +1,11 @@
+Version 0.4
+-----------
+
+* Cleaned up internal ``Filter`` implementation/API
+
+* Added and documented ``Filter.render_choice_object`` which can
+  be overridden for easy customization of filters.
+
 Version 0.3.2
 -------------
 
