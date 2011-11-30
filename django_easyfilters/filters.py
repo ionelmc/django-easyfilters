@@ -144,29 +144,11 @@ class Filter(object):
         chosen = self.chosen
         choices = []
         for choice in chosen:
-            display_obj = self.display_object_from_choice(choice)
-            if display_obj is None:
-                continue
-            choices.append(FilterChoice(self.render_choice_object(display_obj),
+            choices.append(FilterChoice(self.render_choice_object(choice),
                                         None, # Don't need count for removing
                                         self.build_params(remove=[choice]),
                                         FILTER_REMOVE))
         return choices
-
-    def display_object_from_choice(self, choice):
-        """
-        Converts a raw 'choice' (derived from the query string)
-        into an object that will be displayed.
-
-        The 'choice' object passed could be a string, but some subclasses
-        convert to a more convenient type of object.
-
-        This method allows subclasses to do expensive conversion work (e.g. that
-        requires a DB lookup).
-
-        If it returns 'None', the 'remove' link will not be displayed.
-        """
-        return choice
 
     def render_choice_object(self, choice_obj):
         """
@@ -283,10 +265,7 @@ class RangeFilterMixin(ChooseAgainMixin, SingleValueMixin):
         out = []
         for i, choice in enumerate(chosen):
             to_remove = [c for c in chosen if c >= choice]
-            display_obj = self.display_object_from_choice(choice)
-            if display_obj is None:
-                continue
-            out.append(FilterChoice(self.render_choice_object(display_obj),
+            out.append(FilterChoice(self.render_choice_object(choice),
                                     None,
                                     self.build_params(remove=to_remove),
                                     FILTER_REMOVE))
@@ -351,12 +330,13 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
     """
     Filter for ForeignKey fields.
     """
-    def display_object_from_choice(self, choice):
-        lookup = {self.rel_field.name: choice}
+    def choice_from_param(self, param):
+        choice_pk = super(ForeignKeyFilter, self).choice_from_param(param)
+        lookup = {self.rel_field.name: choice_pk}
         try:
             obj = self.rel_model.objects.get(**lookup)
         except self.rel_model.DoesNotExist:
-            return None
+            raise ValueError("object does not exist in DB")
         return obj
 
     def get_choices_add(self, qs):
