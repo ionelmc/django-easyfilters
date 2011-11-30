@@ -363,8 +363,13 @@ class TestFilters(TestCase):
         # If we select 'emily' as an author:
 
         data =  MultiValueDict({'authors':[str(emily.pk)]})
-        filter1 = ManyToManyFilter('authors', Book, data)
-        qs_emily = filter1.apply_filter(qs)
+        with self.assertNumQueries(1):
+            # 1 query for all chosen objects
+            filter1 = ManyToManyFilter('authors', Book, data)
+
+        with self.assertNumQueries(0):
+            # This shouldn't need to do any more queries
+            qs_emily = filter1.apply_filter(qs)
 
         # ...we should get a qs that includes Poems and Wuthering Heights.
         self.assertTrue(qs_emily.filter(name='Poems').exists())
@@ -372,8 +377,13 @@ class TestFilters(TestCase):
         # ...and excludes Jane Eyre
         self.assertFalse(qs_emily.filter(name='Jane Eyre').exists())
 
-        # We should get a 'choices' that includes charlotte and anne
-        choices = filter1.get_choices(qs_emily)
+        with self.assertNumQueries(2):
+            # 0 query for all chosen objects (already done)
+            # 1 query for available objects
+            # 1 query for counts
+            choices = filter1.get_choices(qs_emily)
+
+        # We should have a 'choices' that includes charlotte and anne
         self.assertTrue(unicode(anne) in [c.label for c in choices if c.link_type is FILTER_ADD])
         self.assertTrue(unicode(charlotte) in [c.label for c in choices if c.link_type is FILTER_ADD])
 
@@ -382,9 +392,13 @@ class TestFilters(TestCase):
         # emily should be in 'remove' links, however.
         self.assertTrue(unicode(emily) in [c.label for c in choices if c.link_type is FILTER_REMOVE])
 
-        # If we select again:
-        data2 =  MultiValueDict({'authors': [str(emily.pk), str(anne.pk)]})
-        filter2 = ManyToManyFilter('authors', Book, data2)
+        # Select again - should have sensible params
+        anne_choice = [c for c in choices if c.label.startswith('Anne')][0]
+        self.assertTrue(unicode(emily.pk) in anne_choice.params.getlist('authors'))
+        self.assertTrue(unicode(anne.pk) in anne_choice.params.getlist('authors'))
+
+        # Now do the second select:
+        filter2 = ManyToManyFilter('authors', Book, anne_choice.params)
 
         qs_emily_anne = filter2.apply_filter(qs)
 

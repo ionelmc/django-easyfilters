@@ -100,11 +100,14 @@ class Filter(object):
 
     ### Utility methods needed by most/all subclasses ###
 
-    def param_from_choices(self, choices):
+    def param_from_choice(self, choice):
+        return unicode(choice)
+
+    def paramlist_from_choices(self, choices):
         """
         For a list of choices, return the parameter list that should be created.
         """
-        return map(unicode, choices)
+        return map(self.param_from_choice, choices)
 
     def build_params(self, add=None, remove=None):
         """
@@ -121,7 +124,7 @@ class Filter(object):
             if add not in chosen:
                 chosen.append(add)
         if chosen:
-            params.setlist(self.query_param, self.param_from_choices(chosen))
+            params.setlist(self.query_param, self.paramlist_from_choices(chosen))
         else:
             del params[self.query_param]
         params.pop('page', None) # links should reset paging
@@ -339,6 +342,9 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
             raise ValueError("object does not exist in DB")
         return obj
 
+    def param_from_choice(self, choice):
+        return unicode(choice.pk)
+
     def get_choices_add(self, qs):
         count_dict = self.get_values_counts(qs)
         lookup = {self.rel_field.name + '__in': count_dict.keys()}
@@ -349,7 +355,7 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
             pk = getattr(o, self.rel_field.attname)
             choices.append(FilterChoice(self.render_choice_object(o),
                                         count_dict[pk],
-                                        self.build_params(add=pk),
+                                        self.build_params(add=o),
                                         FILTER_ADD))
         return choices
 
@@ -387,23 +393,28 @@ class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
 
         return [FilterChoice(self.render_choice_object(o),
                              count_dict[o.pk],
-                             self.build_params(add=o.pk),
+                             self.build_params(add=o),
                              FILTER_ADD)
                 for o in objs]
 
-    def get_choices_remove(self, qs):
-        chosen = self.chosen
-        # Do a query in bulk to get objs corresponding to choices.
-        objs = self.rel_model.objects.filter(pk__in=chosen)
+    def param_from_choice(self, choice):
+        return unicode(choice.pk)
 
-        # We want to preserve order of items in params, so use the original
-        # 'chosen' list, rather than objs.
+    def choices_from_params(self):
+        # To create the model instances, we override this method rather than
+        # choice_from_param in order to do a single bulk query rather than
+        # multiple queries. So 'choice_from_param' technically returns the
+        # wrong type of thing, since it returns PKs not instances.
+        chosen_pks = super(ManyToManyFilter, self).choices_from_params()
+        objs = self.rel_model.objects.filter(pk__in=chosen_pks)
+        # Now need to get original order back. But also need to be aware
+        # that some things may not exist in DB
         obj_dict = dict([(obj.pk, obj) for obj in objs])
-        return [FilterChoice(self.render_choice_object(obj_dict[choice]),
-                             None, # Don't need count for removing
-                             self.build_params(remove=[choice]),
-                             FILTER_REMOVE)
-                for choice in chosen if choice in obj_dict]
+        retval = []
+        for c in chosen_pks:
+            if c in obj_dict:
+                retval.append(obj_dict[c])
+        return retval
 
 
 class DateRangeType(object):
