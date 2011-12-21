@@ -67,6 +67,7 @@ class TestFilterSet(TestCase):
                 'authors',
                 'date_published',
                 'price',
+                'rating',
                 ]
 
         fs = BookFilterSet(Book.objects.all(), QueryDict(''))
@@ -76,6 +77,7 @@ class TestFilterSet(TestCase):
         self.assertEqual(ManyToManyFilter, type(fs.filters[3]))
         self.assertEqual(DateTimeFilter, type(fs.filters[4]))
         self.assertEqual(NumericRangeFilter, type(fs.filters[5]))
+        self.assertEqual(NumericRangeFilter, type(fs.filters[6]))
 
     def test_specify_custom_filter(self):
         class AuthorFilterSet(FilterSet):

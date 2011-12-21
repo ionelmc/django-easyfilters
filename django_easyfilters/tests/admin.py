@@ -6,8 +6,8 @@ from django.contrib import admin
 class BookAdmin(admin.ModelAdmin):
     def authors(obj):
         return ", ".join(unicode(a) for a in obj.authors.all())
-    list_display = ["name", authors, "binding", "genre", "price", "date_published", "edition"]
-    list_editable = ["binding", "genre", "price", "date_published", "edition"]
+    list_display = ["name", authors, "binding", "genre", "price", "date_published", "edition", "rating"]
+    list_editable = ["binding", "genre", "price", "date_published", "edition", "rating"]
     list_filter = ["genre", "authors", "binding", "price"]
 
 

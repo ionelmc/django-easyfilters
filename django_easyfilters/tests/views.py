@@ -11,6 +11,7 @@ class BookFilterSet(FilterSet):
         'genre',
         'price',
         'date_published',
+        'rating',
         ]
 
 def books(request):

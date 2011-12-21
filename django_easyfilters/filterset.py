@@ -101,7 +101,7 @@ class FilterSet(object):
             type_ = f.get_internal_type()
             if type_ == 'DateField' or type_ == 'DateTimeField':
                 return DateTimeFilter
-            elif type_ == 'DecimalField':
+            elif type_ == 'DecimalField' or type_ == 'FloatField':
                 return NumericRangeFilter
             else:
                 return ValuesFilter
