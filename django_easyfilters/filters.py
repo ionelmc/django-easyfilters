@@ -689,7 +689,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             if range_type is MONTH:
                 first, last = 1, 12
             elif range_type is DAY:
-                first, last = 1, 31
+                first, last = 1, (results[0][0] + relativedelta(months=1, days=-1)).day
             else:
                 first = results[0][0].year
                 last = results[-1][0].year
@@ -710,8 +710,9 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             for i, bucket in enumerate(buckets):
                 count = sum(row[1] for row in bucket)
                 start_val = first + bucketsize * i
+                end_val = min(start_val + bucketsize, last)
                 start_date = dt_template.replace(**dict({range_type.dateattr: start_val}))
-                end_date = start_date + relativedelta(**dict({range_type.relativedeltaattr: bucketsize - 1}))
+                end_date = dt_template.replace(**dict({range_type.dateattr: end_val}))
 
                 choice = DateChoice.from_datetime_range(range_type, start_date, end_date)
                 date_choice_counts.append((choice, count))
@@ -725,7 +726,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
         # (which might be nothing) to what can be chosen, to give context to the
         # link.
 
-        # Note this is used is bridging to the 'add' choices, and in bridging
+        # Note this is used in bridging to the 'add' choices, and in bridging
         # between 'remove' choices
 
         if len(choices) == 0:

@@ -6,6 +6,8 @@ Version 0.4
 * Added and documented ``Filter.render_choice_object`` which can
   be overridden for easy customization of filters.
 
+* Fixed various bugs with DateTimeFilter
+
 Version 0.3.2
 -------------
 

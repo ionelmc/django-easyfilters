@@ -771,6 +771,34 @@ class TestFilters(TestCase):
         # Expect '10' and '20' as choices
         self.assertEqual(['10', '20'], [c.label for c in choices if c.link_type == FILTER_ADD])
 
+    def test_datetime_filter_day_ranges_end(self):
+        """
+        Test that the ranges for day selection end at the right point (e.g. 31)
+        """
+        # September
+        for i in range(1, 30):
+            Person.objects.create(name="Joe", date_of_birth=date(2011, 9, i))
+
+        params = MultiValueDict({'date_of_birth':['2011-09']})
+
+        f = DateTimeFilter('date_of_birth', Person, params)
+        qs = Person.objects.all()
+        qs_filtered = f.apply_filter(qs)
+        choices = f.get_choices(qs_filtered)
+        self.assertEqual(choices[-1].label[-3:], "-30")
+
+        # October
+        for i in range(1, 31):
+            Person.objects.create(name="Joe", date_of_birth=date(2011, 10, i))
+
+        params = MultiValueDict({'date_of_birth':['2011-10']})
+
+        f = DateTimeFilter('date_of_birth', Person, params)
+        qs = Person.objects.all()
+        qs_filtered = f.apply_filter(qs)
+        choices = f.get_choices(qs_filtered)
+        self.assertEqual(choices[-1].label[-3:], "-31")
+
     def test_numericrange_filter_simple_vals(self):
         # If data is less than max_links, we should get a simple list of values.
         filter1 = NumericRangeFilter('price', Book, MultiValueDict(), max_links=20)
