@@ -788,7 +788,7 @@ class TestFilters(TestCase):
         self.assertEqual(choices[-1].label[-3:], "-30")
 
         # October
-        for i in range(1, 31):
+        for i in range(2, 31):
             Person.objects.create(name="Joe", date_of_birth=date(2011, 10, i))
 
         params = MultiValueDict({'date_of_birth':['2011-10']})

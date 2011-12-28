@@ -689,7 +689,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             if range_type is MONTH:
                 first, last = 1, 12
             elif range_type is DAY:
-                first, last = 1, (results[0][0] + relativedelta(months=1, days=-1)).day
+                first, last = 1, ((results[0][0] + relativedelta(day=1)) + relativedelta(months=1, days=-1)).day
             else:
                 first = results[0][0].year
                 last = results[-1][0].year
