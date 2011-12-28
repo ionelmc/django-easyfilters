@@ -728,7 +728,6 @@ class TestFilters(TestCase):
         """
         Tests that in the case produced in test_datetime_filter_drill_down_to_choice,
         the remove links display correctly.
-        down to reach it.
         """
         # Two birthdays in Jan 2011
         Person.objects.create(name="Joe", date_of_birth=date(2011, 1, 10))
@@ -747,6 +746,30 @@ class TestFilters(TestCase):
                           ('10', FILTER_REMOVE),
                           ],
                          [(c.label, c.link_type) for c in choices])
+
+    def test_datetime_filter_bridge_from_multi_to_single(self):
+        """
+        Tests that bridge_choices will bridge from range (multi) choices to
+        single choices.
+        """
+        # Two birthdays in Jan 2011
+        Person.objects.create(name="Joe", date_of_birth=date(2011, 1, 10))
+        Person.objects.create(name="Peter", date_of_birth=date(2011, 1, 20))
+
+        # Chosen year = 2010 - 2011
+        params = MultiValueDict({'date_of_birth':['2010..2011']})
+
+        f = DateTimeFilter('date_of_birth', Person, params)
+        qs = Person.objects.all()
+        qs_filtered = f.apply_filter(qs)
+        choices = f.get_choices(qs_filtered)
+
+        # Expect 2010 - 2011 as remove link
+        self.assertEqual(['2010-2011'], [c.label for c in choices if c.link_type == FILTER_REMOVE])
+        # Expect 2011 and January as display
+        self.assertEqual(['2011', 'January'], [c.label for c in choices if c.link_type == FILTER_DISPLAY])
+        # Expect '10' and '20' as choices
+        self.assertEqual(['10', '20'], [c.label for c in choices if c.link_type == FILTER_ADD])
 
     def test_numericrange_filter_simple_vals(self):
         # If data is less than max_links, we should get a simple list of values.

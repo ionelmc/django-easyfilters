@@ -732,8 +732,10 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             return []
         if len(chosen) == 0:
             chosen_level = 0
+            bridge_to_single = False
         else:
             chosen_level = chosen[-1].range_type.level
+            bridge_to_single = not chosen[-1].range_type.single
 
         # first choice in list can act as template, as it will have all the
         # values we need.
@@ -741,8 +743,12 @@ class DateTimeFilter(RangeFilterMixin, Filter):
         new_level = new_choice.range_type.level
 
         retval = []
-        while chosen_level < new_level - 1:
-            chosen_level += 1
+        while (chosen_level < new_level - 1) or (chosen_level < new_level and bridge_to_single):
+            # If the first chosen was multi, first bridge just bridges to single
+            if bridge_to_single:
+                bridge_to_single = False
+            else:
+                chosen_level += 1
             if chosen_level > self.max_depth_level:
                 continue
             date_choice = DateChoice(DateRangeType.get(chosen_level, True),
