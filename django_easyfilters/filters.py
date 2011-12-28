@@ -241,7 +241,7 @@ class SimpleQueryMixin(object):
         return value_counts(qs, self.field)
 
 
-class RangeFilterMixin(ChooseAgainMixin, SingleValueMixin):
+class RangeFilterMixin(ChooseAgainMixin):
 
     # choice_type must be set to a class that provides the static method
     # 'from_param' and instance methods 'make_lookup' and 'display', and the
@@ -584,41 +584,80 @@ class DateTimeFilter(RangeFilterMixin, Filter):
     def render_choice_object(self, choice):
         return choice.display()
 
+    def get_choices_remove(self, qs):
+        chosen = list(self.chosen)
+        out = []
+
+        for i, choice in enumerate(chosen):
+            # As for RangeFilterMixin, if a broader param is removed, the more
+            # specific params must be removed too.
+            to_remove = [c for c in chosen if c >= choice]
+            out.append(FilterChoice(self.render_choice_object(choice),
+                                    None,
+                                    self.build_params(remove=to_remove),
+                                    FILTER_REMOVE))
+            # There can be cases where there are gaps, so we need to bridge
+            # using FILTER_DISPLAY
+            out.extend(self.bridge_choices(chosen[0:i+1], chosen[i+1:]))
+        return out
+
     def get_choices_add(self, qs):
         chosen = list(self.chosen)
-        range_type = None
 
-        if len(chosen) > 0:
-            range_type = chosen[-1].range_type.drilldown()
+        # For the case of needing to drill down past a single option
+        # to get to some real choices, we define a recursive
+        # function.
+
+        def get_choices_add_recursive(chosen):
+            range_type = None
+
+            if len(chosen) > 0:
+                range_type = chosen[-1].range_type.drilldown()
+                if range_type is None:
+                    return []
+
             if range_type is None:
-                return []
-
-        if range_type is None:
-            # Get some initial idea of range
-            date_range = qs.aggregate(first=models.Min(self.field),
-                                      last=models.Max(self.field))
-            first = date_range['first']
-            last = date_range['last']
-            if first is None or last is None:
-                # No values, can't drill down:
-                return []
-            if first.year == last.year:
-                if first.month == last.month:
-                    range_type = DAY
+                # Get some initial idea of range
+                date_range = qs.aggregate(first=models.Min(self.field),
+                                          last=models.Max(self.field))
+                first = date_range['first']
+                last = date_range['last']
+                if first is None or last is None:
+                    # No values, can't drill down:
+                    return []
+                if first.year == last.year:
+                    if first.month == last.month:
+                        range_type = DAY
+                    else:
+                        range_type = MONTH
                 else:
-                    range_type = MONTH
+                    range_type = YEAR
+
+            date_qs = qs.dates(self.field, range_type.label)
+            results = date_aggregation(date_qs)
+
+            date_choice_counts = self.collapse_results(results, range_type)
+            if len(date_choice_counts) == 1 and range_type is not None:
+                # Single choice - recurse.
+                single_choice, count = date_choice_counts[0]
+                date_choice_counts_deeper = get_choices_add_recursive([single_choice])
+                if len(date_choice_counts_deeper) == 0:
+                    # Nothing there, so ignore
+                    return date_choice_counts
+                else:
+                    # We discard date_choice_counts, because bridge_choices will
+                    # make it up again.
+                    return date_choice_counts_deeper
             else:
-                range_type = YEAR
+                return date_choice_counts
 
-        date_qs = qs.dates(self.field, range_type.label)
-        results = date_aggregation(date_qs)
-
-        date_choice_counts = self.collapse_results(results, range_type)
+        date_choice_counts = get_choices_add_recursive(chosen)
 
         choices = []
         # Additional display links, to give context for choices if necessary.
         if len(date_choice_counts) > 0:
-            choices.extend(self.bridge_choices(chosen, date_choice_counts))
+            choices.extend(self.bridge_choices(chosen,
+                                               [choice for choice, count in date_choice_counts]))
 
         for date_choice, count in date_choice_counts:
             if date_choice in chosen:
@@ -626,13 +665,20 @@ class DateTimeFilter(RangeFilterMixin, Filter):
 
             # To ensure we get the bridge choices, which are useful, we check
             # self.max_depth_level late on and bailout here.
-            if range_type.level > self.max_depth_level:
+            if date_choice.range_type.level > self.max_depth_level:
                 continue
+
+            if (len(date_choice_counts) == 1 and
+                (date_choice.range_type.level == self.max_depth_level or
+                 count == 1)):
+                link_type = FILTER_DISPLAY
+            else:
+                link_type = FILTER_ADD
 
             choices.append(FilterChoice(self.render_choice_object(date_choice),
                                         count,
                                         self.build_params(add=date_choice),
-                                        FILTER_ADD))
+                                        link_type))
         return choices
 
     def collapse_results(self, results, range_type):
@@ -676,8 +722,12 @@ class DateTimeFilter(RangeFilterMixin, Filter):
 
     def bridge_choices(self, chosen, choices):
         # Returns FILTER_DISPLAY type choices to bridge from what is chosen
-        # (which might be nothing) to the first 'add' link, to give context to
-        # the link.
+        # (which might be nothing) to what can be chosen, to give context to the
+        # link.
+
+        # Note this is used is bridging to the 'add' choices, and in bridging
+        # between 'remove' choices
+
         if len(choices) == 0:
             return []
         if len(chosen) == 0:
@@ -687,7 +737,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
 
         # first choice in list can act as template, as it will have all the
         # values we need.
-        new_choice = choices[0][0]
+        new_choice = choices[0]
         new_level = new_choice.range_type.level
 
         retval = []
@@ -700,6 +750,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             retval.append(FilterChoice(self.render_choice_object(date_choice),
                                        None, None,
                                        FILTER_DISPLAY))
+
         return retval
 
 
@@ -777,7 +828,7 @@ def make_numeric_range_choice(to_python, to_str):
     return NumericRangeChoice
 
 
-class NumericRangeFilter(RangeFilterMixin, Filter):
+class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
 
     def __init__(self, field, model, params, **kwargs):
         self.max_links = kwargs.pop('max_links', 5)

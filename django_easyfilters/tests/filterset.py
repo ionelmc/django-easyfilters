@@ -14,7 +14,7 @@ from django_easyfilters.filters import \
     FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY, \
     ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter, DateTimeFilter, NumericRangeFilter
 
-from models import Book, Genre, Author, BINDING_CHOICES
+from models import Book, Genre, Author, BINDING_CHOICES, Person
 
 
 class TestFilterSet(TestCase):
@@ -599,7 +599,7 @@ class TestFilters(TestCase):
         # the month should be displayed in 'display' mode.
         qs = Book.objects.filter(id=1)
         params = MultiValueDict(dict(date_published=[str(qs[0].date_published.year)]))
-        f = DateTimeFilter('date_published', Book, params, max_links=10)
+        f = DateTimeFilter('date_published', Book, params, max_links=10, max_depth='month')
 
         choices = f.get_choices(qs)
         self.assertEqual(len(choices), 2)
@@ -699,6 +699,54 @@ class TestFilters(TestCase):
                               '1818-08-24..1818-08-30',
                               ])
 
+
+    def test_datetime_filter_drill_down_to_choice(self):
+        """
+        Tests that if there is a choice that can be displayed, it will drill
+        down to reach it.
+        """
+        # Two birthdays in Jan 2011
+        Person.objects.create(name="Joe", date_of_birth=date(2011, 1, 10))
+        Person.objects.create(name="Peter", date_of_birth=date(2011, 1, 20))
+
+        # Chosen year = 2011
+        params = MultiValueDict({'date_of_birth':['2011']})
+
+        f = DateTimeFilter('date_of_birth', Person, params)
+        qs = Person.objects.all()
+        qs_filtered = f.apply_filter(qs)
+        choices = f.get_choices(qs_filtered)
+
+        # Expect 2011 as remove link
+        self.assertEqual(['2011'], [c.label for c in choices if c.link_type == FILTER_REMOVE])
+        # Expect January as display
+        self.assertEqual(['January'], [c.label for c in choices if c.link_type == FILTER_DISPLAY])
+        # Expect '10' and '20' as choices
+        self.assertEqual(['10', '20'], [c.label for c in choices if c.link_type == FILTER_ADD])
+
+    def test_datetime_filter_remove_choices_complete(self):
+        """
+        Tests that in the case produced in test_datetime_filter_drill_down_to_choice,
+        the remove links display correctly.
+        down to reach it.
+        """
+        # Two birthdays in Jan 2011
+        Person.objects.create(name="Joe", date_of_birth=date(2011, 1, 10))
+        Person.objects.create(name="Peter", date_of_birth=date(2011, 1, 20))
+
+        # Chosen year = 2011, and date = 2011-01-10
+        params = MultiValueDict({'date_of_birth':['2011', '2011-01-10']})
+
+        f = DateTimeFilter('date_of_birth', Person, params)
+        qs = Person.objects.all()
+        qs_filtered = f.apply_filter(qs)
+        choices = f.get_choices(qs_filtered)
+
+        self.assertEqual([('2011', FILTER_REMOVE),
+                          ('January', FILTER_DISPLAY),
+                          ('10', FILTER_REMOVE),
+                          ],
+                         [(c.label, c.link_type) for c in choices])
 
     def test_numericrange_filter_simple_vals(self):
         # If data is less than max_links, we should get a simple list of values.

@@ -39,3 +39,8 @@ class Book(models.Model):
     def __unicode__(self):
         return self.name
 
+
+class Person(models.Model):
+    date_of_birth = models.DateField()
+    name = models.CharField(max_length=50)
+
