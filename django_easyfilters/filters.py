@@ -709,13 +709,14 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             date_choice_counts = []
             for i, bucket in enumerate(buckets):
                 count = sum(row[1] for row in bucket)
-                start_val = first + bucketsize * i
-                end_val = min(start_val + bucketsize, last)
-                start_date = dt_template.replace(**dict({range_type.dateattr: start_val}))
-                end_date = dt_template.replace(**dict({range_type.dateattr: end_val}))
+                if count:
+                    start_val = first + bucketsize * i
+                    end_val = min(start_val + bucketsize, last)
+                    start_date = dt_template.replace(**dict({range_type.dateattr: start_val}))
+                    end_date = dt_template.replace(**dict({range_type.dateattr: end_val}))
 
-                choice = DateChoice.from_datetime_range(range_type, start_date, end_date)
-                date_choice_counts.append((choice, count))
+                    choice = DateChoice.from_datetime_range(range_type, start_date, end_date)
+                    date_choice_counts.append((choice, count))
         else:
             date_choice_counts = [(DateChoice.from_datetime(range_type, dt), count)
                                   for dt, count in results]
