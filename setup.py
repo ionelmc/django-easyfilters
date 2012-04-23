@@ -20,7 +20,7 @@ def find_package_data(pkg, filetypes):
 
 setup(
     name = "django-easyfilters",
-    version = '0.3.2',
+    version = '0.4',
     packages = find_packages(),
     author = "Luke Plant",
     author_email = "L.Plant.98@cantab.net",
@@ -37,7 +37,7 @@ setup(
     license = "MIT",
     keywords = "django filter autofilter drilldown easy simple",
     classifiers = [
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
