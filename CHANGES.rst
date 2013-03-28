@@ -1,3 +1,9 @@
+Version 0.5
+-----------
+
+* Python 3.3 compatibility :-) Tests are run against Python 2.6, 2.7 and 3.3,
+  and Django 1.3 to 1.5
+
 Version 0.4
 -----------
 
