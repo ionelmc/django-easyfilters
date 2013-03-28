@@ -2,11 +2,6 @@
 Development
 ===========
 
-Python 2.6 is required for running the test suites and demo app.
-
-First, ensure the directory containing the ``django_easyfilters`` directory is
-on your Python path (virtualenv recommended). Django is a required dependency.
-
 Tests
 -----
 
@@ -14,9 +9,18 @@ To run the test suite, do::
 
    ./manage.py test django_easyfilters
 
-To run it on all supported platforms, install tox and do::
+This requires that the directory containing the ``django_easyfilters`` directory
+is on your Python path (virtualenv recommended), and Django is installed.
+
+Alternatively, to run it on all supported platforms, install tox and do::
 
    tox
+
+This will create all the necessary virtualenvs for you, and is the preferred way
+of working, but will take longer initially. Once you have run it once, you can
+activate a specific virtualenv by doing, for example::
+
+   . .tox/py33-django15/bin/activate
 
 
 Editing test fixtures
