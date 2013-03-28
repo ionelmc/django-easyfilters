@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 import math
@@ -9,8 +11,21 @@ from django.db import models
 from django.utils import formats
 from django.utils.dates import MONTHS
 from django.utils.text import capfirst
+import six
+
 from django_easyfilters.queries import date_aggregation, value_counts, numeric_range_counts
 from django_easyfilters.ranges import auto_ranges
+from django_easyfilters.utils import python_2_unicode_compatible
+
+
+if six.PY3:
+    # Support for __cmp__ implementation below
+    def cmp(a, b):
+        return (a > b) - (a < b)
+    from functools import total_ordering
+else:
+    total_ordering = lambda c: c
+
 
 try:
     from collections import namedtuple
@@ -101,13 +116,13 @@ class Filter(object):
     ### Utility methods needed by most/all subclasses ###
 
     def param_from_choice(self, choice):
-        return unicode(choice)
+        return six.text_type(choice)
 
     def paramlist_from_choices(self, choices):
         """
         For a list of choices, return the parameter list that should be created.
         """
-        return map(self.param_from_choice, choices)
+        return list(map(self.param_from_choice, choices))
 
     def build_params(self, add=None, remove=None):
         """
@@ -162,7 +177,7 @@ class Filter(object):
         The choice object could be the 'raw' query string or database value,
         or transformed into something more convenient (e.g. a model instance)
         """
-        return unicode(choice_obj)
+        return six.text_type(choice_obj)
 
 
 class SingleValueMixin(object):
@@ -343,7 +358,7 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
         return obj
 
     def param_from_choice(self, choice):
-        return unicode(choice.pk)
+        return six.text_type(choice.pk)
 
     def get_choices_add(self, qs):
         count_dict = self.get_values_counts(qs)
@@ -398,7 +413,7 @@ class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
                 for o in objs]
 
     def param_from_choice(self, choice):
-        return unicode(choice.pk)
+        return six.text_type(choice.pk)
 
     def choices_from_params(self):
         # To create the model instances, we override this method rather than
@@ -417,6 +432,7 @@ class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
         return retval
 
 
+@total_ordering
 class DateRangeType(object):
 
     all = {} # Keep a cache, so that we have unique instances
@@ -431,6 +447,12 @@ class DateRangeType(object):
         return '<DateRange %d %s %s>' % (self.level,
                                          "single" if self.single else "multi",
                                          self.label)
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def __cmp__(self, other):
         if other is None:
@@ -473,6 +495,8 @@ DAYGROUP    = DateRangeType(3, False, 'day',   _ymd)
 DAY         = DateRangeType(3, True,  'day',   _ymd)
 
 
+@python_2_unicode_compatible
+@total_ordering
 class DateChoice(object):
     """
     Represents a choice of date. Params are converted to this, and this is used
@@ -486,12 +510,18 @@ class DateChoice(object):
         self.range_type = range_type
         self.values = values
 
-    def __unicode__(self):
+    def __str__(self):
         # This is called when converting to URL
         return '..'.join(self.values)
 
     def __repr__(self):
-        return '<DateChoice %s %s>' % (self.range_type, self.__unicode__())
+        return '<DateChoice %s %s>' % (self.range_type, self)
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def __cmp__(self, other):
         # 'greater' means more specific.
@@ -506,7 +536,7 @@ class DateChoice(object):
             if self.range_type is YEAR:
                 return parts[0]
             elif self.range_type is MONTH:
-                return unicode(MONTHS[int(parts[1])])
+                return six.text_type(MONTHS[int(parts[1])])
             elif self.range_type is DAY:
                 return str(int(parts[-1]))
         else:
@@ -549,8 +579,8 @@ class DateChoice(object):
         else:
             start, end = self.values
 
-        start_parts = map(int, start.split('-'))
-        end_parts = map(int, end.split('-'))
+        start_parts = list(map(int, start.split('-')))
+        end_parts = list(map(int, end.split('-')))
 
         # Fill the parts we don't have with '1' so that e.g. 2000 becomes
         # 2000-1-1
@@ -772,13 +802,15 @@ class RangeEnd(object):
         self.value, self.inclusive = value, inclusive
 
 
+
 def make_numeric_range_choice(to_python, to_str):
     """
     Returns a Choice class that represents a numeric choice range,
     using the passed in 'to_python' and 'to_str' callables to do
     conversion to/from native data types.
     """
-
+    @python_2_unicode_compatible
+    @total_ordering
     class NumericRangeChoice(object):
         def __init__(self, values):
             # Values are instances of RangeEnd
@@ -811,12 +843,19 @@ def make_numeric_range_choice(to_python, to_str):
                 return {field_name + '__gt' + ('e' if start.inclusive else ''): start.value,
                         field_name + '__lt' + ('e' if end.inclusive else ''): end.value}
 
-        def __unicode__(self):
+        def __str__(self):
             return '..'.join([to_str(v.value) + ('i' if v.inclusive else '')
                               for v in self.values])
 
         def __repr__(self):
-            return '<NumericChoice %s>' % self.__unicode__()
+            return '<NumericRangeChoice %s>' % self
+
+
+        def __eq__(self, other):
+            return self.__cmp__(other) == 0
+
+        def __lt__(self, other):
+            return self.__cmp__(other) < 0
 
         def __cmp__(self, other):
             # 'greater' means more specific.

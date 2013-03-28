@@ -8,13 +8,14 @@ import re
 from django.http import QueryDict
 from django.test import TestCase
 from django.utils.datastructures import MultiValueDict
+from six import text_type
 
 from django_easyfilters.filterset import FilterSet
 from django_easyfilters.filters import \
     FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY, \
     ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter, DateTimeFilter, NumericRangeFilter
 
-from models import Book, Genre, Author, BINDING_CHOICES, Person
+from .models import Book, Genre, Author, BINDING_CHOICES, Person
 
 
 class TestFilterSet(TestCase):
@@ -47,7 +48,7 @@ class TestFilterSet(TestCase):
         fs = BookFilterSet(qs, QueryDict(''))
         rendered = fs.render()
         self.assertTrue('Genre' in rendered)
-        self.assertEqual(rendered, unicode(fs))
+        self.assertEqual(rendered, text_type(fs))
 
         # And when in 'already filtered' mode:
         choice = fs.filters[0].get_choices(qs)[0]
@@ -206,7 +207,7 @@ class TestFilters(TestCase):
             qs_filtered = filter2.apply_filter(qs)
             self.assertEqual(len(qs_filtered), choice.count)
             for book in qs_filtered:
-                self.assertEqual(unicode(book.genre), choice.label)
+                self.assertEqual(text_type(book.genre), choice.label)
         self.assertTrue(reached)
 
     def test_foreignkey_remove_link(self):
@@ -252,7 +253,7 @@ class TestFilters(TestCase):
         choices = filter1.get_choices(qs)
 
         for choice in choices:
-            count = Book.objects.filter(edition=choice.params.values()[0]).count()
+            count = Book.objects.filter(edition=list(choice.params.values())[0]).count()
             self.assertEqual(choice.count, count)
 
             # Check the filtering
@@ -260,7 +261,7 @@ class TestFilters(TestCase):
             qs_filtered = filter2.apply_filter(qs)
             self.assertEqual(len(qs_filtered), choice.count)
             for book in qs_filtered:
-                self.assertEqual(unicode(book.edition), choice.label)
+                self.assertEqual(text_type(book.edition), choice.label)
 
             # Check we've got a 'remove link' on filtered.
             choices_filtered = filter2.get_choices(qs)
@@ -269,7 +270,7 @@ class TestFilters(TestCase):
 
 
         # Check list is full, and in right order
-        self.assertEqual([unicode(v) for v in Book.objects.values_list('edition', flat=True).order_by('edition').distinct()],
+        self.assertEqual([text_type(v) for v in Book.objects.values_list('edition', flat=True).order_by('edition').distinct()],
                          [choice.label for choice in choices])
 
     def test_choices_filter(self):
@@ -290,7 +291,7 @@ class TestFilters(TestCase):
 
         # Check choice db value in params
         for c in choices:
-            self.assertTrue(c.params.values()[0] in binding_choices_db)
+            self.assertTrue(list(c.params.values())[0] in binding_choices_db)
 
     def test_normalize_choices(self):
         # We shouldn't get links for non-nullable fields when there is only one choice.
@@ -325,7 +326,7 @@ class TestFilters(TestCase):
         choices = filter1.get_choices(qs)
 
         # Check list is full, and in right order
-        self.assertEqual([unicode(v) for v in Author.objects.all()],
+        self.assertEqual([text_type(v) for v in Author.objects.all()],
                          [choice.label for choice in choices])
 
         for choice in choices:
@@ -339,7 +340,7 @@ class TestFilters(TestCase):
             author = Author.objects.get(id=param)
 
             # Check the label
-            self.assertEqual(unicode(author),
+            self.assertEqual(text_type(author),
                              choice.label)
 
             # Check the filtering
@@ -386,18 +387,18 @@ class TestFilters(TestCase):
             choices = filter1.get_choices(qs_emily)
 
         # We should have a 'choices' that includes charlotte and anne
-        self.assertTrue(unicode(anne) in [c.label for c in choices if c.link_type is FILTER_ADD])
-        self.assertTrue(unicode(charlotte) in [c.label for c in choices if c.link_type is FILTER_ADD])
+        self.assertTrue(text_type(anne) in [c.label for c in choices if c.link_type is FILTER_ADD])
+        self.assertTrue(text_type(charlotte) in [c.label for c in choices if c.link_type is FILTER_ADD])
 
         # ... but not emily, because that is obvious and boring
-        self.assertTrue(unicode(emily) not in [c.label for c in choices if c.link_type is FILTER_ADD])
+        self.assertTrue(text_type(emily) not in [c.label for c in choices if c.link_type is FILTER_ADD])
         # emily should be in 'remove' links, however.
-        self.assertTrue(unicode(emily) in [c.label for c in choices if c.link_type is FILTER_REMOVE])
+        self.assertTrue(text_type(emily) in [c.label for c in choices if c.link_type is FILTER_REMOVE])
 
         # Select again - should have sensible params
         anne_choice = [c for c in choices if c.label.startswith('Anne')][0]
-        self.assertTrue(unicode(emily.pk) in anne_choice.params.getlist('authors'))
-        self.assertTrue(unicode(anne.pk) in anne_choice.params.getlist('authors'))
+        self.assertTrue(text_type(emily.pk) in anne_choice.params.getlist('authors'))
+        self.assertTrue(text_type(anne.pk) in anne_choice.params.getlist('authors'))
 
         # Now do the second select:
         filter2 = ManyToManyFilter('authors', Book, anne_choice.params)
@@ -415,9 +416,9 @@ class TestFilters(TestCase):
         # not adding it (could have books by Emily and Anne, but not Charlotte)
         choices = filter2.get_choices(qs_emily_anne)
         self.assertEqual([(c.label, c.link_type) for c in choices],
-                         [(unicode(emily), FILTER_REMOVE),
-                          (unicode(anne), FILTER_REMOVE),
-                          (unicode(charlotte), FILTER_ADD)])
+                         [(text_type(emily), FILTER_REMOVE),
+                          (text_type(anne), FILTER_REMOVE),
+                          (text_type(charlotte), FILTER_ADD)])
 
     def test_manytomany_filter_invalid_query(self):
         self.do_invalid_query_param_test(lambda params:

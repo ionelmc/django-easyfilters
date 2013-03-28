@@ -48,5 +48,5 @@ setup(
         "Framework :: Django",
         "Topic :: Software Development :: User Interfaces",
         ],
-    install_requires = ['django >= 1.3', 'python-dateutil'],
+    install_requires = ['django >= 1.3', 'python-dateutil', 'six'],
 )

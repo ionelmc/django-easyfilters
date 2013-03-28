@@ -14,6 +14,11 @@ To run the test suite, do::
 
    ./manage.py test django_easyfilters
 
+To run it on all supported platforms, install tox and do::
+
+   tox
+
+
 Editing test fixtures
 ---------------------
 

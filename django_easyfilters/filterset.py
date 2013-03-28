@@ -2,9 +2,11 @@ from django import template
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.utils.text import capfirst
+import six
 
 from django_easyfilters.filters import FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY, \
     ValuesFilter, ChoicesFilter, ForeignKeyFilter, ManyToManyFilter, DateTimeFilter, NumericRangeFilter
+from django_easyfilters.utils import python_2_unicode_compatible
 
 
 def non_breaking_spaces(val):
@@ -27,6 +29,7 @@ class cachedproperty(object):
         return res
 
 
+@python_2_unicode_compatible
 class FilterSet(object):
 
     template = u"""
@@ -110,7 +113,7 @@ class FilterSet(object):
         filters = []
         for i, f in enumerate(self.get_fields()):
             klass = None
-            if isinstance(f, basestring):
+            if isinstance(f, six.string_types):
                 opts = {}
                 field_name = f
             else:
@@ -133,5 +136,5 @@ class FilterSet(object):
                           for c in self.get_filter_choices(f)
                           if c.link_type == FILTER_REMOVE)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.render()

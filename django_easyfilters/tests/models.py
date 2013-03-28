@@ -1,5 +1,6 @@
 from django.db import models
 
+from django_easyfilters.utils import python_2_unicode_compatible
 
 BINDING_CHOICES = [
     ('H', 'Hardback'),
@@ -7,25 +8,30 @@ BINDING_CHOICES = [
     ('C', 'Cloth'),
 ]
 
+@python_2_unicode_compatible
 class Author(models.Model):
     name = models.CharField(max_length=50)
     likes = models.IntegerField(default=0)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
         ordering = ['name']
 
+
+@python_2_unicode_compatible
 class Genre(models.Model):
     name = models.CharField(max_length=50)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
         ordering = ['name']
 
+
+@python_2_unicode_compatible
 class Book(models.Model):
     name = models.CharField(max_length=100)
     binding = models.CharField(max_length=2, choices=BINDING_CHOICES)
@@ -36,7 +42,7 @@ class Book(models.Model):
     edition = models.IntegerField(default=1)
     rating = models.FloatField(null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
