@@ -1,0 +1,19 @@
+Release process
+===============
+
+Requirements:
+* sphinx
+* tox
+
+Process:
+* Run tox and ensure there are no failures
+* Check version numbers in setup.py and docs/conf.py
+* (could use ./setup.py build_sphinx but it is borked by setuptools/distribute)
+* cd docs; make html
+* Check built docs in browser
+* cd html, then something like:
+  zip ../django-easyfilters-0.5.zip *
+* Upload package: ./setup.py dist upload
+* Upload docs to pypi using web interface
+* tag the release in hg
+* Push to bitbucket
