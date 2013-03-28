@@ -22,6 +22,7 @@ Docs
 See the docs/ directory, especially docs/overview.rst
 
 Also hosted here: http://packages.python.org/django-easyfilters
+And here: https://django-easyfilters.readthedocs.org/en/latest/
 
 Demo
 ====
