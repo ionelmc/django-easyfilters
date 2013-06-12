@@ -35,3 +35,14 @@ def authors(request):
                                             'title': "Authors",
                                             })
 
+
+def book_search(request):
+    books = Book.objects.all()
+    if 'search_q' in request.GET:
+        books = books.filter(name__icontains=request.GET['search_q'])
+
+    booksfilter = BookFilterSet(books, request.GET)
+    return render(request, "book_search.html", {'books': booksfilter.qs,
+                                                'booksfilter': booksfilter,
+                                                'title': "Books",
+                                                })

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<form action="" method="GET">
+Search <input name="search_q" type="text" value="{{ request.GET.search_q }}"><input type="submit">
+{% for k, v in request.GET.items %}
+  {% if k != "search_q" %}
+    <input type="hidden" name="{{ k }}" value="{{ v }}">
+  {% endif %}
+{% endfor %}
+</form>
+
+{{ booksfilter }}
+
+<p>The following books were found:</p>
+{% for book in books %}
+<div class="book">
+  <h2>{{ book.name }}</h2>
+  <div><b>Authors:</b>
+    {% for author in book.authors.all %}
+    {{ author }}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    <br><b>Genre:</b> {{ book.genre }}</div>
+</div>
+{% endfor %}
+
+
+{% endblock %}
