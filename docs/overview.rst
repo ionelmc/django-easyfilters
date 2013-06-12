@@ -2,6 +2,9 @@
 Overview
 ========
 
+Model
+-----
+
 Suppose your models.py looks something like this:
 
 .. code-block:: python
@@ -16,6 +19,9 @@ Suppose your models.py looks something like this:
 
 (with BINDING_CHOICES, Author and Genre omitted for brevity).
 
+View
+----
+
 You might want to present a list of Book objects, allowing the user to filter on
 the various fields. Your views.py would be something like this:
 
@@ -29,16 +35,35 @@ the various fields. Your views.py would be something like this:
         books = Book.objects.all()
         return render(request, "booklist.html", {'books': books})
 
-and the template is like this:
+URLs
+----
+
+And you'd need to add a pattern to your URL conf:      
+
+.. code-block:: python
+
+    url(r'^booklist/$', views.booklist) 
+        
+Template
+--------
+
+And the template:
 
 .. code-block:: django
 
-    {% for book in books %}
-       {# etc #}
-    {% endfor %}
+    <ul>
+        {% for book in books %}
+           <li>{{ book }}</li>
+        {% endfor %}
+    </ul>
+
+Create a Filterset
+------------------
+
+So far, you have simple set-up that lists all the ``Book`` objects.
 
 To add the filters, in views.py add a FilterSet subclass and change the view
-code as follow:
+code as follows:
 
 .. code-block:: python
 
@@ -69,27 +94,52 @@ string (request.GET).
 The ``booksfilter`` item has been added to the context in order for the filters
 to be displayed on the template.
 
-Then, in the template, just add ``{{ booksfilter }}`` to the template.
-You can also use pagination e.g. using django-pagination:
+Change the template
+-------------------
+
+Just add ``{{ booksfilter }}`` to the template:
 
 .. code-block:: django
 
+    {{ booksfilter }}
+    
+    <ul>
+        {% for book in books %}
+           <li>{{ book }}</li>
+        {% endfor %}
+    </ul>
+
+
+Pagination
+^^^^^^^^^^
+
+You can also use pagination, for example using `django-pagination <https://pypi.python.org/pypi/django-pagination/>`_:
+
+.. code-block:: django
+
+    {% load pagination_tags %}
+    
     {% autopaginate books 20 %}
 
-    <h2>Filters:</h2>
     {{ booksfilter }}
 
     {% paginate %}
 
-    <h2>Books found</h2>
-    {% for book in books %}
-       {# etc #}
-    {% endfor %}
+    <ul>
+        {% for book in books %}
+           <li>{{ book }}</li>
+        {% endfor %}
+    </ul>
+
+
+FilterSet ``title`` attribute
+-----------------------------
 
 The ``FilterSet`` also provides a 'title' attribute that can be used to provide
-a simple summary of what has been selected so far. It is made up of a comma
-separated list of chosen fields. For example, if the user has selected genre
-'Classics' and binding 'Hardback' in the example above, you would get the following::
+a simple summary of what filters are currently being applied. It is made up of a
+comma-separated list of chosen fields. For example, if the user has selected
+genre 'Classics' and binding 'Hardback' in the example above, you would get the
+following::
 
     >>> books = Book.objects.all()
     >>> booksfilter = BookFilterSet(books, request.GET)
