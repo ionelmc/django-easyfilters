@@ -164,3 +164,19 @@ customised by adding a ``title_fields`` attribute to your ``FilterSet``:
 Customisation of the filters can be done in various ways - see :doc:`the
 FilterSet documentation <filterset>` for how to do this, and :doc:`the Filters
 documentation <filters>` for options that can be specified.
+
+
+Example
+-------
+
+A full example can be found in ``django_easyfilters/tests`` which is included in
+the source distribution. See the ``books`` view in ``views.py``:
+
+https://bitbucket.org/spookylukey/django-easyfilters/src/default/django_easyfilters/tests/views.py
+
+The ``book_search`` view gives an example of how to integrate with other searching and filtering. Remember to check the templates:
+
+https://bitbucket.org/spookylukey/django-easyfilters/src/default/django_easyfilters/tests/templates/
+
+See the :doc:`development <develop>` documentation if you want to run this
+example code as a demo.
