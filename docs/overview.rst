@@ -38,12 +38,12 @@ the various fields. Your views.py would be something like this:
 URLs
 ----
 
-And you'd need to add a pattern to your URL conf:      
+And you'd need to add a pattern to your URL conf:
 
 .. code-block:: python
 
-    url(r'^booklist/$', views.booklist) 
-        
+    url(r'^booklist/$', views.booklist)
+
 Template
 --------
 
@@ -102,7 +102,7 @@ Just add ``{{ booksfilter }}`` to the template:
 .. code-block:: django
 
     {{ booksfilter }}
-    
+
     <ul>
         {% for book in books %}
            <li>{{ book }}</li>
@@ -118,7 +118,7 @@ You can also use pagination, for example using `django-pagination <https://pypi.
 .. code-block:: django
 
     {% load pagination_tags %}
-    
+
     {% autopaginate books 20 %}
 
     {{ booksfilter }}
