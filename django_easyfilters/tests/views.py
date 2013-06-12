@@ -18,7 +18,9 @@ def books(request):
     books = Book.objects.all()
     booksfilter = BookFilterSet(books, request.GET)
     return render(request, "books.html", {'books': booksfilter.qs,
-                                          'booksfilter': booksfilter})
+                                          'booksfilter': booksfilter,
+                                          'title': "Books",
+                                          })
 
 class AuthorFilterSet(FilterSet):
     fields = [
@@ -29,4 +31,7 @@ def authors(request):
     authors = Author.objects.all()
     authorsfilter = AuthorFilterSet(authors, request.GET)
     return render(request, "authors.html", {'authors': authorsfilter.qs,
-                                            'authorsfilter': authorsfilter})
+                                            'authorsfilter': authorsfilter,
+                                            'title': "Authors",
+                                            })
+
