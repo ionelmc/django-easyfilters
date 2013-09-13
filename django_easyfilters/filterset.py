@@ -1,4 +1,6 @@
 from django import template
+from django.template.loader import get_template
+
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.utils.text import capfirst
@@ -32,21 +34,11 @@ class cachedproperty(object):
 @python_2_unicode_compatible
 class FilterSet(object):
 
-    template = u"""
-<div class="filterline"><span class="filterlabel">{{ filterlabel }}:</span>
-{% for choice in choices %}
-  {% if choice.link_type == 'add' %}
-    <span class="addfilter"><a href="{{ choice.url }}" title="Add filter">{{ choice.label }}&nbsp;({{ choice.count }})</a></span>&nbsp;&nbsp;
-  {% else %}
-    {% if choice.link_type == 'remove' %}
-    <span class="removefilter"><a href="{{ choice.url }}" title="Remove filter">{{ choice.label }}&nbsp;&laquo;&nbsp;</a></span>
-    {% else %}
-      <span class="displayfilter">{{ choice.label }}</span>
-    {% endif %}
-  {% endif %}
-{% endfor %}
-</div>
-"""
+    # If the attribute "template" is provided (as a string), that will be
+    # preferred;  otherwise we use the specified template_file 
+    template = None
+    template_file = "django-easyfilters/default.html"
+    
     title_fields = None
 
     def __init__(self, queryset, params):
@@ -83,7 +75,10 @@ class FilterSet(object):
         return self.get_template(filter_.field).render(template.Context(ctx))
 
     def get_template(self, field_name):
-        return template.Template(self.template)
+        if self.template:
+            return template.Template(self.template)
+        else:
+            return get_template(self.template_file)
 
     def render(self):
         return mark_safe(u'\n'.join(self.render_filter(f) for f in self.filters))
