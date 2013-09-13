@@ -98,7 +98,7 @@ FilterSet
       The path to a file containing a Django template, used to render all the
       filters. It is used by the default ``get_template`` method, see above. By
       default, "django-easyfilters/default.html" is used. If the ``template``
-      attribute is provided, ``template_file`` will be ignored.
+      attribute (below) is provided, ``template_file`` will be ignored.
 
    .. attribute:: template
 

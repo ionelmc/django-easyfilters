@@ -1,6 +1,5 @@
 from django import template
 from django.template.loader import get_template
-
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.utils.text import capfirst
