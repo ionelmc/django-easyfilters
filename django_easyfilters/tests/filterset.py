@@ -56,6 +56,34 @@ class TestFilterSet(TestCase):
         rendered_2 = fs_filtered.render()
         self.assertTrue('Genre' in rendered_2)
 
+    def test_custom_template(self):
+        class BookFilterSet(FilterSet):
+            template_file = "ignore/this/non-existent/file"
+            template = u"Bogus empty template"
+            fields = [
+                'genre',
+                ]
+
+        qs = Book.objects.all()
+        fs = BookFilterSet(qs, QueryDict(''))
+        rendered = fs.render()
+        self.assertTrue('Bogus empty template' in rendered)
+        self.assertEqual(rendered, text_type(fs))
+
+    def test_custom_template_from_file(self):
+        class BookFilterSet(FilterSet):
+            template_file = "template_for_tests.html"
+            fields = [
+                'genre',
+                ]
+
+        qs = Book.objects.all()
+        fs = BookFilterSet(qs, QueryDict(''))
+        rendered = fs.render()
+        self.assertTrue('Bogus template from file for testing' in rendered)
+        self.assertEqual(rendered, text_type(fs))
+
+
     def test_get_filter_for_field(self):
         """
         Ensures that the get_filter_for_field method chooses appropriately.
