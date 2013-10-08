@@ -95,7 +95,7 @@ class Filter(object):
             except ValueError:
                 pass
         for p in self.params.getlist(self.query_param + '--isnull'):
-            out.append(None)
+            out.append(self.choice_from_param(None))
         return out
 
     def choice_from_param(self, param):
@@ -136,13 +136,13 @@ class Filter(object):
         chosen = list(self.chosen)
         for r in remove:
             chosen.remove(r)
-        if add is not Ellipsis:
+        if add is not Ellipsis and add not in chosen:
             chosen.append(add)
-        if None in chosen:
-            params[self.query_param + "--isnull"] = 'true'
+        if NullChoice in chosen:
+            params[self.query_param + "--isnull"] = ''
         else:
             params.pop(self.query_param + "--isnull", None)
-        chosen = list(i for i in chosen if i is not None)
+        chosen = list(i for i in chosen if i is not NullChoice)
         if chosen:
             params.setlist(self.query_param, self.paramlist_from_choices(chosen))
         else:
@@ -342,9 +342,10 @@ class ChoicesFilter(ValuesFilter):
         for val, display in self.field_obj.choices:
             # 1), 2) above
             if val in count_dict:
+                choice = NullChoice if val is None else val
                 choices.append(FilterChoice(self.render_choice_object(val),
                                             count_dict[val],
-                                            self.build_params(add=val),
+                                            self.build_params(add=choice),
                                             FILTER_ADD))
         return choices
 
@@ -499,6 +500,24 @@ MONTH       = DateRangeType(2, True,  'month', _ym)
 DAYGROUP    = DateRangeType(3, False, 'day',   _ymd)
 DAY         = DateRangeType(3, True,  'day',   _ymd)
 
+class NullChoice(object):
+    @classmethod
+    def make_lookup(self, field_name):
+        return {field_name+"__isnull": True}
+
+    @classmethod
+    def display(self):
+        return str(None)
+
+    @classmethod
+    def __cmp__(self, other):
+        return 0 if other is NullChoice else 1
+
+    @classmethod
+    def __eq__(self, other):
+        return other is NullChoice
+
+    range_type = values = None
 
 @python_2_unicode_compatible
 @total_ordering
@@ -510,6 +529,7 @@ class DateChoice(object):
     It can represent a year, month or day choice, or a range (start, end, both
     inclusive) of any of these choice.
     """
+    #link_type = FILTER_DISPLAY
 
     def __init__(self, range_type, values):
         self.range_type = range_type
@@ -573,6 +593,8 @@ class DateChoice(object):
 
     @staticmethod
     def from_param(param):
+        if param is None:
+            return NullChoice
         for drt in DateRangeType.all.values():
             m = drt.regex.match(param)
             if m is not None:
@@ -641,6 +663,9 @@ class DateTimeFilter(RangeFilterMixin, Filter):
 
     def get_choices_add(self, qs):
         chosen = list(self.chosen)
+        print self.field, chosen
+        if NullChoice in chosen:
+            return []
 
         # For the case of needing to drill down past a single option
         # to get to some real choices, we define a recursive
@@ -696,6 +721,13 @@ class DateTimeFilter(RangeFilterMixin, Filter):
         if len(date_choice_counts) > 0:
             choices.extend(self.bridge_choices(chosen,
                                                [choice for choice, count in date_choice_counts]))
+
+        null_count = qs.filter(**{self.field + '__isnull': True}).count()
+        if null_count:
+            choices.append(FilterChoice(self.render_choice_object(NullChoice),
+                                        null_count,
+                                        self.build_params(add=NullChoice),
+                                        FILTER_ADD))
 
         for date_choice, count in date_choice_counts:
             if date_choice in chosen:
@@ -820,6 +852,8 @@ def make_numeric_range_choice(to_python, to_str):
     @python_2_unicode_compatible
     @total_ordering
     class NumericRangeChoice(object):
+        #link_type = FILTER_DISPLAY
+
         def __init__(self, values):
             # Values are instances of RangeEnd
             self.values = tuple(values)
@@ -829,6 +863,9 @@ def make_numeric_range_choice(to_python, to_str):
 
         @classmethod
         def from_param(cls, param):
+            if param is None:
+                return NullChoice
+
             vals = []
             for p in param.split('..', 1):
                 inclusive = False
@@ -844,7 +881,9 @@ def make_numeric_range_choice(to_python, to_str):
             return cls(vals)
 
         def make_lookup(self, field_name):
-            if len(self.values) == 1:
+            if self.values is None:
+                return {field_name: None}
+            elif len(self.values) == 1:
                 return {field_name: self.values[0].value}
             else:
                 start, end = self.values[0], self.values[1]
@@ -869,6 +908,8 @@ def make_numeric_range_choice(to_python, to_str):
             if other is None:
                 return cmp(self.values, ())
             else:
+                if other is NullChoice:
+                    return -1
                 if len(self.values) != len(other.values):
                     # one value is more specific than two
                     return -cmp(len(self.values), len(other.values))
@@ -893,6 +934,8 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
         super(NumericRangeFilter, self).__init__(field, model, params, **kwargs)
 
     def render_choice_object(self, c):
+        if c is None:
+            return str(None)
         if self.ranges is None:
             return c.display()
         if len(c.values) == 1:
@@ -909,9 +952,8 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
 
     def get_choices_add(self, qs):
         chosen = list(self.chosen)
-        range_type = None
-
-        if not self.drilldown and len(chosen) > 0:
+        print self.field, chosen
+        if NullChoice in chosen or (not self.drilldown and len(chosen) > 0):
             return []
 
         all_vals = qs.values_list(self.field).distinct()
@@ -922,12 +964,20 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
         if num <= self.max_links:
             val_counts = value_counts(qs, self.field)
             for v, count in val_counts.items():
-                choice = self.choice_type([RangeEnd(v, True)])
+                choice = NullChoice if v is None else self.choice_type([RangeEnd(v, True)])
                 choices.append(FilterChoice(self.render_choice_object(choice),
                                             count,
                                             self.build_params(add=choice),
                                             FILTER_ADD))
         else:
+            null_count = qs.filter(**{self.field + '__isnull': True}).count()
+            if null_count:
+                choice = NullChoice
+                #choice = self.choice_type([RangeEnd(None, False)])
+                choices.append(FilterChoice(self.render_choice_object(choice),
+                                            null_count,
+                                            self.build_params(add=choice),
+                                            FILTER_ADD))
             if self.ranges is None:
                 val_range = qs.aggregate(lower=models.Min(self.field),
                                          upper=models.Max(self.field))
@@ -947,5 +997,4 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
                                             count,
                                             self.build_params(add=choice),
                                             FILTER_ADD))
-
         return choices
