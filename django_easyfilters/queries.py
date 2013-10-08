@@ -74,8 +74,13 @@ def value_counts(qs, fieldname):
     the field 'fieldname' in the QuerySet, returning the results
     as a SortedDict of value: count
     """
-    values_counts = qs.values_list(fieldname).order_by(fieldname).annotate(models.Count(fieldname))
+    values_counts = qs.filter(**{
+        fieldname+"__isnull": False
+    }).values_list(fieldname).order_by(fieldname).annotate(models.Count(fieldname))
     count_dict = SortedDict()
+    null_count = qs.filter(**{fieldname+"__isnull": True}).count()
+    if null_count:
+        count_dict[None] = null_count
     for val, count in values_counts:
         count_dict[val] = count
     return count_dict
@@ -153,4 +158,3 @@ def numeric_range_counts(qs, fieldname, ranges):
             r = ranges[-1]
         count_dict[r] = count
     return count_dict
-
