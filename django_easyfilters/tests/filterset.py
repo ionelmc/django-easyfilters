@@ -447,7 +447,7 @@ class TestFilters(TestCase):
         self.assertEqual([(c.label, c.link_type) for c in choices],
                          [(text_type(emily), FILTER_REMOVE),
                           (text_type(anne), FILTER_REMOVE),
-                          (text_type(charlotte), FILTER_ADD)])
+                          (text_type(charlotte), FILTER_DISPLAY)])
 
     def test_manytomany_filter_invalid_query(self):
         self.do_invalid_query_param_test(lambda params:
