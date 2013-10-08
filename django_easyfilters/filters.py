@@ -529,7 +529,6 @@ class DateChoice(object):
     It can represent a year, month or day choice, or a range (start, end, both
     inclusive) of any of these choice.
     """
-    #link_type = FILTER_DISPLAY
 
     def __init__(self, range_type, values):
         self.range_type = range_type
@@ -851,7 +850,6 @@ def make_numeric_range_choice(to_python, to_str):
     @python_2_unicode_compatible
     @total_ordering
     class NumericRangeChoice(object):
-        #link_type = FILTER_DISPLAY
 
         def __init__(self, values):
             # Values are instances of RangeEnd
