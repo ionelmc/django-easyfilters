@@ -54,6 +54,7 @@ class TestFilterSet(TestCase):
         choice = fs.filters[0].get_choices(qs)[0]
         fs_filtered = BookFilterSet(qs, choice.params)
         rendered_2 = fs_filtered.render()
+
         self.assertTrue('Genre' in rendered_2)
 
     def test_custom_template(self):
@@ -850,7 +851,7 @@ class TestFilters(TestCase):
         qs = Book.objects.all()
         # Should take 3 queries - one to find out how many distinct values,
         # one to find a range, one to get the counts.
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             choices = filter1.get_choices(qs)
 
         self.assertTrue(len(choices) <= 8)
