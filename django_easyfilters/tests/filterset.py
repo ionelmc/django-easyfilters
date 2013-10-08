@@ -333,12 +333,12 @@ class TestFilters(TestCase):
         filter1 = ChoicesFilter('binding', Book, MultiValueDict())
         choices1 = filter1.get_choices(qs)
         self.assertEqual(len(choices1), 1)
-        self.assertEqual(choices1[0].link_type, FILTER_DISPLAY)
+        self.assertEqual(choices1[0].link_type, FILTER_DISPLAY, choices1)
 
         filter2 = ForeignKeyFilter('genre', Book, MultiValueDict())
         choices2 = filter2.get_choices(qs)
         self.assertEqual(len(choices2), 1)
-        self.assertEqual(choices2[0].link_type, FILTER_DISPLAY)
+        self.assertEqual(choices2[0].link_type, FILTER_DISPLAY, choices2)
 
     def test_manytomany_filter(self):
         """

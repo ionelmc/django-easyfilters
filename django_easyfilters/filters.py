@@ -315,7 +315,7 @@ class ValuesFilter(ChooseOnceMixin, SimpleQueryMixin, Filter):
         count_dict = self.get_values_counts(qs)
         return [FilterChoice(self.render_choice_object(val),
                              count,
-                             self.build_params(add=val),
+                             self.build_params(add=NullChoice if val is None else val),
                              FILTER_ADD)
                 for val, count in count_dict.items()]
 
@@ -721,7 +721,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             choices.extend(self.bridge_choices(chosen,
                                                [choice for choice, count in date_choice_counts]))
 
-        null_count = qs.filter(**{self.field + '__isnull': True}).count()
+        null_count = not chosen and qs.filter(**{self.field + '__isnull': True}).count()
         if null_count:
             choices.append(FilterChoice(self.render_choice_object(NullChoice),
                                         null_count,
@@ -968,7 +968,7 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
                                             self.build_params(add=choice),
                                             FILTER_ADD))
         else:
-            null_count = qs.filter(**{self.field + '__isnull': True}).count()
+            null_count = not chosen and qs.filter(**{self.field + '__isnull': True}).count()
             if null_count:
                 choice = NullChoice
                 #choice = self.choice_type([RangeEnd(None, False)])
