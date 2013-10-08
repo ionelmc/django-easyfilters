@@ -408,7 +408,7 @@ class TestFilters(TestCase):
         # ...and excludes Jane Eyre
         self.assertFalse(qs_emily.filter(name='Jane Eyre').exists())
 
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             # 0 query for all chosen objects (already done)
             # 1 query for available objects
             # 1 query for counts
@@ -837,7 +837,7 @@ class TestFilters(TestCase):
 
         # Should only take 2 queries - one to find out how many distinct values,
         # one to get the counts.
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             choices = filter1.get_choices(qs)
 
         self.assertEqual(len(choices), 1)

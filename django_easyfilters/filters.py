@@ -94,6 +94,8 @@ class Filter(object):
                 out.append(choice)
             except ValueError:
                 pass
+        for p in self.params.getlist(self.query_param + '--isnull'):
+            out.append(None)
         return out
 
     def choice_from_param(self, param):
@@ -124,7 +126,7 @@ class Filter(object):
         """
         return list(map(self.param_from_choice, choices))
 
-    def build_params(self, add=None, remove=None):
+    def build_params(self, add=Ellipsis, remove=()):
         """
         Builds a new parameter MultiDict.
         add is an optional item to add,
@@ -132,16 +134,19 @@ class Filter(object):
         """
         params = self.params.copy()
         chosen = list(self.chosen)
-        if remove is not None:
-            for r in remove:
-                chosen.remove(r)
+        for r in remove:
+            chosen.remove(r)
+        if add is not Ellipsis:
+            chosen.append(add)
+        if None in chosen:
+            params[self.query_param + "--isnull"] = 'true'
         else:
-            if add not in chosen:
-                chosen.append(add)
+            params.pop(self.query_param + "--isnull", None)
+        chosen = list(i for i in chosen if i is not None)
         if chosen:
             params.setlist(self.query_param, self.paramlist_from_choices(chosen))
         else:
-            del params[self.query_param]
+            params.pop(self.query_param, None)
         params.pop('page', None) # links should reset paging
         return params
 
@@ -525,8 +530,11 @@ class DateChoice(object):
 
     def __cmp__(self, other):
         # 'greater' means more specific.
-        return cmp((self.range_type, self.values),
-                   (other.range_type, other.values))
+        if other is None:
+            return 1
+        else:
+            return cmp((self.range_type, self.values),
+                       (other.range_type, other.values))
 
     def display(self):
         # Called for user presentable string
@@ -814,7 +822,7 @@ def make_numeric_range_choice(to_python, to_str):
     class NumericRangeChoice(object):
         def __init__(self, values):
             # Values are instances of RangeEnd
-            self.values = values
+            self.values = tuple(values)
 
         def display(self):
             return '-'.join([str(v.value) for v in self.values])
@@ -850,7 +858,6 @@ def make_numeric_range_choice(to_python, to_str):
         def __repr__(self):
             return '<NumericRangeChoice %s>' % self
 
-
         def __eq__(self, other):
             return self.__cmp__(other) == 0
 
@@ -860,7 +867,7 @@ def make_numeric_range_choice(to_python, to_str):
         def __cmp__(self, other):
             # 'greater' means more specific.
             if other is None:
-                return cmp(self.values, None)
+                return cmp(self.values, ())
             else:
                 if len(self.values) != len(other.values):
                     # one value is more specific than two
