@@ -663,7 +663,6 @@ class DateTimeFilter(RangeFilterMixin, Filter):
 
     def get_choices_add(self, qs):
         chosen = list(self.chosen)
-        print self.field, chosen
         if NullChoice in chosen:
             return []
 
@@ -952,7 +951,6 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
 
     def get_choices_add(self, qs):
         chosen = list(self.chosen)
-        print self.field, chosen
         if NullChoice in chosen or (not self.drilldown and len(chosen) > 0):
             return []
 
