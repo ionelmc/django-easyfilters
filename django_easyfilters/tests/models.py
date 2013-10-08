@@ -3,7 +3,7 @@ from django.db import models
 from django_easyfilters.utils import python_2_unicode_compatible
 
 BINDING_CHOICES = [
-    (None, 'Nothing'),
+    #(None, 'Nothing'),
     ('H', 'Hardback'),
     ('P', 'Paperback'),
     ('C', 'Cloth'),
