@@ -192,7 +192,7 @@ class SingleValueMixin(object):
     def normalize_add_choices(self, choices):
         addchoices = [(i, choice) for i, choice in enumerate(choices)
                       if choice.link_type == FILTER_ADD]
-        if len(addchoices) == 1 and not self.field_obj.null:
+        if len(addchoices) == 1:
             # No point giving people a choice of one, since all the results will
             # already have the selected value (apart from nullable fields, which
             # might have null)
@@ -221,7 +221,7 @@ class ChooseOnceMixin(SingleValueMixin):
         raise NotImplementedError()
 
 
-class ChooseAgainMixin(object):
+class ChooseAgainMixin(SingleValueMixin):
     """
     A mixin for filters where it is possible to choose the filter more than
     once.
