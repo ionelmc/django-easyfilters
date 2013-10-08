@@ -40,7 +40,7 @@ class Book(models.Model):
     price = models.DecimalField(max_digits=6, decimal_places=2)
     date_published = models.DateField()
     edition = models.IntegerField(default=1)
-    rating = models.FloatField(null=True)
+    rating = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -49,4 +49,3 @@ class Book(models.Model):
 class Person(models.Model):
     date_of_birth = models.DateField()
     name = models.CharField(max_length=50)
-

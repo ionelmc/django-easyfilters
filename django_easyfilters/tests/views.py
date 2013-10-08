@@ -12,7 +12,8 @@ class BookFilterSet(FilterSet):
         'price',
         'date_published',
         'rating',
-        ]
+        'edition',
+    ]
 
 def books(request):
     books = Book.objects.all()
