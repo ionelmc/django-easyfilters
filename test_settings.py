@@ -12,6 +12,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.contenttypes',
+    'django.contrib.staticfiles',
     'django_easyfilters',
     'django_easyfilters.tests',
 ]
