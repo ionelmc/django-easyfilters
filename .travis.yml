@@ -24,14 +24,14 @@ env:
 
 matrix:
   exclude:
-    - python: 3.3
-      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.3,<1.4" PYTHONPATH=src:tests PYTHONUNBUFFERED=yes DJANGO_SETTINGS_MODULE=test_project.settings
-    - python: 3.2
-      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.3,<1.4" PYTHONPATH=src:tests PYTHONUNBUFFERED=yes DJANGO_SETTINGS_MODULE=test_project.settings
-    - python: 3.3
-      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.4,<1.5" PYTHONPATH=src:tests PYTHONUNBUFFERED=yes DJANGO_SETTINGS_MODULE=test_project.settings
-    - python: 3.2
-      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.4,<1.5" PYTHONPATH=src:tests PYTHONUNBUFFERED=yes DJANGO_SETTINGS_MODULE=test_project.settings
+    - python: "3.3"
+      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.3,<1.4" 
+    - python: "3.2"
+      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.3,<1.4"
+    - python: "3.3"
+      env: WITH_COVERAGE=no DEPS="python-dateutil six django>=1.4,<1.5"
+    - python: "3.2"
+      env: WITH_COVERAGE=no DEPS="python-dateutil six django>=1.4,<1.5"
       
     
 before_install:
