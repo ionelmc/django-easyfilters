@@ -37,7 +37,7 @@ class FilterSet(object):
     # If the attribute "template" is provided (as a string), that will be
     # preferred;  otherwise we use the specified template_file
     template = None
-    template_file = "django-easyfilters/default.html"
+    template_file = "django_easyfilters/default.html"
 
     title_fields = None
 
