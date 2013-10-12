@@ -50,7 +50,7 @@ script:
   - rm .coverage* || true
   - |
     if [[ $WITH_COVERAGE == yes ]]; then
-      coverage run --source=src --parallel-mode django-admin.py test test_app;
+      coverage run --source=src --parallel-mode `which django-admin.py` test test_app;
     else
       django-admin.py test test_app;
     fi
