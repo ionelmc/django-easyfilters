@@ -282,7 +282,7 @@ class TestFilters(TestCase):
         choices = filter1.get_choices(qs)
 
         for choice in choices:
-            count = Book.objects.filter(edition=list(choice.params.values())[0]).count()
+            count = Book.objects.filter(edition=list(choice.params.values())[0] or None).count()
             self.assertEqual(choice.count, count)
 
             # Check the filtering
@@ -290,7 +290,7 @@ class TestFilters(TestCase):
             qs_filtered = filter2.apply_filter(qs)
             self.assertEqual(len(qs_filtered), choice.count)
             for book in qs_filtered:
-                self.assertEqual(text_type(book.edition), choice.label)
+                self.assertEqual(text_type(book.edition) if book.edition else '(null)', choice.label)
 
             # Check we've got a 'remove link' on filtered.
             choices_filtered = filter2.get_choices(qs)
@@ -299,7 +299,7 @@ class TestFilters(TestCase):
 
 
         # Check list is full, and in right order
-        self.assertEqual([text_type(v) for v in Book.objects.values_list('edition', flat=True).order_by('edition').distinct()],
+        self.assertEqual([text_type(v) if v else '(null)' for v in Book.objects.values_list('edition', flat=True).order_by('edition').distinct()],
                          [choice.label for choice in choices])
 
     def test_choices_filter(self):
@@ -327,8 +327,7 @@ class TestFilters(TestCase):
 
         # Make sure there are no other books in 1975
         clark = Author.objects.get(name='Arthur C. Clarke')
-        Book.objects.filter(date_published__year=1975).exclude(authors=clark.id).delete()
-        qs = Book.objects.filter(date_published__year=1975)
+        qs = Book.objects.filter(date_published__year=1861)
         self.assertEqual(len(qs), 1)
 
         filter1 = ChoicesFilter('binding', Book, MultiValueDict())
@@ -469,7 +468,8 @@ class TestFilters(TestCase):
         # We have enough data that it will not show a simple list of years.
         choices = f.get_choices(qs)
         self.assertTrue(len(choices) <= 10)
-        self.assertTrue('-' in choices[0].label)
+        self.assertEqual('(null)', choices[0].label)
+        self.assertTrue('-' in choices[1].label, choices)
 
     def test_datetime_filter_single_year_selected(self):
         params = MultiValueDict({'date_published':['1818']})

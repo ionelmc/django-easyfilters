@@ -1,406 +1,836 @@
 [
-  {
-    "pk": 4, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "A. A. Milne", 
-      "likes": 1234
+    {
+        "fields": {
+            "domain": "example.com",
+            "name": "example.com"
+        },
+        "model": "sites.site",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "likes": 1234,
+            "name": "A. A. Milne"
+        },
+        "model": "test_app.author",
+        "pk": 4
+    },
+    {
+        "fields": {
+            "likes": 678,
+            "name": "Anne Bront\u00eb"
+        },
+        "model": "test_app.author",
+        "pk": 6
+    },
+    {
+        "fields": {
+            "likes": 890,
+            "name": "Arthur C. Clarke"
+        },
+        "model": "test_app.author",
+        "pk": 10
+    },
+    {
+        "fields": {
+            "likes": 777,
+            "name": "Charles Dickens"
+        },
+        "model": "test_app.author",
+        "pk": 9
+    },
+    {
+        "fields": {
+            "likes": 1534,
+            "name": "Charlotte Bront\u00eb"
+        },
+        "model": "test_app.author",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "likes": 970,
+            "name": "E. H. Shepard"
+        },
+        "model": "test_app.author",
+        "pk": 5
+    },
+    {
+        "fields": {
+            "likes": 456,
+            "name": "Emily Bront\u00eb"
+        },
+        "model": "test_app.author",
+        "pk": 7
+    },
+    {
+        "fields": {
+            "likes": 912,
+            "name": "George Orwell"
+        },
+        "model": "test_app.author",
+        "pk": 8
+    },
+    {
+        "fields": {
+            "likes": 533,
+            "name": "Jane Austen"
+        },
+        "model": "test_app.author",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "likes": 1101,
+            "name": "Lewis Carroll"
+        },
+        "model": "test_app.author",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "name": "Children's"
+        },
+        "model": "test_app.genre",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "name": "Classics"
+        },
+        "model": "test_app.genre",
+        "pk": 6
+    },
+    {
+        "fields": {
+            "name": "Fantasy"
+        },
+        "model": "test_app.genre",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "name": "Poetry"
+        },
+        "model": "test_app.genre",
+        "pk": 4
+    },
+    {
+        "fields": {
+            "name": "Romance"
+        },
+        "model": "test_app.genre",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "name": "Satire"
+        },
+        "model": "test_app.genre",
+        "pk": 5
+    },
+    {
+        "fields": {
+            "name": "Science Fiction"
+        },
+        "model": "test_app.genre",
+        "pk": 7
+    },
+    {
+        "fields": {
+            "authors": [
+                1
+            ],
+            "binding": "P",
+            "date_published": "1813-01-28",
+            "edition": 3,
+            "genre": 1,
+            "name": "Pride and Prejudice",
+            "other": "",
+            "price": "5",
+            "rating": 0.5
+        },
+        "model": "test_app.book",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "authors": [
+                1
+            ],
+            "binding": "H",
+            "date_published": "1815-12-01",
+            "edition": 3,
+            "genre": 1,
+            "name": "Emma",
+            "other": "",
+            "price": "4.99",
+            "rating": 1.4
+        },
+        "model": "test_app.book",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "authors": [
+                2
+            ],
+            "binding": "P",
+            "date_published": "1847-10-16",
+            "edition": 1,
+            "genre": 1,
+            "name": "Jane Eyre",
+            "other": "",
+            "price": "3.5",
+            "rating": 4.3
+        },
+        "model": "test_app.book",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "authors": [
+                3
+            ],
+            "binding": "H",
+            "date_published": "1871-01-02",
+            "edition": 1,
+            "genre": 2,
+            "name": "Through The Looking Glass",
+            "other": "",
+            "price": "10.99",
+            "rating": 4.2
+        },
+        "model": "test_app.book",
+        "pk": 4
+    },
+    {
+        "fields": {
+            "authors": [
+                4,
+                5
+            ],
+            "binding": "C",
+            "date_published": "1926-10-14",
+            "edition": 2,
+            "genre": 3,
+            "name": "Winnie-the-Pooh",
+            "other": "",
+            "price": "5.99",
+            "rating": 0.3
+        },
+        "model": "test_app.book",
+        "pk": 5
+    },
+    {
+        "fields": {
+            "authors": [
+                6,
+                2,
+                7
+            ],
+            "binding": "H",
+            "date_published": "1846-05-01",
+            "edition": 1,
+            "genre": 4,
+            "name": "Poems",
+            "other": "",
+            "price": "4.5",
+            "rating": 3.4
+        },
+        "model": "test_app.book",
+        "pk": 6
+    },
+    {
+        "fields": {
+            "authors": [
+                7
+            ],
+            "binding": "C",
+            "date_published": "1847-10-22",
+            "edition": 1,
+            "genre": 1,
+            "name": "Wuthering Heights",
+            "other": "",
+            "price": "44.99",
+            "rating": 4.9
+        },
+        "model": "test_app.book",
+        "pk": 7
+    },
+    {
+        "fields": {
+            "authors": [
+                1
+            ],
+            "binding": "P",
+            "date_published": "1814-02-03",
+            "edition": 1,
+            "genre": 1,
+            "name": "Mansfield Park",
+            "other": "",
+            "price": "5.5",
+            "rating": 3.7
+        },
+        "model": "test_app.book",
+        "pk": 8
+    },
+    {
+        "fields": {
+            "authors": [
+                6
+            ],
+            "binding": "P",
+            "date_published": "1848-10-04",
+            "edition": 1,
+            "genre": 1,
+            "name": "The Tenant of Wildfell Hall",
+            "other": "",
+            "price": "6",
+            "rating": 2.0
+        },
+        "model": "test_app.book",
+        "pk": 9
+    },
+    {
+        "fields": {
+            "authors": [
+                2
+            ],
+            "binding": "P",
+            "date_published": "1849-06-01",
+            "edition": 1,
+            "genre": 1,
+            "name": "Shirley",
+            "other": "",
+            "price": "4.5",
+            "rating": 1.11
+        },
+        "model": "test_app.book",
+        "pk": 10
+    },
+    {
+        "fields": {
+            "authors": [
+                1
+            ],
+            "binding": "P",
+            "date_published": "1811-04-05",
+            "edition": 1,
+            "genre": 1,
+            "name": "Sense and Sensibility",
+            "other": "",
+            "price": "6.99",
+            "rating": 1.8
+        },
+        "model": "test_app.book",
+        "pk": 11
+    },
+    {
+        "fields": {
+            "authors": [
+                1
+            ],
+            "binding": "P",
+            "date_published": "1818-08-24",
+            "edition": 1,
+            "genre": 1,
+            "name": "Northanger Abbey",
+            "other": "",
+            "price": "4.25",
+            "rating": 4.62
+        },
+        "model": "test_app.book",
+        "pk": 12
+    },
+    {
+        "fields": {
+            "authors": [
+                1
+            ],
+            "binding": "P",
+            "date_published": "1818-09-25",
+            "edition": 1,
+            "genre": 1,
+            "name": "Persuasion",
+            "other": "",
+            "price": "3.8",
+            "rating": 3.65
+        },
+        "model": "test_app.book",
+        "pk": 13
+    },
+    {
+        "fields": {
+            "authors": [
+                8
+            ],
+            "binding": "P",
+            "date_published": "1945-08-17",
+            "edition": 1,
+            "genre": 5,
+            "name": "Animal Farm",
+            "other": "",
+            "price": "6.5",
+            "rating": 2.5
+        },
+        "model": "test_app.book",
+        "pk": 14
+    },
+    {
+        "fields": {
+            "authors": [
+                9
+            ],
+            "binding": "P",
+            "date_published": "1861-11-05",
+            "edition": 1,
+            "genre": 6,
+            "name": "Great Expectations",
+            "other": "",
+            "price": "4.99",
+            "rating": 0.93
+        },
+        "model": "test_app.book",
+        "pk": 15
+    },
+    {
+        "fields": {
+            "authors": [
+                10
+            ],
+            "binding": null,
+            "date_published": "1975-01-01",
+            "edition": 1,
+            "genre": 7,
+            "name": "Imperial Earth",
+            "other": "",
+            "price": "5.99",
+            "rating": 1.3
+        },
+        "model": "test_app.book",
+        "pk": 16
+    },
+    {
+        "fields": {
+            "authors": [],
+            "binding": "",
+            "date_published": null,
+            "edition": null,
+            "genre": null,
+            "name": "The Professor",
+            "other": "Stuff",
+            "price": "4.99",
+            "rating": null
+        },
+        "model": "test_app.book",
+        "pk": 17
+    },
+    {
+        "fields": {
+            "action_flag": 2,
+            "action_time": "2013-10-12 08:00:31",
+            "change_message": "No fields changed.",
+            "content_type": 11,
+            "object_id": "17",
+            "object_repr": "The Professor",
+            "user": 1
+        },
+        "model": "admin.logentry",
+        "pk": 5
+    },
+    {
+        "fields": {
+            "action_flag": 2,
+            "action_time": "2013-10-12 08:00:23",
+            "change_message": "No fields changed.",
+            "content_type": 11,
+            "object_id": "16",
+            "object_repr": "Imperial Earth",
+            "user": 1
+        },
+        "model": "admin.logentry",
+        "pk": 4
+    },
+    {
+        "fields": {
+            "action_flag": 2,
+            "action_time": "2013-10-12 07:59:47",
+            "change_message": "No fields changed.",
+            "content_type": 11,
+            "object_id": "17",
+            "object_repr": "The Professor",
+            "user": 1
+        },
+        "model": "admin.logentry",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "action_flag": 2,
+            "action_time": "2013-10-12 07:59:30",
+            "change_message": "Changed binding.",
+            "content_type": 11,
+            "object_id": "16",
+            "object_repr": "Imperial Earth",
+            "user": 1
+        },
+        "model": "admin.logentry",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "action_flag": 2,
+            "action_time": "2013-10-12 07:59:15",
+            "change_message": "Changed binding, other, genre, date_published, edition, rating and authors.",
+            "content_type": 11,
+            "object_id": "17",
+            "object_repr": "The Professor",
+            "user": 1
+        },
+        "model": "admin.logentry",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "codename": "add_logentry",
+            "content_type": 5,
+            "name": "Can add log entry"
+        },
+        "model": "auth.permission",
+        "pk": 13
+    },
+    {
+        "fields": {
+            "codename": "change_logentry",
+            "content_type": 5,
+            "name": "Can change log entry"
+        },
+        "model": "auth.permission",
+        "pk": 14
+    },
+    {
+        "fields": {
+            "codename": "delete_logentry",
+            "content_type": 5,
+            "name": "Can delete log entry"
+        },
+        "model": "auth.permission",
+        "pk": 15
+    },
+    {
+        "fields": {
+            "codename": "add_group",
+            "content_type": 2,
+            "name": "Can add group"
+        },
+        "model": "auth.permission",
+        "pk": 4
+    },
+    {
+        "fields": {
+            "codename": "change_group",
+            "content_type": 2,
+            "name": "Can change group"
+        },
+        "model": "auth.permission",
+        "pk": 5
+    },
+    {
+        "fields": {
+            "codename": "delete_group",
+            "content_type": 2,
+            "name": "Can delete group"
+        },
+        "model": "auth.permission",
+        "pk": 6
+    },
+    {
+        "fields": {
+            "codename": "add_message",
+            "content_type": 4,
+            "name": "Can add message"
+        },
+        "model": "auth.permission",
+        "pk": 10
+    },
+    {
+        "fields": {
+            "codename": "change_message",
+            "content_type": 4,
+            "name": "Can change message"
+        },
+        "model": "auth.permission",
+        "pk": 11
+    },
+    {
+        "fields": {
+            "codename": "delete_message",
+            "content_type": 4,
+            "name": "Can delete message"
+        },
+        "model": "auth.permission",
+        "pk": 12
+    },
+    {
+        "fields": {
+            "codename": "add_permission",
+            "content_type": 1,
+            "name": "Can add permission"
+        },
+        "model": "auth.permission",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "codename": "change_permission",
+            "content_type": 1,
+            "name": "Can change permission"
+        },
+        "model": "auth.permission",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "codename": "delete_permission",
+            "content_type": 1,
+            "name": "Can delete permission"
+        },
+        "model": "auth.permission",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "codename": "add_user",
+            "content_type": 3,
+            "name": "Can add user"
+        },
+        "model": "auth.permission",
+        "pk": 7
+    },
+    {
+        "fields": {
+            "codename": "change_user",
+            "content_type": 3,
+            "name": "Can change user"
+        },
+        "model": "auth.permission",
+        "pk": 8
+    },
+    {
+        "fields": {
+            "codename": "delete_user",
+            "content_type": 3,
+            "name": "Can delete user"
+        },
+        "model": "auth.permission",
+        "pk": 9
+    },
+    {
+        "fields": {
+            "codename": "add_contenttype",
+            "content_type": 8,
+            "name": "Can add content type"
+        },
+        "model": "auth.permission",
+        "pk": 22
+    },
+    {
+        "fields": {
+            "codename": "change_contenttype",
+            "content_type": 8,
+            "name": "Can change content type"
+        },
+        "model": "auth.permission",
+        "pk": 23
+    },
+    {
+        "fields": {
+            "codename": "delete_contenttype",
+            "content_type": 8,
+            "name": "Can delete content type"
+        },
+        "model": "auth.permission",
+        "pk": 24
+    },
+    {
+        "fields": {
+            "codename": "add_session",
+            "content_type": 6,
+            "name": "Can add session"
+        },
+        "model": "auth.permission",
+        "pk": 16
+    },
+    {
+        "fields": {
+            "codename": "change_session",
+            "content_type": 6,
+            "name": "Can change session"
+        },
+        "model": "auth.permission",
+        "pk": 17
+    },
+    {
+        "fields": {
+            "codename": "delete_session",
+            "content_type": 6,
+            "name": "Can delete session"
+        },
+        "model": "auth.permission",
+        "pk": 18
+    },
+    {
+        "fields": {
+            "codename": "add_site",
+            "content_type": 7,
+            "name": "Can add site"
+        },
+        "model": "auth.permission",
+        "pk": 19
+    },
+    {
+        "fields": {
+            "codename": "change_site",
+            "content_type": 7,
+            "name": "Can change site"
+        },
+        "model": "auth.permission",
+        "pk": 20
+    },
+    {
+        "fields": {
+            "codename": "delete_site",
+            "content_type": 7,
+            "name": "Can delete site"
+        },
+        "model": "auth.permission",
+        "pk": 21
+    },
+    {
+        "fields": {
+            "codename": "add_author",
+            "content_type": 9,
+            "name": "Can add author"
+        },
+        "model": "auth.permission",
+        "pk": 25
+    },
+    {
+        "fields": {
+            "codename": "change_author",
+            "content_type": 9,
+            "name": "Can change author"
+        },
+        "model": "auth.permission",
+        "pk": 26
+    },
+    {
+        "fields": {
+            "codename": "delete_author",
+            "content_type": 9,
+            "name": "Can delete author"
+        },
+        "model": "auth.permission",
+        "pk": 27
+    },
+    {
+        "fields": {
+            "codename": "add_book",
+            "content_type": 11,
+            "name": "Can add book"
+        },
+        "model": "auth.permission",
+        "pk": 31
+    },
+    {
+        "fields": {
+            "codename": "change_book",
+            "content_type": 11,
+            "name": "Can change book"
+        },
+        "model": "auth.permission",
+        "pk": 32
+    },
+    {
+        "fields": {
+            "codename": "delete_book",
+            "content_type": 11,
+            "name": "Can delete book"
+        },
+        "model": "auth.permission",
+        "pk": 33
+    },
+    {
+        "fields": {
+            "codename": "add_genre",
+            "content_type": 10,
+            "name": "Can add genre"
+        },
+        "model": "auth.permission",
+        "pk": 28
+    },
+    {
+        "fields": {
+            "codename": "change_genre",
+            "content_type": 10,
+            "name": "Can change genre"
+        },
+        "model": "auth.permission",
+        "pk": 29
+    },
+    {
+        "fields": {
+            "codename": "delete_genre",
+            "content_type": 10,
+            "name": "Can delete genre"
+        },
+        "model": "auth.permission",
+        "pk": 30
+    },
+    {
+        "fields": {
+            "codename": "add_person",
+            "content_type": 12,
+            "name": "Can add person"
+        },
+        "model": "auth.permission",
+        "pk": 34
+    },
+    {
+        "fields": {
+            "codename": "change_person",
+            "content_type": 12,
+            "name": "Can change person"
+        },
+        "model": "auth.permission",
+        "pk": 35
+    },
+    {
+        "fields": {
+            "codename": "delete_person",
+            "content_type": 12,
+            "name": "Can delete person"
+        },
+        "model": "auth.permission",
+        "pk": 36
+    },
+    {
+        "fields": {
+            "date_joined": "2013-10-12 07:58:35",
+            "email": "admin@example.com",
+            "first_name": "",
+            "groups": [],
+            "is_active": true,
+            "is_staff": true,
+            "is_superuser": true,
+            "last_login": "2013-10-12 07:58:45",
+            "last_name": "",
+            "password": "sha1$20dfa$dd76facdc31c50e356ad2b2f946253deadb4f962",
+            "user_permissions": [],
+            "username": "admin"
+        },
+        "model": "auth.user",
+        "pk": 1
     }
-  }, 
-  {
-    "pk": 6, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "Anne Bront\u00eb", 
-      "likes": 678
-    }
-  }, 
-  {
-    "pk": 10, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "Arthur C. Clarke", 
-      "likes": 890
-    }
-  }, 
-  {
-    "pk": 9, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "Charles Dickens", 
-      "likes": 777
-    }
-  }, 
-  {
-    "pk": 2, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "Charlotte Bront\u00eb", 
-      "likes": 1534
-    }
-  }, 
-  {
-    "pk": 5, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "E. H. Shepard", 
-      "likes": 970
-    }
-  }, 
-  {
-    "pk": 7, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "Emily Bront\u00eb", 
-      "likes": 456
-    }
-  }, 
-  {
-    "pk": 8, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "George Orwell", 
-      "likes": 912
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "Jane Austen", 
-      "likes": 533
-    }
-  }, 
-  {
-    "pk": 3, 
-    "model": "test_app.author", 
-    "fields": {
-      "name": "Lewis Carroll", 
-      "likes": 1101
-    }
-  }, 
-  {
-    "pk": 3, 
-    "model": "test_app.genre", 
-    "fields": {
-      "name": "Children's"
-    }
-  }, 
-  {
-    "pk": 6, 
-    "model": "test_app.genre", 
-    "fields": {
-      "name": "Classics"
-    }
-  }, 
-  {
-    "pk": 2, 
-    "model": "test_app.genre", 
-    "fields": {
-      "name": "Fantasy"
-    }
-  }, 
-  {
-    "pk": 4, 
-    "model": "test_app.genre", 
-    "fields": {
-      "name": "Poetry"
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "test_app.genre", 
-    "fields": {
-      "name": "Romance"
-    }
-  }, 
-  {
-    "pk": 5, 
-    "model": "test_app.genre", 
-    "fields": {
-      "name": "Satire"
-    }
-  }, 
-  {
-    "pk": 7, 
-    "model": "test_app.genre", 
-    "fields": {
-      "name": "Science Fiction"
-    }
-  }, 
-  {
-    "pk": 1, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 0.5, 
-      "name": "Pride and Prejudice", 
-      "edition": 3, 
-      "price": "5", 
-      "binding": "P", 
-      "date_published": "1813-01-28", 
-      "authors": [
-        1
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 2, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 1.4, 
-      "name": "Emma", 
-      "edition": 3, 
-      "price": "4.99", 
-      "binding": "H", 
-      "date_published": "1815-12-01", 
-      "authors": [
-        1
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 3, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 4.3, 
-      "name": "Jane Eyre", 
-      "edition": 1, 
-      "price": "3.5", 
-      "binding": "P", 
-      "date_published": "1847-10-16", 
-      "authors": [
-        2
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 4, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 4.2, 
-      "name": "Through The Looking Glass", 
-      "edition": 1, 
-      "price": "10.99", 
-      "binding": "H", 
-      "date_published": "1871-01-02", 
-      "authors": [
-        3
-      ], 
-      "genre": 2
-    }
-  }, 
-  {
-    "pk": 5, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 0.3, 
-      "name": "Winnie-the-Pooh", 
-      "edition": 2, 
-      "price": "5.99", 
-      "binding": "C", 
-      "date_published": "1926-10-14", 
-      "authors": [
-        4, 
-        5
-      ], 
-      "genre": 3
-    }
-  }, 
-  {
-    "pk": 6, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 3.4, 
-      "name": "Poems", 
-      "edition": 1, 
-      "price": "4.5", 
-      "binding": "H", 
-      "date_published": "1846-05-01", 
-      "authors": [
-        6, 
-        2, 
-        7
-      ], 
-      "genre": 4
-    }
-  }, 
-  {
-    "pk": 7, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 4.9, 
-      "name": "Wuthering Heights", 
-      "edition": 1, 
-      "price": "44.99", 
-      "binding": "C", 
-      "date_published": "1847-10-22", 
-      "authors": [
-        7
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 8, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 3.7, 
-      "name": "Mansfield Park", 
-      "edition": 1, 
-      "price": "5.5", 
-      "binding": "P", 
-      "date_published": "1814-02-03", 
-      "authors": [
-        1
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 9, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 2.0, 
-      "name": "The Tenant of Wildfell Hall", 
-      "edition": 1, 
-      "price": "6", 
-      "binding": "P", 
-      "date_published": "1848-10-04", 
-      "authors": [
-        6
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 10, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 1.11, 
-      "name": "Shirley", 
-      "edition": 1, 
-      "price": "4.5", 
-      "binding": "P", 
-      "date_published": "1849-06-01", 
-      "authors": [
-        2
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 11, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 1.8, 
-      "name": "Sense and Sensibility", 
-      "edition": 1, 
-      "price": "6.99", 
-      "binding": "P", 
-      "date_published": "1811-04-05", 
-      "authors": [
-        1
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 12, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 4.62, 
-      "name": "Northanger Abbey", 
-      "edition": 1, 
-      "price": "4.25", 
-      "binding": "P", 
-      "date_published": "1818-08-24", 
-      "authors": [
-        1
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 13, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 3.65, 
-      "name": "Persuasion", 
-      "edition": 1, 
-      "price": "3.8", 
-      "binding": "P", 
-      "date_published": "1818-09-25", 
-      "authors": [
-        1
-      ], 
-      "genre": 1
-    }
-  }, 
-  {
-    "pk": 14, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 2.5, 
-      "name": "Animal Farm", 
-      "edition": 1, 
-      "price": "6.5", 
-      "binding": "P", 
-      "date_published": "1945-08-17", 
-      "authors": [
-        8
-      ], 
-      "genre": 5
-    }
-  }, 
-  {
-    "pk": 15, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 0.93, 
-      "name": "Great Expectations", 
-      "edition": 1, 
-      "price": "4.99", 
-      "binding": "P", 
-      "date_published": "1861-11-05", 
-      "authors": [
-        9
-      ], 
-      "genre": 6
-    }
-  }, 
-  {
-    "pk": 16, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 1.3, 
-      "name": "Imperial Earth", 
-      "edition": 1, 
-      "price": "5.99", 
-      "binding": "P", 
-      "date_published": "1975-01-01", 
-      "authors": [
-        10
-      ], 
-      "genre": 7
-    }
-  }, 
-  {
-    "pk": 17, 
-    "model": "test_app.book", 
-    "fields": {
-      "rating": 3.4, 
-      "name": "The Professor", 
-      "edition": 1, 
-      "price": "4.99", 
-      "binding": "P", 
-      "date_published": "1857-04-15", 
-      "authors": [
-        2
-      ], 
-      "genre": 1
-    }
-  }
 ]
