@@ -15,7 +15,7 @@ import six
 
 from django_easyfilters.queries import date_aggregation, value_counts, numeric_range_counts
 from django_easyfilters.ranges import auto_ranges
-from django_easyfilters.utils import python_2_unicode_compatible
+from django_easyfilters.utils import python_2_unicode_compatible, get_model_field
 
 
 if six.PY3:
@@ -58,7 +58,7 @@ class Filter(object):
             query_param = field
         self.query_param = query_param
         self.order_by_count = order_by_count
-        self.field_obj = self.model._meta.get_field(self.field)
+        self.field_obj, m2m = get_model_field(self.model, self.field)
 
         if self.field_obj.rel is not None:
             self.rel_model = self.field_obj.rel.to

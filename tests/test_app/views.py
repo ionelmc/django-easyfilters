@@ -8,7 +8,9 @@ class BookFilterSet(FilterSet):
     fields = [
         'binding',
         'authors',
+        'authors__likes',
         'genre',
+        'genre__likes',
         'price',
         'date_published',
         'rating',

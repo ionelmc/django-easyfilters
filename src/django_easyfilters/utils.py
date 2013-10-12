@@ -1,8 +1,11 @@
+try:
+    from django.db.models.constants import LOOKUP_SEP
+except ImportError: # Django < 1.5 fallback
+    from django.db.models.sql.constants import LOOKUP_SEP
+from django.db.models.related import RelatedObject
 import six
 
-# Copied from Django 1.5
-
-def python_2_unicode_compatible(klass):
+def python_2_unicode_compatible(klass): # Copied from Django 1.5
     """
     A decorator that defines __unicode__ and __str__ methods under Python 2.
     Under Python 3 it does nothing.
@@ -14,3 +17,20 @@ def python_2_unicode_compatible(klass):
         klass.__unicode__ = klass.__str__
         klass.__str__ = lambda self: self.__unicode__().encode('utf-8')
     return klass
+
+def get_model_field(model, f):
+    parts = f.split(LOOKUP_SEP)
+    opts = model._meta
+    for name in parts[:-1]:
+        try:
+            rel = opts.get_field_by_name(name)[0]
+        except FieldDoesNotExist:
+            return None
+        if isinstance(rel, RelatedObject):
+            model = rel.model
+            opts = rel.opts
+        else:
+            model = rel.rel.to
+            opts = model._meta
+    rel, model, direct, m2m = opts.get_field_by_name(parts[-1])
+    return rel, m2m

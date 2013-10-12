@@ -3,19 +3,20 @@ from django.template.loader import get_template
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.utils.text import capfirst
+
 import six
 
-from django_easyfilters.filters import FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY, \
+from django_easyfilters.filters import (
+    FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY,
     ValuesFilter, ChoicesFilter, ForeignKeyFilter, ManyToManyFilter, DateTimeFilter, NumericRangeFilter
-from django_easyfilters.utils import python_2_unicode_compatible
-
+)
+from django_easyfilters.utils import python_2_unicode_compatible, get_model_field
 
 def non_breaking_spaces(val):
     # This helps a lot with presentation, by stopping the links+count from being
     # split over a line end.
     val = val.replace(u'-', u'\u2011')
     return mark_safe(u'&nbsp;'.join(escape(part) for part in val.split(u' ')))
-
 
 class cachedproperty(object):
     """
@@ -86,7 +87,7 @@ class FilterSet(object):
         return self.fields
 
     def get_filter_for_field(self, field):
-        f, model, direct, m2m = self.model._meta.get_field_by_name(field)
+        f, m2m = get_model_field(self.model, field)
         if f.rel is not None:
             if m2m:
                 return ManyToManyFilter
