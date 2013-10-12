@@ -12,20 +12,29 @@ env:
     PYTHONPATH=src:tests
     PYTHONUNBUFFERED=yes
   matrix:
-    - WITH_COVERAGE=yes PY3=no DEPS="python-dateutil six django>=1.3,<1.4"
-    - WITH_COVERAGE=yes PY3=no DEPS="python-dateutil six django>=1.4,<1.5"
-    - WITH_COVERAGE=yes PY3=yes DEPS="python-dateutil six django>=1.5,<1.6"
-    - WITH_COVERAGE=yes PY3=yes DEPS="python-dateutil six https://www.djangoproject.com/download/1.6b4/tarball/"
-    - WITH_COVERAGE=no PY3=no DEPS="python-dateutil six django>=1.3,<1.4"
-    - WITH_COVERAGE=no PY3=no DEPS="python-dateutil six django>=1.4,<1.5"
-    - WITH_COVERAGE=no PY3=yes DEPS="python-dateutil six django>=1.5,<1.6"
-    - WITH_COVERAGE=no PY3=yes DEPS="python-dateutil six https://www.djangoproject.com/download/1.6b4/tarball/"
+    - WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.3,<1.4"
+    - WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.4,<1.5"
+    - WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.5,<1.6"
+    - WITH_COVERAGE=yes DEPS="python-dateutil six https://www.djangoproject.com/download/1.6b4/tarball/"
+    - WITH_COVERAGE=no DEPS="python-dateutil six django>=1.3,<1.4"
+    - WITH_COVERAGE=no DEPS="python-dateutil six django>=1.4,<1.5"
+    - WITH_COVERAGE=no DEPS="python-dateutil six django>=1.5,<1.6"
+    - WITH_COVERAGE=no DEPS="python-dateutil six https://www.djangoproject.com/download/1.6b4/tarball/"
+
+matrix:
+  exclude:
+    - python: 3.3
+      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.3,<1.4"
+    - python: 3.2
+      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.3,<1.4"
+    - python: 3.3
+      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.4,<1.5"
+    - python: 3.2
+      env: WITH_COVERAGE=yes DEPS="python-dateutil six django>=1.4,<1.5"
+      
     
 before_install:
   - |
-    if python --version |& grep "Python 3" && [[ $PY3 == no ]]; then
-      exit 1
-    fi
     if python --version |& grep PyPy; then
       deactivate
       (
