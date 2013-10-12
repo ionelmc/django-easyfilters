@@ -2,6 +2,23 @@
 django-easyfilters
 ==================
 
+.. image:: https://secure.travis-ci.org/ionelmc/django-easyfilters.png
+    :alt: Build Status
+    :target: http://travis-ci.org/ionelmc/django-easyfilters
+
+.. image:: https://coveralls.io/repos/ionelmc/django-easyfilters/badge.png?branch=master
+    :alt: Coverage Status
+    :target: https://coveralls.io/r/ionelmc/django-easyfilters
+
+.. image:: https://pypip.in/d/django-easyfilters/badge.png
+    :alt: PYPI Package
+    :target: https://pypi.python.org/pypi/django-easyfilters
+
+.. image:: https://pypip.in/v/django-easyfilters/badge.png
+    :alt: PYPI Package
+    :target: https://pypi.python.org/pypi/django-easyfilters
+
+
 Overview
 ========
 
