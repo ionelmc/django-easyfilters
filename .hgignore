@@ -4,3 +4,4 @@ syntax: glob
 *.pyc
 tests.db
 django_easyfilters.egg-info
+.coverage
