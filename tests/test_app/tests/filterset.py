@@ -15,7 +15,7 @@ from django_easyfilters.filters import \
     FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY, \
     ForeignKeyFilter, ValuesFilter, ChoicesFilter, ManyToManyFilter, DateTimeFilter, NumericRangeFilter
 
-from .models import Book, Genre, Author, BINDING_CHOICES, Person
+from test_app.models import Book, Genre, Author, BINDING_CHOICES, Person
 
 
 class TestFilterSet(TestCase):

@@ -5,3 +5,5 @@ syntax: glob
 tests.db
 django_easyfilters.egg-info
 .coverage
+build
+dist

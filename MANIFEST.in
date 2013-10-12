@@ -1,11 +1,7 @@
 include *.rst
 include LICENSE
-include AUTHORS
-include MANIFEST.in
-include docs/Makefile
-include docs/conf.py
-include manage.py
-include test_settings.py
-recursive-include docs *.rst
-recursive-include django_easyfilters/tests *.html
-recursive-include django_easyfilters/tests *.json
+include README
+include tox.ini
+recursive-include docs *
+recursive-include tests *
+global-exclude *.pyc *.pyo

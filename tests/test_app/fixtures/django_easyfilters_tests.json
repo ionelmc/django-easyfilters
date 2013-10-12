@@ -1,7 +1,7 @@
 [
   {
     "pk": 4, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "A. A. Milne", 
       "likes": 1234
@@ -9,7 +9,7 @@
   }, 
   {
     "pk": 6, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "Anne Bront\u00eb", 
       "likes": 678
@@ -17,7 +17,7 @@
   }, 
   {
     "pk": 10, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "Arthur C. Clarke", 
       "likes": 890
@@ -25,7 +25,7 @@
   }, 
   {
     "pk": 9, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "Charles Dickens", 
       "likes": 777
@@ -33,7 +33,7 @@
   }, 
   {
     "pk": 2, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "Charlotte Bront\u00eb", 
       "likes": 1534
@@ -41,7 +41,7 @@
   }, 
   {
     "pk": 5, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "E. H. Shepard", 
       "likes": 970
@@ -49,7 +49,7 @@
   }, 
   {
     "pk": 7, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "Emily Bront\u00eb", 
       "likes": 456
@@ -57,7 +57,7 @@
   }, 
   {
     "pk": 8, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "George Orwell", 
       "likes": 912
@@ -65,7 +65,7 @@
   }, 
   {
     "pk": 1, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "Jane Austen", 
       "likes": 533
@@ -73,7 +73,7 @@
   }, 
   {
     "pk": 3, 
-    "model": "tests.author", 
+    "model": "test_app.author", 
     "fields": {
       "name": "Lewis Carroll", 
       "likes": 1101
@@ -81,56 +81,56 @@
   }, 
   {
     "pk": 3, 
-    "model": "tests.genre", 
+    "model": "test_app.genre", 
     "fields": {
       "name": "Children's"
     }
   }, 
   {
     "pk": 6, 
-    "model": "tests.genre", 
+    "model": "test_app.genre", 
     "fields": {
       "name": "Classics"
     }
   }, 
   {
     "pk": 2, 
-    "model": "tests.genre", 
+    "model": "test_app.genre", 
     "fields": {
       "name": "Fantasy"
     }
   }, 
   {
     "pk": 4, 
-    "model": "tests.genre", 
+    "model": "test_app.genre", 
     "fields": {
       "name": "Poetry"
     }
   }, 
   {
     "pk": 1, 
-    "model": "tests.genre", 
+    "model": "test_app.genre", 
     "fields": {
       "name": "Romance"
     }
   }, 
   {
     "pk": 5, 
-    "model": "tests.genre", 
+    "model": "test_app.genre", 
     "fields": {
       "name": "Satire"
     }
   }, 
   {
     "pk": 7, 
-    "model": "tests.genre", 
+    "model": "test_app.genre", 
     "fields": {
       "name": "Science Fiction"
     }
   }, 
   {
     "pk": 1, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 0.5, 
       "name": "Pride and Prejudice", 
@@ -146,7 +146,7 @@
   }, 
   {
     "pk": 2, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 1.4, 
       "name": "Emma", 
@@ -162,7 +162,7 @@
   }, 
   {
     "pk": 3, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 4.3, 
       "name": "Jane Eyre", 
@@ -178,7 +178,7 @@
   }, 
   {
     "pk": 4, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 4.2, 
       "name": "Through The Looking Glass", 
@@ -194,7 +194,7 @@
   }, 
   {
     "pk": 5, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 0.3, 
       "name": "Winnie-the-Pooh", 
@@ -211,7 +211,7 @@
   }, 
   {
     "pk": 6, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 3.4, 
       "name": "Poems", 
@@ -229,7 +229,7 @@
   }, 
   {
     "pk": 7, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 4.9, 
       "name": "Wuthering Heights", 
@@ -245,7 +245,7 @@
   }, 
   {
     "pk": 8, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 3.7, 
       "name": "Mansfield Park", 
@@ -261,7 +261,7 @@
   }, 
   {
     "pk": 9, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 2.0, 
       "name": "The Tenant of Wildfell Hall", 
@@ -277,7 +277,7 @@
   }, 
   {
     "pk": 10, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 1.11, 
       "name": "Shirley", 
@@ -293,7 +293,7 @@
   }, 
   {
     "pk": 11, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 1.8, 
       "name": "Sense and Sensibility", 
@@ -309,7 +309,7 @@
   }, 
   {
     "pk": 12, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 4.62, 
       "name": "Northanger Abbey", 
@@ -325,7 +325,7 @@
   }, 
   {
     "pk": 13, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 3.65, 
       "name": "Persuasion", 
@@ -341,7 +341,7 @@
   }, 
   {
     "pk": 14, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 2.5, 
       "name": "Animal Farm", 
@@ -357,7 +357,7 @@
   }, 
   {
     "pk": 15, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 0.93, 
       "name": "Great Expectations", 
@@ -373,7 +373,7 @@
   }, 
   {
     "pk": 16, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 1.3, 
       "name": "Imperial Earth", 
@@ -389,7 +389,7 @@
   }, 
   {
     "pk": 17, 
-    "model": "tests.book", 
+    "model": "test_app.book", 
     "fields": {
       "rating": 3.4, 
       "name": "The Professor", 

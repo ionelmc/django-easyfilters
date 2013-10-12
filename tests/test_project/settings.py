@@ -1,4 +1,3 @@
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -14,7 +13,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
     'django_easyfilters',
-    'django_easyfilters.tests',
+    'test_app',
 ]
 
 TEMPLATE_CONTEXT_PROCESSORS = [
@@ -28,7 +27,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.request",
 ]
 
-ROOT_URLCONF = 'django_easyfilters.tests.urls'
+ROOT_URLCONF = 'test_app.urls'
 
 DEBUG = True
 
