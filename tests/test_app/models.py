@@ -4,6 +4,7 @@ from django_easyfilters.utils import python_2_unicode_compatible
 
 BINDING_CHOICES = [
     #(None, 'Nothing'),
+    ('', 'Empty'),
     ('H', 'Hardback'),
     ('P', 'Paperback'),
     ('C', 'Cloth'),
@@ -24,6 +25,7 @@ class Author(models.Model):
 @python_2_unicode_compatible
 class Genre(models.Model):
     name = models.CharField(max_length=50)
+    likes = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -36,7 +38,8 @@ class Genre(models.Model):
 class Book(models.Model):
     name = models.CharField(max_length=100)
     binding = models.CharField(max_length=2, choices=BINDING_CHOICES, null=True, blank=True)
-    authors = models.ManyToManyField(Author)
+    other = models.CharField(max_length=10, blank=True)
+    authors = models.ManyToManyField(Author, blank=True)
     genre = models.ForeignKey(Genre, null=True, blank=True)
     price = models.DecimalField(max_digits=6, decimal_places=2)
     date_published = models.DateField(null=True, blank=True)

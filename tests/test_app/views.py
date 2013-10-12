@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-from django_easyfilters.tests.models import Book, Author
+from .models import Book, Author
 from django_easyfilters import FilterSet
 from django_easyfilters.filters import NumericRangeFilter
 
@@ -13,6 +13,7 @@ class BookFilterSet(FilterSet):
         'date_published',
         'rating',
         'edition',
+        'other',
     ]
 
 def books(request):
