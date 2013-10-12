@@ -925,7 +925,7 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
         self.max_links = kwargs.pop('max_links', 5)
         self.drilldown = kwargs.pop('drilldown', True)
         self.ranges = kwargs.pop('ranges', None)
-        field_obj = model._meta.get_field(field)
+        field_obj, _ = get_model_field(model, field)
         self.choice_type = make_numeric_range_choice(field_obj.to_python, str)
         super(NumericRangeFilter, self).__init__(field, model, params, **kwargs)
 

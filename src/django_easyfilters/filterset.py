@@ -63,7 +63,7 @@ class FilterSet(object):
         return queryset
 
     def render_filter(self, filter_):
-        field_obj = self.model._meta.get_field(filter_.field)
+        field_obj, _m2m = get_model_field(self.model, filter_.field)
         choices = self.get_filter_choices(filter_.field)
         ctx = {'filterlabel': capfirst(field_obj.verbose_name)}
         ctx['choices'] = [dict(label=non_breaking_spaces(c.label),
