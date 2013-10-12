@@ -25,6 +25,9 @@ def auto_ranges(lower, upper, max_items):
     assert lower < upper
 
     input_type = type(lower)
+    if input_type is float:
+        lower = str(lower)
+        upper = str(upper)
 
     # Convert to decimals.
     lower_d = Decimal(lower)
