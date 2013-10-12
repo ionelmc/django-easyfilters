@@ -315,9 +315,10 @@ class ValuesFilter(ChooseOnceMixin, SimpleQueryMixin, Filter):
         count_dict = self.get_values_counts(qs)
         return [FilterChoice(self.render_choice_object(val),
                              count,
-                             self.build_params(add=NullChoice if val is None else val),
+                             self.build_params(add=val),
                              FILTER_ADD)
-                for val, count in count_dict.items()]
+                for val, count in count_dict.items()
+                for val in (NullChoice if val is None else val,)]
 
 
 class ChoicesFilter(ValuesFilter):
@@ -501,23 +502,21 @@ DAYGROUP    = DateRangeType(3, False, 'day',   _ymd)
 DAY         = DateRangeType(3, True,  'day',   _ymd)
 
 class NullChoice(object):
-    @classmethod
     def make_lookup(self, field_name):
         return {field_name+"__isnull": True}
 
-    @classmethod
     def display(self):
-        return str(None)
+        return "(null)"
+    __str__ = __repr__ = display
 
-    @classmethod
     def __cmp__(self, other):
         return 0 if other is NullChoice else 1
 
-    @classmethod
     def __eq__(self, other):
         return other is NullChoice
 
     range_type = values = None
+NullChoice = NullChoice()
 
 @python_2_unicode_compatible
 @total_ordering
