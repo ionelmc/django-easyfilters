@@ -151,7 +151,7 @@ class TestFilterSet(TestCase):
 class TestFilters(TestCase):
     fixtures = ['django_easyfilters_tests']
 
-    def do_invalid_query_param_test(self, make_filter, params):
+    def do_invalid_query_param(self, make_filter, params):
         """
         Utility to test filters with invalid query parameters.
 
@@ -170,7 +170,7 @@ class TestFilters(TestCase):
         self.assertEqual(list(f.get_choices(qs)),
                          list(f_empty.get_choices(qs)))
 
-    def do_missing_related_object_test(self, make_filter, params):
+    def do_missing_related_object(self, make_filter, params):
         """
         Utility to test filters with query strings representing objects
         not in the database.
@@ -265,10 +265,10 @@ class TestFilters(TestCase):
         self.assertEqual(qs, qs_reverted)
 
     def test_foreignkey_invalid_query(self):
-        self.do_invalid_query_param_test(lambda params:
+        self.do_invalid_query_param(lambda params:
                                              ForeignKeyFilter('genre', Book, params),
                                          MultiValueDict({'genre':['xxx']}))
-        self.do_missing_related_object_test(lambda params:
+        self.do_missing_related_object(lambda params:
                                                 ForeignKeyFilter('genre', Book, params),
                                             MultiValueDict({'genre':['1000']}))
 
@@ -449,10 +449,10 @@ class TestFilters(TestCase):
                           (text_type(charlotte), FILTER_DISPLAY)])
 
     def test_manytomany_filter_invalid_query(self):
-        self.do_invalid_query_param_test(lambda params:
+        self.do_invalid_query_param(lambda params:
                                              ManyToManyFilter('authors', Book, params),
                                          MultiValueDict({'authors':['xxx']}))
-        self.do_missing_related_object_test(lambda params:
+        self.do_missing_related_object(lambda params:
                                                 ManyToManyFilter('authors', Book, params),
                                             MultiValueDict({'authors':['10000']}))
 
@@ -648,7 +648,7 @@ class TestFilters(TestCase):
         self.assertEqual(choices[0].link_type, FILTER_REMOVE)
 
     def test_datetime_filter_invalid_query(self):
-        self.do_invalid_query_param_test(lambda params: DateTimeFilter('date_published', Book, params, max_links=10),
+        self.do_invalid_query_param(lambda params: DateTimeFilter('date_published', Book, params, max_links=10),
                                          MultiValueDict({'date_published':['1818xx']}))
 
     def test_datetime_filter_empty_qs(self):
