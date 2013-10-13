@@ -1,3 +1,4 @@
+from django import VERSION
 from django.db import models
 from django.db.backends.util import typecast_timestamp
 from django.db.models.sql.compiler import SQLCompiler
@@ -47,7 +48,11 @@ class DateAggregateCompiler(SQLCompiler):
 class DateWithAlias(Date):
     alias = 'easyfilter_date_alias'
     def as_sql(self, qn, connection):
-        return super(DateWithAlias, self).as_sql(qn, connection) + ' as ' + self.alias
+        if VERSION >= (1, 6):
+            sql, params = super(DateWithAlias, self).as_sql(qn, connection)
+            return sql + ' as ' + self.alias, params
+        else:
+            return super(DateWithAlias, self).as_sql(qn, connection) + ' as ' + self.alias
 
 
 def date_aggregation(date_qs):
@@ -59,8 +64,12 @@ def date_aggregation(date_qs):
     date_q.distinct = False
 
     # Replace 'select' to add an alias
-    date_obj = date_q.select[0]
-    date_q.select = [DateWithAlias(date_obj.col, date_obj.lookup_type)]
+    if VERSION >= (1, 6):
+        date_obj, date_field = date_q.select[0]
+        date_q.select = [(DateWithAlias(date_obj.col, date_obj.lookup_type), date_field)]
+    else:
+        date_obj = date_q.select[0]
+        date_q.select = [DateWithAlias(date_obj.col, date_obj.lookup_type)]
 
     # Now use as a subquery to do aggregation
     query = DateAggregateQuery(date_qs.model)
@@ -136,14 +145,21 @@ class NumericValueRange(object):
                   ['WHEN %s = %s THEN 0 ' % (col, self.ranges[0][0])] +
                   ['ELSE %s END ' % len(self.ranges)] +
                   ['as %s' % self.alias])
-        return ''.join(clause)
+        if VERSION >= (1, 6):
+            return ''.join(clause), ()
+        else:
+            return ''.join(clause)
 
 
 def numeric_range_counts(qs, fieldname, ranges):
 
     # Build the query:
     query = qs.values_list(fieldname).query.clone()
-    query.select[0] = NumericValueRange(query.select[0], ranges)
+    if VERSION >= (1, 6):
+        col, field = query.select[0]
+        query.select[0] = NumericValueRange(col, ranges), field
+    else:
+        query.select[0] = NumericValueRange(query.select[0], ranges)
 
     agg_query = NumericAggregateQuery(qs.model)
     agg_query.add_subquery(query, qs.db)
