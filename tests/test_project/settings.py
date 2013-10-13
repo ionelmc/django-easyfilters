@@ -14,7 +14,27 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_easyfilters',
     'test_app',
+    #'debug_toolbar',
+    #'django_extensions',
 ]
+try:
+    import debug_toolbar
+    INSTALLED_APPS.append('debug_toolbar')
+    from django.conf.global_settings import MIDDLEWARE_CLASSES
+    MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
+    )
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_TOOLBAR_CALLBACK': lambda req: True,
+    }
+except ImportError:
+    pass
+
+try:
+    import django_extensions
+    INSTALLED_APPS.append('django_extensions')
+except ImportError:
+    pass
 
 TEMPLATE_CONTEXT_PROCESSORS = [
     "django.contrib.auth.context_processors.auth",
@@ -35,3 +55,5 @@ SITE_ID = 1
 STATIC_URL = '/static/'
 
 SECRET_KEY = 'x'
+
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
