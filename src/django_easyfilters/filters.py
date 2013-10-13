@@ -974,13 +974,10 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
                                             self.build_params(add=choice),
                                             FILTER_ADD))
             if self.ranges is None:
-                val_range = qs.filter(**{
-                    self.field + '__isnull': False
-                }).aggregate(
+                val_range = qs.aggregate(
                     lower=models.Min(self.field),
                     upper=models.Max(self.field)
                 )
-                print self.field, "=>", val_range
                 ranges = auto_ranges(val_range['lower'], val_range['upper'], self.max_links)
             else:
                 ranges = self.ranges
