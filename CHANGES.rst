@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.6.1
+-------------
+
+* Fix broken import / error handling in utils.
+
 Version 0.6
 -----------
 
