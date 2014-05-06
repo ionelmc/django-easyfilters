@@ -50,7 +50,7 @@ class Filter(object):
 
     ### Public interface ###
 
-    def __init__(self, field, model, params, query_param=None, order_by_count=False):
+    def __init__(self, field, model, params, query_param=None, order_by_count=False, sticky=True):
         self.field = field
         self.model = model
         self.params = params
@@ -65,6 +65,7 @@ class Filter(object):
             self.rel_field = self.field_obj.rel.get_related_field()
         # Make chosen an immutable sequence, to stop accidental mutation.
         self.chosen = tuple(self.choices_from_params())
+        self.sticky = sticky
 
     def apply_filter(self, qs):
         """
@@ -74,6 +75,8 @@ class Filter(object):
         chosen = list(self.chosen)
         while len(chosen) > 0:
             lookup = self.lookup_from_choice(chosen.pop())
+            if self.sticky:
+                qs._next_is_sticky()
             qs = qs.filter(**lookup)
         return qs
 
@@ -501,6 +504,7 @@ MONTH       = DateRangeType(2, True,  'month', _ym)
 DAYGROUP    = DateRangeType(3, False, 'day',   _ymd)
 DAY         = DateRangeType(3, True,  'day',   _ymd)
 
+
 class NullChoice(object):
     def make_lookup(self, field_name):
         return {field_name+"__isnull": True}
@@ -517,6 +521,24 @@ class NullChoice(object):
 
     range_type = values = None
 NullChoice = NullChoice()
+
+
+class AnyChoice(object):
+    def make_lookup(self, field_name):
+        return {}
+
+    def display(self):
+        return "(any)"
+    __str__ = __repr__ = display
+
+    def __cmp__(self, other):
+        return 0 if other is AnyChoice else 1
+
+    def __eq__(self, other):
+        return other is AnyChoice
+
+    range_type = values = None
+AnyChoice = AnyChoice()
 
 @python_2_unicode_compatible
 @total_ordering
