@@ -3,7 +3,8 @@ syntax: glob
 .ve
 *.pyc
 tests.db
-django_easyfilters.egg-info
+*.egg-info
 .coverage
 build
 dist
+.bootstrap

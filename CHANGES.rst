@@ -1,3 +1,14 @@
+Changelog
+=========
+
+Version 0.6
+-----------
+
+* Fixed compat with django 1.6 and 1.7
+* Fixed handling around NULL values
+* Fixed inconsistencies with "display" links
+* Add support for filters on forward relations (eg: fk1__fk2__finalfield)
+
 Version 0.5
 -----------
 

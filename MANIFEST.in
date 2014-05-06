@@ -1,7 +1,13 @@
-include *.rst
+include README.rst
+include CHANGES.rst
 include LICENSE
-include README
+include AUTHORS
 include tox.ini
-recursive-include docs *
-recursive-include tests *
+include .coveragerc
+include .pylintrc
+include *.komodoproject
+graft tests
+graft examples
+graft src
+graft docs
 global-exclude *.pyc *.pyo

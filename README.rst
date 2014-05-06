@@ -2,22 +2,21 @@
 django-easyfilters
 ==================
 
-.. image:: https://secure.travis-ci.org/ionelmc/django-easyfilters.png
+.. image:: http://img.shields.io/travis/ionelmc/django-easyfilters.png
     :alt: Build Status
-    :target: http://travis-ci.org/ionelmc/django-easyfilters
+    :target: https://travis-ci.org/ionelmc/django-easyfilters
 
-.. image:: https://coveralls.io/repos/ionelmc/django-easyfilters/badge.png?branch=master
+.. image:: http://img.shields.io/coveralls/ionelmc/django-easyfilters.png
     :alt: Coverage Status
     :target: https://coveralls.io/r/ionelmc/django-easyfilters
 
-.. image:: https://pypip.in/d/django-easyfilters/badge.png
+.. image:: http://img.shields.io/pypi/v/django-easyfilters.png
     :alt: PYPI Package
     :target: https://pypi.python.org/pypi/django-easyfilters
 
-.. image:: https://pypip.in/v/django-easyfilters/badge.png
+.. image:: http://img.shields.io/pypi/dm/django-easyfilters.png
     :alt: PYPI Package
     :target: https://pypi.python.org/pypi/django-easyfilters
-
 
 Overview
 ========
@@ -27,53 +26,20 @@ This library provides filters similar in some ways to ``list_filter`` and
 admin. Importantly, it also includes result counts for the choices. It is
 designed to be very easy to get started with.
 
-Download/install
-================
-Just install as a Python library.
+Install
+=======
 
-PyPI page: http://pypi.python.org/pypi/django-easyfilters
+::
+
+    pip install django-easyfilters-ex
 
 Docs
 ====
 
-See the docs/ directory, especially docs/overview.rst
-
-Also hosted here: http://packages.python.org/django-easyfilters
-And here: https://django-easyfilters.readthedocs.org/en/latest/
-
-Demo
-====
-
-A small demo app is included, see the instructions in docs/develop.rst
-
-A (currently) live example can be seen at:
-
-http://www.christchurchbradford.org.uk/sermons/
-
-Status
-======
-
-The library is in a useful state and is used in production. Test coverage is
-extensive. Feedback regarding API or features is very welcome!
-
-Support
-=======
-
-File bugs/feature request in the 'issues' in BitBucket:
-
-https://bitbucket.org/spookylukey/django-easyfilters/issues?status=new&status=open
-
-Or drop `me <http://lukeplant.me.uk/>`_ an email, I always like to hear when
-people are using my stuff.
+https://django-easyfilters.readthedocs.org/en/latest/
 
 TODO
 ====
 
 * Possible: ability to specify 'defaults' attribute for FilterSet
 * Allow the automatic 'page' resetting to be customized
-
-
-.. image:: https://d2weczhvl823v0.cloudfront.net/ionelmc/django-easyfilters/trend.png
-   :alt: Bitdeli badge
-   :target: https://bitdeli.com/free
-
