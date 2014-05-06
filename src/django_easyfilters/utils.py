@@ -3,7 +3,8 @@ try:
 except ImportError: # Django < 1.5 fallback
     from django.db.models.sql.constants import LOOKUP_SEP
 from django.db.models.related import RelatedObject
-import six
+from six import PY3
+
 
 def python_2_unicode_compatible(klass): # Copied from Django 1.5
     """
@@ -13,7 +14,7 @@ def python_2_unicode_compatible(klass): # Copied from Django 1.5
     To support Python 2 and 3 with a single code base, define a __str__ method
     returning text and apply this decorator to the class.
     """
-    if not six.PY3:
+    if not PY3:
         klass.__unicode__ = klass.__str__
         klass.__str__ = lambda self: self.__unicode__().encode('utf-8')
     return klass
@@ -22,10 +23,7 @@ def get_model_field(model, f):
     parts = f.split(LOOKUP_SEP)
     opts = model._meta
     for name in parts[:-1]:
-        try:
-            rel = opts.get_field_by_name(name)[0]
-        except FieldDoesNotExist:
-            return None
+        rel = opts.get_field_by_name(name)[0]
         if isinstance(rel, RelatedObject):
             model = rel.model
             opts = rel.opts
