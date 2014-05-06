@@ -15,7 +15,7 @@ def read(*names, **kwargs):
 
 setup(
     name="django-easyfilters-ex",
-    version='0.6',
+    version='0.6.1',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     include_package_data=True,
