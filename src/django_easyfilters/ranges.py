@@ -3,7 +3,6 @@ Utilities to produce ranges of values for filters
 """
 
 from decimal import Decimal, DecimalTuple, ROUND_HALF_EVEN, ROUND_DOWN, ROUND_UP
-import math
 
 from six.moves import xrange
 
@@ -11,8 +10,10 @@ from six.moves import xrange
 def round_dec(d):
     return d.quantize(1, ROUND_HALF_EVEN)
 
+
 def round_dec_down(d):
     return d.quantize(1, ROUND_DOWN)
+
 
 def round_dec_up(d):
     return d.quantize(1, ROUND_UP)
