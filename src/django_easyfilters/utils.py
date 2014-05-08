@@ -19,6 +19,7 @@ def python_2_unicode_compatible(klass): # Copied from Django 1.5
         klass.__str__ = lambda self: self.__unicode__().encode('utf-8')
     return klass
 
+
 def get_model_field(model, f):
     parts = f.split(LOOKUP_SEP)
     opts = model._meta
