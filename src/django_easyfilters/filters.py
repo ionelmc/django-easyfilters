@@ -51,7 +51,7 @@ class Filter(object):
 
     ### Public interface ###
 
-    def __init__(self, field, model, params, query_param=None, order_by_count=False, sticky=True):
+    def __init__(self, field, model, params, query_param=None, order_by_count=False, sticky=False):
         self.field = field
         self.model = model
         self.params = params
