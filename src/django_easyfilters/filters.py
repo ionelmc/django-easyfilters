@@ -13,9 +13,9 @@ from django.utils.dates import MONTHS
 from django.utils.text import capfirst
 import six
 
-from django_easyfilters.queries import date_aggregation, value_counts, numeric_range_counts
-from django_easyfilters.ranges import auto_ranges
-from django_easyfilters.utils import python_2_unicode_compatible, get_model_field
+from .queries import date_aggregation, value_counts, numeric_range_counts
+from .ranges import auto_ranges
+from .utils import python_2_unicode_compatible, get_model_field
 
 
 if six.PY3:
@@ -859,7 +859,6 @@ class RangeEnd(object):
         # value is some generic value, inclusive is a bool specifying where this
         # value is included as part of the range.
         self.value, self.inclusive = value, inclusive
-
 
 
 def make_numeric_range_choice(to_python, to_str):
