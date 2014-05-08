@@ -1,21 +1,22 @@
 from __future__ import unicode_literals
 
-from datetime import date, timedelta
-from dateutil.relativedelta import relativedelta
 import math
 import operator
 import re
+from datetime import date
 
+import six
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import formats
 from django.utils.dates import MONTHS
-from django.utils.text import capfirst
-import six
 
-from .queries import date_aggregation, value_counts, numeric_range_counts
+from .queries import date_aggregation
+from .queries import numeric_range_counts
+from .queries import value_counts
 from .ranges import auto_ranges
-from .utils import python_2_unicode_compatible, get_model_field
+from .utils import get_model_field
+from .utils import python_2_unicode_compatible
 
 
 if six.PY3:
