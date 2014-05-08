@@ -8,17 +8,17 @@ from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 from django.utils.functional import cached_property
 
-from django_easyfilters.filters import ChoicesFilter
-from django_easyfilters.filters import DateTimeFilter
-from django_easyfilters.filters import FILTER_ADD
-from django_easyfilters.filters import FILTER_DISPLAY
-from django_easyfilters.filters import FILTER_REMOVE
-from django_easyfilters.filters import ForeignKeyFilter
-from django_easyfilters.filters import ManyToManyFilter
-from django_easyfilters.filters import NumericRangeFilter
-from django_easyfilters.filters import ValuesFilter
-from django_easyfilters.utils import get_model_field
-from django_easyfilters.utils import python_2_unicode_compatible
+from .filters import ChoicesFilter
+from .filters import DateTimeFilter
+from .filters import FILTER_ADD
+from .filters import FILTER_DISPLAY
+from .filters import FILTER_REMOVE
+from .filters import ForeignKeyFilter
+from .filters import ManyToManyFilter
+from .filters import NumericRangeFilter
+from .filters import ValuesFilter
+from .utils import get_model_field
+from .utils import python_2_unicode_compatible
 
 logger = getLogger(__name__)
 
