@@ -1,34 +1,33 @@
-from django import template
-from django.template.loader import get_template
-from django.utils.safestring import mark_safe
-from django.utils.html import escape
-from django.utils.text import capfirst
+from logging import getLogger
 
 import six
+from django import template
+from django.template.loader import get_template
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
+from django.utils.text import capfirst
+from django.utils.functional import cached_property
 
-from django_easyfilters.filters import (
-    FILTER_ADD, FILTER_REMOVE, FILTER_DISPLAY,
-    ValuesFilter, ChoicesFilter, ForeignKeyFilter, ManyToManyFilter, DateTimeFilter, NumericRangeFilter
-)
-from django_easyfilters.utils import python_2_unicode_compatible, get_model_field
+from django_easyfilters.filters import ChoicesFilter
+from django_easyfilters.filters import DateTimeFilter
+from django_easyfilters.filters import FILTER_ADD
+from django_easyfilters.filters import FILTER_DISPLAY
+from django_easyfilters.filters import FILTER_REMOVE
+from django_easyfilters.filters import ForeignKeyFilter
+from django_easyfilters.filters import ManyToManyFilter
+from django_easyfilters.filters import NumericRangeFilter
+from django_easyfilters.filters import ValuesFilter
+from django_easyfilters.utils import get_model_field
+from django_easyfilters.utils import python_2_unicode_compatible
+
+logger = getLogger(__name__)
+
 
 def non_breaking_spaces(val):
     # This helps a lot with presentation, by stopping the links+count from being
     # split over a line end.
     val = val.replace(u'-', u'\u2011')
     return mark_safe(u'&nbsp;'.join(escape(part) for part in val.split(u' ')))
-
-class cachedproperty(object):
-    """
-    Decorator that creates converts a method with a single
-    self argument into a property cached on the instance.
-    """
-    def __init__(self, func):
-        self.func = func
-
-    def __get__(self, instance, type):
-        res = instance.__dict__[self.func.__name__] = self.func(instance)
-        return res
 
 
 @python_2_unicode_compatible
@@ -47,7 +46,7 @@ class FilterSet(object):
         self.filters = self.setup_filters()
         self.qs = self.apply_filters(queryset)
 
-    @cachedproperty
+    @cached_property
     def title(self):
         return self.make_title()
 
@@ -106,7 +105,7 @@ class FilterSet(object):
 
     def setup_filters(self):
         filters = []
-        for i, f in enumerate(self.get_fields()):
+        for f in self.get_fields():
             klass = None
             if isinstance(f, six.string_types):
                 opts = {}
@@ -118,6 +117,7 @@ class FilterSet(object):
                     klass = f[2]
             if klass is None:
                 klass = self.get_filter_for_field(field_name)
+            logger.debug("Creating %s(%s, %s, %s, **%s)", klass.__name__, field_name, self.model, self.params, opts)
             filters.append(klass(field_name, self.model, self.params, **opts))
         return filters
 
