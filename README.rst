@@ -10,13 +10,13 @@ django-easyfilters
     :alt: Coverage Status
     :target: https://coveralls.io/r/ionelmc/django-easyfilters
 
-.. image:: http://img.shields.io/pypi/v/django-easyfilters.png
+.. image:: http://img.shields.io/pypi/v/django-easyfilters-ex.png
     :alt: PYPI Package
-    :target: https://pypi.python.org/pypi/django-easyfilters
+    :target: https://pypi.python.org/pypi/django-easyfilters-ex
 
-.. image:: http://img.shields.io/pypi/dm/django-easyfilters.png
+.. image:: http://img.shields.io/pypi/dm/django-easyfilters-ex.png
     :alt: PYPI Package
-    :target: https://pypi.python.org/pypi/django-easyfilters
+    :target: https://pypi.python.org/pypi/django-easyfilters-ex
 
 Overview
 ========
