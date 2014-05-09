@@ -6,6 +6,19 @@ from django.template.loader import get_template
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
+
+from .filters import ChoicesFilter
+from .filters import DateTimeFilter
+from .filters import FILTER_ADD
+from .filters import FILTER_DISPLAY
+from .filters import FILTER_REMOVE
+from .filters import ForeignKeyFilter
+from .filters import ManyToManyFilter
+from .filters import NumericRangeFilter
+from .filters import ValuesFilter
+from .utils import get_model_field
+from .utils import python_2_unicode_compatible
+
 try:
     from django.utils.functional import cached_property
 except ImportError:
@@ -22,18 +35,6 @@ except ImportError:
                 return self
             res = instance.__dict__[self.func.__name__] = self.func(instance)
             return res
-
-from .filters import ChoicesFilter
-from .filters import DateTimeFilter
-from .filters import FILTER_ADD
-from .filters import FILTER_DISPLAY
-from .filters import FILTER_REMOVE
-from .filters import ForeignKeyFilter
-from .filters import ManyToManyFilter
-from .filters import NumericRangeFilter
-from .filters import ValuesFilter
-from .utils import get_model_field
-from .utils import python_2_unicode_compatible
 
 logger = getLogger(__name__)
 
