@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 0.6.2
+-------------
+
+* Add a ``show_counts`` option on filters.
+* Add a ``defaults`` option on filterset so you don't have to specify the same options for every filter.
+
 Version 0.6.1
 -------------
 
