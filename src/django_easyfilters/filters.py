@@ -4,6 +4,7 @@ import math
 import operator
 import re
 from datetime import date
+from logging import getLogger
 
 import six
 from dateutil.relativedelta import relativedelta
@@ -17,6 +18,8 @@ from .queries import value_counts
 from .ranges import auto_ranges
 from .utils import get_model_field
 from .utils import python_2_unicode_compatible
+
+logger = getLogger(__name__)
 
 
 if six.PY3:
@@ -51,7 +54,7 @@ class Filter(object):
 
     ### Public interface ###
 
-    def __init__(self, field, model, params, query_param=None, order_by_count=False, sticky=False):
+    def __init__(self, field, model, params, query_param=None, order_by_count=False, sticky=False, show_counts=True):
         self.field = field
         self.model = model
         self.params = params
@@ -67,6 +70,7 @@ class Filter(object):
         # Make chosen an immutable sequence, to stop accidental mutation.
         self.chosen = tuple(self.choices_from_params())
         self.sticky = sticky
+        self.show_counts = show_counts
 
     def apply_filter(self, qs):
         """
@@ -172,7 +176,7 @@ class Filter(object):
         choices = []
         for choice in chosen:
             choices.append(FilterChoice(self.render_choice_object(choice),
-                                        None, # Don't need count for removing
+                                        None,  # Don't need count for removing
                                         self.build_params(remove=[choice]),
                                         FILTER_REMOVE))
         return choices
@@ -262,7 +266,10 @@ class SimpleQueryMixin(object):
         The order is the underlying order produced by sorting ascending on the
         DB field.
         """
-        return value_counts(qs, self.field)
+        if self.show_counts or self.order_by_count:
+            return value_counts(qs, self.field)
+        else:
+            return dict((val, None) for val, in qs.values_list(self.field).order_by(self.field).distinct())
 
 
 class RangeFilterMixin(ChooseAgainMixin):
@@ -745,7 +752,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
         null_count = not chosen and qs.filter(**{self.field + '__isnull': True}).count()
         if null_count:
             choices.append(FilterChoice(self.render_choice_object(NullChoice),
-                                        null_count,
+                                        null_count if self.show_counts else None,
                                         self.build_params(add=NullChoice),
                                         FILTER_ADD))
 
@@ -766,7 +773,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
                 link_type = FILTER_ADD
 
             choices.append(FilterChoice(self.render_choice_object(date_choice),
-                                        count,
+                                        count if self.show_counts else None,
                                         self.build_params(add=date_choice),
                                         link_type))
         return choices
@@ -983,16 +990,15 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
             for v, count in val_counts.items():
                 choice = NullChoice if v is None else self.choice_type([RangeEnd(v, True)])
                 choices.append(FilterChoice(self.render_choice_object(choice),
-                                            count,
+                                            count if self.show_counts else None,
                                             self.build_params(add=choice),
                                             FILTER_ADD))
         else:
             null_count = not chosen and qs.filter(**{self.field + '__isnull': True}).count()
             if null_count:
                 choice = NullChoice
-                #choice = self.choice_type([RangeEnd(None, False)])
                 choices.append(FilterChoice(self.render_choice_object(choice),
-                                            null_count,
+                                            null_count if self.show_counts else None,
                                             self.build_params(add=choice),
                                             FILTER_ADD))
             if self.ranges is None:
@@ -1004,7 +1010,10 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
             else:
                 ranges = self.ranges
 
-            val_counts = numeric_range_counts(qs, self.field, ranges)
+            if self.show_counts or self.order_by_count:
+                val_counts = numeric_range_counts(qs, self.field, ranges)
+            else:
+                val_counts = dict((val, None) for val in ranges)
             for i, (vals, count) in enumerate(val_counts.items()):
                 # For the lower bound, we make it inclusive only if it the first
                 # choice. The upper bound is always inclusive. This gives
