@@ -39,6 +39,7 @@ class FilterSet(object):
     template_file = "django_easyfilters/default.html"
 
     title_fields = None
+    defaults = None
 
     def __init__(self, queryset, params):
         self.params = params
@@ -107,11 +108,11 @@ class FilterSet(object):
         filters = []
         for f in self.get_fields():
             klass = None
+            opts = {} if self.defaults is None else dict(self.defaults)
             if isinstance(f, six.string_types):
-                opts = {}
                 field_name = f
             else:
-                opts = f[1]
+                opts.update(f[1])
                 field_name = f[0]
                 if len(f) > 2:
                     klass = f[2]
