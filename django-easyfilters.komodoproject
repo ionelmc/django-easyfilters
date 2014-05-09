@@ -4,5 +4,7 @@
 <preference-set idref="c5f899d4-4a4e-4f7b-8ac1-1e557f8d775c" id="project" preftype="project">
   <string relative="path" id="import_dirname"></string>
   <string id="import_exclude_matches">*.*~;*.bak;*.tmp;CVS;.#*;*.pyo;*.pyc;.svn;.git;.hg;.bzr;*%25*;tmp*.html;.DS_Store;*.swp;*.kpf;*.komodoproject;.komodotools;__pycache__;.ve;.tox;.coverage;*.egg-ingo</string>
+  <string relative="path" id="pythonDefaultInterpreter">.tox/2.7-1.6/bin/python</string>
+  <string relative="path" id="pythonExtraPaths">.tox/2.7-1.6/lib/python2.7/site-packages</string>
 </preference-set>
 </project>
