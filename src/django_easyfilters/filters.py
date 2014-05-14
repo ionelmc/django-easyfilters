@@ -723,7 +723,11 @@ class DateTimeFilter(RangeFilterMixin, Filter):
                 else:
                     range_type = YEAR
 
-            date_qs = qs.dates(self.field, range_type.label)
+            if VERSION >= (1, 6):
+                date_qs = qs.datetimes(self.field, range_type.label)
+            else:
+                date_qs = qs.dates(self.field, range_type.label)
+
             results = date_aggregation(date_qs)
 
             date_choice_counts = self.collapse_results(results, range_type)
