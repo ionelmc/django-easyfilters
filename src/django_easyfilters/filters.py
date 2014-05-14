@@ -8,6 +8,7 @@ from logging import getLogger
 
 import six
 from dateutil.relativedelta import relativedelta
+from django import VERSION
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.dates import MONTHS
@@ -367,16 +368,22 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
     Filter for ForeignKey fields.
     """
     def choice_from_param(self, param):
-        choice_pk = super(ForeignKeyFilter, self).choice_from_param(param)
-        lookup = {self.rel_field.name: choice_pk}
-        try:
-            obj = self.rel_model.objects.get(**lookup)
-        except self.rel_model.DoesNotExist:
-            raise ValueError("object does not exist in DB")
-        return obj
+        if param is None:
+            return self.field_obj.to_python(param)
+        else:
+            choice_pk = super(ForeignKeyFilter, self).choice_from_param(param)
+            lookup = {self.rel_field.name: choice_pk}
+            try:
+                obj = self.rel_model.objects.get(**lookup)
+            except self.rel_model.DoesNotExist:
+                raise ValueError("object does not exist in DB")
+            return obj
 
     def param_from_choice(self, choice):
-        return six.text_type(choice.pk)
+        if hasattr(choice, 'pk'):
+            return six.text_type(choice.pk)
+        else:
+            return super(ForeignKeyFilter, self).param_from_choice(choice)
 
     def get_choices_add(self, qs):
         count_dict = self.get_values_counts(qs)
@@ -390,6 +397,14 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
                                         count_dict[pk],
                                         self.build_params(add=o),
                                         FILTER_ADD))
+
+        null_count = not self.chosen and self.field_obj.null and qs.filter(**{self.field + '__isnull': True}).count()
+        if null_count:
+            choices.append(FilterChoice(self.render_choice_object(NullChoice),
+                                        null_count if self.show_counts else None,
+                                        self.build_params(add=NullChoice),
+                                        FILTER_ADD))
+
         return choices
 
 
