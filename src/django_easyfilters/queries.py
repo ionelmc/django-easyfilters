@@ -37,22 +37,26 @@ class DateAggregateCompiler(SQLCompiler):
                 yield vals
 
     def as_sql(self, qn=None):
-        sql = ('SELECT %s, COUNT(%s) FROM (%s) subquery GROUP BY (%s) ORDER BY (%s)' % (
-                DateWithAlias.alias, DateWithAlias.alias, self.query.subquery,
-                DateWithAlias.alias, DateWithAlias.alias)
-               )
+        sql = ('SELECT %s, COUNT(%s) '
+               'FROM (%s) subquery '
+               'GROUP BY (%s) '
+               'ORDER BY (%s)'
+               % (DateWithAlias.alias, DateWithAlias.alias, self.query.subquery,
+                  DateWithAlias.alias, DateWithAlias.alias))
         params = self.query.sub_params
         return (sql, params)
 
 
 class DateWithAlias(Date):
     alias = 'easyfilter_date_alias'
+
     def as_sql(self, qn, connection):
         if VERSION >= (1, 6):
             sql, params = super(DateWithAlias, self).as_sql(qn, connection)
             return sql + ' as ' + self.alias, params
         else:
-            return super(DateWithAlias, self).as_sql(qn, connection) + ' as ' + self.alias
+            return (super(DateWithAlias, self).as_sql(qn, connection)
+                    + ' as ' + self.alias)
 
 
 def date_aggregation(date_qs):
@@ -66,7 +70,8 @@ def date_aggregation(date_qs):
     # Replace 'select' to add an alias
     if VERSION >= (1, 6):
         date_obj, date_field = date_q.select[0]
-        date_q.select = [(DateWithAlias(date_obj.col, date_obj.lookup_type), date_field)]
+        date_q.select = [(DateWithAlias(date_obj.col, date_obj.lookup_type),
+                         date_field)]
     else:
         date_obj = date_q.select[0]
         date_q.select = [DateWithAlias(date_obj.col, date_obj.lookup_type)]
@@ -85,7 +90,9 @@ def value_counts(qs, fieldname):
     """
     values_counts = qs.filter(**{
         fieldname+"__isnull": False
-    }).values_list(fieldname).order_by(fieldname).annotate(models.Count(fieldname))
+    }).values_list(fieldname)\
+        .order_by(fieldname)\
+        .annotate(models.Count(fieldname))
     count_dict = SortedDict()
     null_count = qs.filter(**{fieldname+"__isnull": True}).count()
     if null_count:
@@ -98,7 +105,7 @@ def value_counts(qs, fieldname):
 class NumericAggregateQuery(AggregateQuery):
     # Need to override to return a compiler not in django.db.models.sql.compiler
     def get_compiler(self, using=None, connection=None):
-        return  NumericAggregateCompiler(self, connection, using)
+        return NumericAggregateCompiler(self, connection, using)
 
     def get_counts(self, using):
         from django.db import connections
@@ -113,16 +120,20 @@ class NumericAggregateCompiler(SQLCompiler):
                 yield row
 
     def as_sql(self, qn=None):
-        sql = ('SELECT %s, COUNT(%s) FROM (%s) subquery GROUP BY (%s) ORDER BY (%s)' % (
-                NumericValueRange.alias, NumericValueRange.alias, self.query.subquery,
-                NumericValueRange.alias, NumericValueRange.alias)
-               )
+        sql = ('SELECT %s, COUNT(%s) '
+               'FROM (%s) subquery '
+               'GROUP BY (%s) '
+               'ORDER BY (%s)'
+               % (NumericValueRange.alias, NumericValueRange.alias,
+                  self.query.subquery, NumericValueRange.alias,
+                  NumericValueRange.alias))
         params = self.query.sub_params
         return (sql, params)
 
 
 class NumericValueRange(object):
     alias = 'easyfilter_number_range_alias'
+
     def __init__(self, col, ranges):
         # ranges is list of (lower, upper) bounds we want to find, where 'lower'
         # is inclusive and upper is exclusive.
@@ -139,7 +150,8 @@ class NumericValueRange(object):
 
         # Build up case expression.
         clause = (['CASE '] +
-                  ['WHEN %s > %s AND %s <= %s THEN %s ' % (col, val[0], col, val[1], i)
+                  ['WHEN %s > %s AND %s <= %s THEN %s '
+                   % (col, val[0], col, val[1], i)
                    for i, val in enumerate(self.ranges)] +
                   # An inclusive lower limit for the first item in ranges:
                   ['WHEN %s = %s THEN 0 ' % (col, self.ranges[0][0])] +

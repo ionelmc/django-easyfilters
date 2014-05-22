@@ -9,7 +9,6 @@ from django.utils.text import capfirst
 
 from .filters import ChoicesFilter
 from .filters import DateTimeFilter
-from .filters import FILTER_ADD
 from .filters import FILTER_DISPLAY
 from .filters import FILTER_REMOVE
 from .filters import ForeignKeyFilter
@@ -97,7 +96,8 @@ class FilterSet(object):
             return get_template(self.template_file)
 
     def render(self):
-        return mark_safe(u'\n'.join(self.render_filter(f) for f in self.filters))
+        return mark_safe(u'\n'.join(self.render_filter(f)
+                         for f in self.filters))
 
     def get_fields(self):
         return self.fields
@@ -134,7 +134,12 @@ class FilterSet(object):
                     klass = f[2]
             if klass is None:
                 klass = self.get_filter_for_field(field_name)
-            logger.debug("Creating %s(%s, %s, %s, **%s)", klass.__name__, field_name, self.model, self.params, opts)
+            logger.debug("Creating %s(%s, %s, %s, **%s)",
+                         klass.__name__,
+                         field_name,
+                         self.model,
+                         self.params,
+                         opts)
             filters.append(klass(field_name, self.model, self.params, **opts))
         return filters
 

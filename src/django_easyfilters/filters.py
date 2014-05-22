@@ -39,7 +39,8 @@ except ImportError:
     # We don't use it as a tuple, so this will do:
     class FilterChoice(object):
         def __init__(self, label, count, params, link_type):
-            self.label, self.count, self.params, self.link_type = label, count, params, link_type
+            self.label, self.count, self.params, self.link_type = \
+                label, count, params, link_type
 
 
 FILTER_ADD = 'add'
@@ -55,7 +56,14 @@ class Filter(object):
 
     ### Public interface ###
 
-    def __init__(self, field, model, params, query_param=None, order_by_count=False, sticky=False, show_counts=True):
+    def __init__(self,
+                 field,
+                 model,
+                 params,
+                 query_param=None,
+                 order_by_count=False,
+                 sticky=False,
+                 show_counts=True):
         self.field = field
         self.model = model
         self.params = params
@@ -153,10 +161,11 @@ class Filter(object):
             params.pop(self.query_param + "--isnull", None)
         chosen = list(i for i in chosen if i is not NullChoice)
         if chosen:
-            params.setlist(self.query_param, self.paramlist_from_choices(chosen))
+            params.setlist(self.query_param,
+                           self.paramlist_from_choices(chosen))
         else:
             params.pop(self.query_param, None)
-        params.pop('page', None) # links should reset paging
+        params.pop('page', None)  # links should reset paging
         return params
 
     def sort_choices(self, qs, choices):
@@ -270,7 +279,9 @@ class SimpleQueryMixin(object):
         if self.show_counts or self.order_by_count:
             return value_counts(qs, self.field)
         else:
-            return dict((val, None) for val, in qs.values_list(self.field).order_by(self.field).distinct())
+            return dict((val, None)
+                        for val, in qs.values_list(self.field)
+                        .order_by(self.field).distinct())
 
 
 class RangeFilterMixin(ChooseAgainMixin):
@@ -363,7 +374,10 @@ class ChoicesFilter(ValuesFilter):
         return choices
 
 
-class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Filter):
+class ForeignKeyFilter(ChooseOnceMixin,
+                       SimpleQueryMixin,
+                       RelatedObjectMixin,
+                       Filter):
     """
     Filter for ForeignKey fields.
     """
@@ -391,7 +405,9 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
         objs = self.rel_model.objects.filter(**lookup)
         choices = []
 
-        null_count = not self.chosen and self.field_obj.null and qs.filter(**{self.field + '__isnull': True}).count()
+        null_count = (not self.chosen
+                      and self.field_obj.null
+                      and qs.filter(**{self.field + '__isnull': True}).count())
         if null_count:
             choices.append(FilterChoice(self.render_choice_object(NullChoice),
                                         null_count,
@@ -424,7 +440,7 @@ class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
 
         # We need to limit items by what is in the main QuerySet (which might
         # already be filtered).
-        m2m_objs = through.objects.filter(**{fkey_this.name + '__in':qs})
+        m2m_objs = through.objects.filter(**{fkey_this.name + '__in': qs})
 
         # We need to exclude items in other table that we have already filtered
         # on, because they are not interesting.
@@ -468,7 +484,7 @@ class ManyToManyFilter(ChooseAgainMixin, RelatedObjectMixin, Filter):
 @total_ordering
 class DateRangeType(object):
 
-    all = {} # Keep a cache, so that we have unique instances
+    all = {}  # Keep a cache, so that we have unique instances
 
     def __init__(self, level, single, label, regex):
         self.level, self.single, self.label = level, single, label
@@ -500,7 +516,8 @@ class DateRangeType(object):
 
     @property
     def dateattr(self):
-        # The attribute of a date object that we truncate to when collapsing results.
+        #  The attribute of a date object that we truncate
+        #  to when collapsing results.
         return self.label
 
     @property
@@ -520,12 +537,12 @@ class DateRangeType(object):
 
 
 _y, _ym, _ymd = r'\d{4}', r'\d{4}-\d{2}', r'\d{4}-\d{2}-\d{2}'
-YEARGROUP   = DateRangeType(1, False, 'year',  _y)
-YEAR        = DateRangeType(1, True,  'year',  _y)
-MONTHGROUP  = DateRangeType(2, False, 'month', _ym)
-MONTH       = DateRangeType(2, True,  'month', _ym)
-DAYGROUP    = DateRangeType(3, False, 'day',   _ymd)
-DAY         = DateRangeType(3, True,  'day',   _ymd)
+YEARGROUP = DateRangeType(1,    False, 'year',  _y)
+YEAR = DateRangeType(1,         True,  'year',  _y)
+MONTHGROUP = DateRangeType(2,   False, 'month', _ym)
+MONTH = DateRangeType(2,        True,  'month', _ym)
+DAYGROUP = DateRangeType(3,     False, 'day',   _ymd)
+DAY = DateRangeType(3,          True,  'day',   _ymd)
 
 
 class NullChoice(object):
@@ -562,6 +579,7 @@ class AnyChoice(object):
 
     range_type = values = None
 AnyChoice = AnyChoice()
+
 
 @python_2_unicode_compatible
 @total_ordering
@@ -611,9 +629,10 @@ class DateChoice(object):
             elif self.range_type is DAY:
                 return str(int(parts[-1]))
         else:
-            return u'-'.join([DateChoice(DateRangeType.get(self.range_type.level, True),
-                                         [val]).display()
-                              for val in self.values])
+            return u'-'.join([DateChoice(
+                             DateRangeType.get(self.range_type.level,
+                                               True), [val]).display()
+                for val in self.values])
 
     @staticmethod
     def datetime_to_value(range_type, dt):
@@ -626,7 +645,8 @@ class DateChoice(object):
 
     @staticmethod
     def from_datetime(range_type, dt):
-        return DateChoice(range_type, [DateChoice.datetime_to_value(range_type, dt)])
+        return DateChoice(range_type,
+                          [DateChoice.datetime_to_value(range_type, dt)])
 
     @staticmethod
     def from_datetime_range(range_type, dt1, dt2):
@@ -663,7 +683,8 @@ class DateChoice(object):
         end_date = date(end_parts[0], end_parts[1], end_parts[2])
 
         # Now add one year/month/day:
-        end_date = end_date + relativedelta(**{self.range_type.relativedeltaattr: 1})
+        end_date = end_date + \
+            relativedelta(**{self.range_type.relativedeltaattr: 1})
 
         return {field_name + '__gte': start_date,
                 field_name + '__lt':  end_date}
@@ -738,7 +759,8 @@ class DateTimeFilter(RangeFilterMixin, Filter):
                 else:
                     range_type = YEAR
 
-            if VERSION >= (1, 6) and isinstance(self.field_obj, models.fields.DateTimeField):
+            if (VERSION >= (1, 6) and isinstance(self.field_obj,
+                                                 models.fields.DateTimeField)):
                 date_qs = qs.datetimes(self.field, range_type.label)
             else:
                 date_qs = qs.dates(self.field, range_type.label)
@@ -749,7 +771,8 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             if len(date_choice_counts) == 1 and range_type is not None:
                 # Single choice - recurse.
                 single_choice, count = date_choice_counts[0]
-                date_choice_counts_deeper = get_choices_add_recursive([single_choice])
+                date_choice_counts_deeper = \
+                    get_choices_add_recursive([single_choice])
                 if len(date_choice_counts_deeper) == 0:
                     # Nothing there, so ignore
                     return date_choice_counts
@@ -765,15 +788,18 @@ class DateTimeFilter(RangeFilterMixin, Filter):
         choices = []
         # Additional display links, to give context for choices if necessary.
         if len(date_choice_counts) > 0:
-            choices.extend(self.bridge_choices(chosen,
-                                               [choice for choice, count in date_choice_counts]))
+            choices.extend(self.bridge_choices(
+                chosen, [choice for choice, count in date_choice_counts]))
 
-        null_count = not chosen and qs.filter(**{self.field + '__isnull': True}).count()
+        null_count = (not chosen
+                      and qs.filter(**{self.field + '__isnull': True}).count())
+
         if null_count:
-            choices.append(FilterChoice(self.render_choice_object(NullChoice),
-                                        null_count if self.show_counts else None,
-                                        self.build_params(add=NullChoice),
-                                        FILTER_ADD))
+            choices.append(
+                FilterChoice(self.render_choice_object(NullChoice),
+                             null_count if self.show_counts else None,
+                             self.build_params(add=NullChoice),
+                             FILTER_ADD))
 
         for date_choice, count in date_choice_counts:
             if date_choice in chosen:
@@ -805,13 +831,14 @@ class DateTimeFilter(RangeFilterMixin, Filter):
             if range_type is MONTH:
                 first, last = 1, 12
             elif range_type is DAY:
-                first, last = 1, ((results[0][0] + relativedelta(day=1)) + relativedelta(months=1, days=-1)).day
+                first, last = 1, ((results[0][0] + relativedelta(day=1))
+                                  + relativedelta(months=1, days=-1)).day
             else:
                 first = results[0][0].year
                 last = results[-1][0].year
 
             # We need to split into even sized buckets, so it looks nice.
-            span =  last - first + 1
+            span = last - first + 1
             bucketsize = int(math.ceil(float(span) / self.max_links))
             numbuckets = int(math.ceil(float(span) / bucketsize))
 
@@ -828,14 +855,19 @@ class DateTimeFilter(RangeFilterMixin, Filter):
                 if count:
                     start_val = first + bucketsize * i
                     end_val = min(start_val + bucketsize, last)
-                    start_date = dt_template.replace(**dict({range_type.dateattr: start_val}))
-                    end_date = dt_template.replace(**dict({range_type.dateattr: end_val}))
+                    start_date = dt_template.replace(
+                        **dict({range_type.dateattr: start_val}))
+                    end_date = dt_template.replace(
+                        **dict({range_type.dateattr: end_val}))
 
-                    choice = DateChoice.from_datetime_range(range_type, start_date, end_date)
+                    choice = DateChoice.from_datetime_range(range_type,
+                                                            start_date,
+                                                            end_date)
                     date_choice_counts.append((choice, count))
         else:
-            date_choice_counts = [(DateChoice.from_datetime(range_type, dt), count)
-                                  for dt, count in results]
+            date_choice_counts = \
+                [(DateChoice.from_datetime(range_type, dt), count)
+                 for dt, count in results]
         return date_choice_counts
 
     def bridge_choices(self, chosen, choices):
@@ -861,7 +893,8 @@ class DateTimeFilter(RangeFilterMixin, Filter):
         new_level = new_choice.range_type.level
 
         retval = []
-        while (chosen_level < new_level - 1) or (chosen_level < new_level and bridge_to_single):
+        while ((chosen_level < new_level - 1)
+               or (chosen_level < new_level and bridge_to_single)):
             # If the first chosen was multi, first bridge just bridges to single
             if bridge_to_single:
                 bridge_to_single = False
@@ -931,8 +964,10 @@ def make_numeric_range_choice(to_python, to_str):
                 return {field_name: self.values[0].value}
             else:
                 start, end = self.values[0], self.values[1]
-                return {field_name + '__gt' + ('e' if start.inclusive else ''): start.value,
-                        field_name + '__lt' + ('e' if end.inclusive else ''): end.value}
+                return {field_name + '__gt' +
+                        ('e' if start.inclusive else ''): start.value,
+                        field_name + '__lt' +
+                        ('e' if end.inclusive else ''): end.value}
 
         def __str__(self):
             return '..'.join([to_str(v.value) + ('i' if v.inclusive else '')
@@ -1007,17 +1042,21 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
         if num <= self.max_links:
             val_counts = value_counts(qs, self.field)
             for v, count in val_counts.items():
-                choice = NullChoice if v is None else self.choice_type([RangeEnd(v, True)])
+                choice = (NullChoice if v is None
+                          else self.choice_type([RangeEnd(v, True)]))
                 choices.append(FilterChoice(self.render_choice_object(choice),
                                             count if self.show_counts else None,
                                             self.build_params(add=choice),
                                             FILTER_ADD))
         else:
-            null_count = not chosen and qs.filter(**{self.field + '__isnull': True}).count()
+            null_count = (not chosen
+                          and qs.filter(**{self.field +
+                                           '__isnull': True}).count())
             if null_count:
                 choice = NullChoice
                 choices.append(FilterChoice(self.render_choice_object(choice),
-                                            null_count if self.show_counts else None,
+                                            null_count if self.show_counts
+                                            else None,
                                             self.build_params(add=choice),
                                             FILTER_ADD))
             if self.ranges is None:
@@ -1025,7 +1064,9 @@ class NumericRangeFilter(RangeFilterMixin, SingleValueMixin, Filter):
                     lower=models.Min(self.field),
                     upper=models.Max(self.field)
                 )
-                ranges = auto_ranges(val_range['lower'], val_range['upper'], self.max_links)
+                ranges = auto_ranges(val_range['lower'],
+                                     val_range['upper'],
+                                     self.max_links)
             else:
                 ranges = self.ranges
 
