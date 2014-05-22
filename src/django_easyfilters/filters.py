@@ -391,18 +391,18 @@ class ForeignKeyFilter(ChooseOnceMixin, SimpleQueryMixin, RelatedObjectMixin, Fi
         objs = self.rel_model.objects.filter(**lookup)
         choices = []
 
+        null_count = not self.chosen and self.field_obj.null and qs.filter(**{self.field + '__isnull': True}).count()
+        if null_count:
+            choices.append(FilterChoice(self.render_choice_object(NullChoice),
+                                        null_count,
+                                        self.build_params(add=NullChoice),
+                                        FILTER_ADD))
+
         for o in objs:
             pk = getattr(o, self.rel_field.attname)
             choices.append(FilterChoice(self.render_choice_object(o),
                                         count_dict[pk],
                                         self.build_params(add=o),
-                                        FILTER_ADD))
-
-        null_count = not self.chosen and self.field_obj.null and qs.filter(**{self.field + '__isnull': True}).count()
-        if null_count:
-            choices.append(FilterChoice(self.render_choice_object(NullChoice),
-                                        null_count if self.show_counts else None,
-                                        self.build_params(add=NullChoice),
                                         FILTER_ADD))
 
         return choices
@@ -738,7 +738,7 @@ class DateTimeFilter(RangeFilterMixin, Filter):
                 else:
                     range_type = YEAR
 
-            if VERSION >= (1, 6):
+            if VERSION >= (1, 6) and isinstance(self.field_obj, models.fields.DateTimeField):
                 date_qs = qs.datetimes(self.field, range_type.label)
             else:
                 date_qs = qs.dates(self.field, range_type.label)

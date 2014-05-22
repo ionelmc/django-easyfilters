@@ -236,7 +236,7 @@ class TestFilters(TestCase):
             qs_filtered = filter2.apply_filter(qs)
             self.assertEqual(len(qs_filtered), choice.count)
             for book in qs_filtered:
-                self.assertEqual(text_type(book.genre), choice.label)
+                self.assertEqual(text_type(book.genre) if book.genre else '(null)', choice.label)
         self.assertTrue(reached)
 
     def test_foreignkey_remove_link(self):
@@ -248,7 +248,7 @@ class TestFilters(TestCase):
         data = MultiValueDict()
         filter1 = ForeignKeyFilter('genre', Book, data)
         choices = filter1.get_choices(qs)
-        choice = choices[0]
+        choice = choices[1]  # Pick a non-null entry
 
         filter2 = ForeignKeyFilter('genre', Book, choice.params)
         qs_filtered = filter2.apply_filter(qs)
