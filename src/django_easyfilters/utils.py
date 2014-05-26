@@ -1,12 +1,12 @@
 try:
     from django.db.models.constants import LOOKUP_SEP
-except ImportError: # Django < 1.5 fallback
+except ImportError:  # Django < 1.5 fallback
     from django.db.models.sql.constants import LOOKUP_SEP
 from django.db.models.related import RelatedObject
 from six import PY3
 
 
-def python_2_unicode_compatible(klass): # Copied from Django 1.5
+def python_2_unicode_compatible(klass):  # Copied from Django 1.5
     """
     A decorator that defines __unicode__ and __str__ methods under Python 2.
     Under Python 3 it does nothing.

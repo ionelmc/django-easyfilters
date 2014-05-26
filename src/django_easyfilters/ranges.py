@@ -49,14 +49,16 @@ def auto_ranges(lower, upper, max_items):
         exponent_offset = -st.exponent
     zeros = [0] * (len(st.digits) - 1 - exponent_offset)
 
-    candidate_steps = [Decimal(DecimalTuple(sign=st.sign,
-                                            digits=[d] + zeros,
-                                            exponent=st.exponent + exponent_offset))
-                       for d in (1, 2, 5)]
+    candidate_steps = [
+        Decimal(DecimalTuple(sign=st.sign,
+                             digits=[d] + zeros,
+                             exponent=st.exponent + exponent_offset))
+        for d in (1, 2, 5)]
     # Go one order bigger as well:
-    candidate_steps.append(Decimal(DecimalTuple(sign=st.sign,
-                                                digits=[1, 0] + zeros,
-                                                exponent=st.exponent + exponent_offset)))
+    candidate_steps.append(
+        Decimal(DecimalTuple(sign=st.sign,
+                             digits=[1, 0] + zeros,
+                             exponent=st.exponent + exponent_offset)))
 
     for c_step in candidate_steps:
         # Use c_step to do rounding as well.

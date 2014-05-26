@@ -10,6 +10,7 @@ BINDING_CHOICES = [
     ('C', 'Cloth'),
 ]
 
+
 @python_2_unicode_compatible
 class Author(models.Model):
     name = models.CharField(max_length=50)
@@ -37,7 +38,10 @@ class Genre(models.Model):
 @python_2_unicode_compatible
 class Book(models.Model):
     name = models.CharField(max_length=100)
-    binding = models.CharField(max_length=2, choices=BINDING_CHOICES, null=True, blank=True)
+    binding = models.CharField(max_length=2,
+                               choices=BINDING_CHOICES,
+                               null=True,
+                               blank=True)
     other = models.CharField(max_length=10, blank=True)
     authors = models.ManyToManyField(Author, blank=True)
     genre = models.ForeignKey(Genre, null=True, blank=True)

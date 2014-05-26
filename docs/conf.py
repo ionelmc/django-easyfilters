@@ -11,8 +11,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -178,8 +176,8 @@ htmlhelp_basename = 'django-easyfiltersdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'django-easyfilters.tex', u'django-easyfilters Documentation',
-   u'Luke Plant', 'manual'),
+    ('index', 'django-easyfilters.tex', u'django-easyfilters Documentation',
+     u'Luke Plant', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -225,8 +223,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'django-easyfilters', u'django-easyfilters Documentation', u'Luke Plant',
-   'django-easyfilters', 'One line description of project.', 'Miscellaneous'),
+    ('index', 'django-easyfilters', u'django-easyfilters Documentation',
+     u'Luke Plant', 'django-easyfilters', 'One line description of project.',
+     'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
