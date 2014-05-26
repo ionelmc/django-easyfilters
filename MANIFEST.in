@@ -8,6 +8,5 @@ include .pylintrc
 include *.komodoproject
 graft tests
 graft examples
-graft src
 graft docs
 global-exclude *.pyc *.pyo

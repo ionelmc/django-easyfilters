@@ -18,7 +18,6 @@ setup(
     version='0.6.2',
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    include_package_data=True,
     zip_safe=False,
     author="Luke Plant",
     author_email="L.Plant.98@cantab.net",
