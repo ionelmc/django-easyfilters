@@ -1,13 +1,21 @@
+graft docs
+graft examples
+graft src
+graft tests
+
+include *.komodoproject
+include .bumpversion.cfg
+include .coveragerc
+include .isort.cfg
+include .pylintrc
+
 include README.rst
 include CHANGES.rst
 include LICENSE
 include AUTHORS
-include tox.ini
-include .coveragerc
-include .pylintrc
-include *.komodoproject
-graft tests
-graft examples
-graft src
-graft docs
-global-exclude *.pyc *.pyo
+
+include configure
+include tox.ini tox.tmpl.ini
+include .travis.yml .travis.tmpl.yml
+
+global-exclude *.py[co] __pycache__

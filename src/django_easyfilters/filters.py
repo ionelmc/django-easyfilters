@@ -54,7 +54,7 @@ class Filter(object):
     and can apply the information from a URL to filter a QuerySet.
     """
 
-    ### Public interface ###
+    # Public interface
 
     def __init__(self,
                  field,
@@ -101,7 +101,7 @@ class Filter(object):
         """
         raise NotImplementedError()
 
-    ### Methods that are used by base implementation above ###
+    # Methods that are used by base implementation above
 
     def choices_from_params(self):
         out = []
@@ -132,7 +132,7 @@ class Filter(object):
         """
         return {self.field: choice}
 
-    ### Utility methods needed by most/all subclasses ###
+    # Utility methods needed by most/all subclasses
 
     def param_from_choice(self, choice):
         return six.text_type(choice)
@@ -318,7 +318,7 @@ class RangeFilterMixin(ChooseAgainMixin):
         return out
 
 
-### Concrete filter classes that are used by FilterSet ###
+# Concrete filter classes that are used by FilterSet
 
 class ValuesFilter(ChooseOnceMixin, SimpleQueryMixin, Filter):
     """
