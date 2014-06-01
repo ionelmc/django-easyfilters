@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 0.7.0
+-------------
+
+* Fix bug with DateTimeFilter on Django 1.6 and add support for filtering NULLs in ForeignKey filters (contributed by
+  Eugene A Brin in PR#9)
+
 Version 0.6.2
 -------------
 
