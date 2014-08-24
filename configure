@@ -28,7 +28,7 @@ deps = [
     'Django==1.4.14',
     'Django==1.5.9',
     'Django==1.6.6',
-    'https://www.djangoproject.com/download/1.7.c3/tarball/',
+    'https://www.djangoproject.com/download/1.7c3/tarball/',
 ]
 covers = [True, False]
 envs = ['']  # could be some env vars that activate certain features
