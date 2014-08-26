@@ -17,10 +17,14 @@ INSTALLED_APPS = [
     #'debug_toolbar',
     #'django_extensions',
 ]
+MIDDLEWARE_CLASSES = [
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware'
+]
 try:
     import debug_toolbar
     INSTALLED_APPS.append('debug_toolbar')
-    from django.conf.global_settings import MIDDLEWARE_CLASSES
     MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
         'debug_toolbar.middleware.DebugToolbarMiddleware',
     )
