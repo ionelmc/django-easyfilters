@@ -6,6 +6,7 @@ from django.template.loader import get_template
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
+from django.utils.translation import ugettext as _
 
 from .filters import ChoicesFilter
 from .filters import DateTimeFilter
@@ -80,7 +81,7 @@ class FilterSet(object):
     def render_filter(self, filter_):
         field_obj, _m2m = get_model_field(self.model, filter_.field)
         choices = self.get_filter_choices(filter_.field)
-        ctx = {'filterlabel': capfirst(field_obj.verbose_name)}
+        ctx = {'filterlabel': capfirst(_(field_obj.verbose_name))}
         ctx['choices'] = [dict(label=non_breaking_spaces(c.label),
                                url=u'?' + c.params.urlencode()
                                    if c.link_type != FILTER_DISPLAY else None,
