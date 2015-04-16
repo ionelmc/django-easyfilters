@@ -3,7 +3,10 @@ from django.db import models
 from django.db.backends.util import typecast_timestamp
 from django.db.models.sql.compiler import SQLCompiler
 from django.db.models.sql.constants import MULTI
-from django.db.models.sql.datastructures import Date
+try:
+    from django.db.models.sql.datastructures import Date
+except ImportError:
+    from django.db.models.expressions import Date
 from django.db.models.sql.subqueries import AggregateQuery
 from django.utils.datastructures import SortedDict
 

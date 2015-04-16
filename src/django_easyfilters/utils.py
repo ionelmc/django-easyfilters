@@ -2,7 +2,10 @@ try:
     from django.db.models.constants import LOOKUP_SEP
 except ImportError:  # Django < 1.5 fallback
     from django.db.models.sql.constants import LOOKUP_SEP
-from django.db.models.related import RelatedObject
+try:
+    from django.db.models.related import RelatedObject
+except ImportError:
+    from django.db.models.fields.related import ForeignObjectRel as RelatedObject
 from six import PY3
 
 
